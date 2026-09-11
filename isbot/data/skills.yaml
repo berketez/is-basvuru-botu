@@ -1,0 +1,191 @@
+# Genel yetenek sözlüğü — kişiye özel DEĞİL.
+# cv_import bu listeyi CV metninde arar, bulduklarını profile.yaml'a yazar.
+# Biçim:  KanonikAd: [eşanlamlı, eşanlamlı, ...]
+# Yeni alan eklemek isteyen buraya satır ekler; motor kodu değişmez.
+
+diller:
+  Python: [python, py3]
+  JavaScript: [javascript, js, ecmascript]
+  TypeScript: [typescript, ts]
+  Java: [java]
+  C: []
+  C++: ["c++", cpp]
+  "C#": ["c#", csharp, "dotnet", ".net"]
+  Go: [golang]
+  Rust: [rust]
+  Ruby: [ruby, rails]
+  PHP: [php]
+  Swift: [swift]
+  Kotlin: [kotlin]
+  Scala: [scala]
+  R: []
+  MATLAB: [matlab]
+  Fortran: [fortran]
+  Julia: [julia]
+  SQL: [sql, mysql, sqlite, t-sql, plsql]
+  PostgreSQL: [postgresql, postgres]
+  MongoDB: [mongodb, mongo]
+  Redis: [redis, memcached]
+  Bash: [bash, shell, zsh, "shell scripting"]
+
+ml_ai:
+  PyTorch: [pytorch, torch]
+  TensorFlow: [tensorflow, keras]
+  JAX: [jax, flax]
+  MLX: [mlx]
+  scikit-learn: [scikit-learn, sklearn]
+  XGBoost: [xgboost]
+  LightGBM: [lightgbm]
+  CatBoost: [catboost]
+  LLM: [llm, "large language model", gpt, transformer]
+  RAG: [rag, "retrieval augmented", "retrieval-augmented"]
+  "prompt engineering": ["prompt engineering", prompting]
+  "fine-tuning": ["fine-tuning", finetuning, lora, peft, qlora]
+  "vector database": ["vector database", pinecone, weaviate, qdrant, chromadb, faiss]
+  LangChain: [langchain, llamaindex]
+  "computer vision": ["computer vision", opencv, yolo, "image segmentation"]
+  NLP: [nlp, "natural language processing", spacy, "hugging face", huggingface]
+  "reinforcement learning": ["reinforcement learning", rlhf, ppo, sac, "deep rl"]
+  "neural operator": ["neural operator", "fourier neural operator", deeponet, fno]
+  "physics-informed": ["physics-informed", pinn, "physics informed"]
+  MLOps: [mlops, mlflow, "weights & biases", wandb, kubeflow]
+  "diffusion models": ["diffusion model", "stable diffusion"]
+  CUDA: [cuda, cudnn, triton]
+  Ollama: [ollama, "lm studio", llama.cpp, vllm]
+
+veri:
+  NumPy: [numpy]
+  SciPy: [scipy]
+  pandas: [pandas]
+  Spark: [spark, pyspark]
+  Kafka: [kafka]
+  Airflow: [airflow, dagster, prefect]
+  dbt: [dbt]
+  Snowflake: [snowflake, bigquery, redshift]
+  ETL: [etl, elt, "data pipeline"]
+
+web_backend:
+  FastAPI: [fastapi]
+  Flask: [flask]
+  Django: [django]
+  "Node.js": ["node.js", nodejs, express]
+  React: [react, "react.js", nextjs, "next.js"]
+  Vue: [vue, "vue.js", nuxt]
+  REST: ["rest api", restful]
+  GraphQL: [graphql]
+  WebSocket: [websocket, websockets]
+  gRPC: [grpc, protobuf]
+
+altyapi:
+  Docker: [docker, containerization]
+  Kubernetes: [kubernetes, k8s, helm]
+  AWS: [aws, ec2, s3, lambda, sagemaker]
+  GCP: [gcp, "google cloud", "vertex ai"]
+  Azure: [azure, "azure openai", "copilot studio", "ai foundry"]
+  Terraform: [terraform, pulumi]
+  "CI/CD": ["ci/cd", jenkins, "github actions", gitlab ci]
+  Linux: [linux, ubuntu, debian, "unix"]
+  HPC: [hpc, slurm, mpi, "high performance computing", openmp]
+  Git: [git, github, gitlab]
+
+bilimsel:
+  CFD: [cfd, "computational fluid dynamics", openfoam, ansys, fluent]
+  "Navier-Stokes": ["navier-stokes", "navier stokes"]
+  LES: [les, "large eddy", dns, rans, turbulence]
+  "spectral method": ["spectral method", "pseudo-spectral", pseudospectral, fft]
+  FEA: [fea, "finite element", fem, abaqus, nastran]
+  "structural mechanics": ["structural mechanics", "solid mechanics", buckling]
+  Cantera: [cantera, "chemical equilibrium", "combustion"]
+  "orbital mechanics": ["orbital mechanics", astrodynamics, "n-body"]
+  "signal processing": ["signal processing", dsp, "fourier analysis"]
+  "numerical methods": ["numerical method", "finite difference", "finite volume"]
+  Simulation: [simulation, "monte carlo"]
+
+guvenlik:
+  "reverse engineering": ["reverse engineering", re, decompilation]
+  Ghidra: [ghidra, pyghidra, ida, "ida pro", radare2, binary ninja]
+  "binary analysis": ["binary analysis", "malware analysis", "static analysis", mach-o, elf]
+  Frida: [frida, dynamic instrumentation]
+  Capstone: [capstone, disassembl]
+  "penetration testing": ["penetration testing", pentest, "red team", burp, metasploit]
+  Cryptography: [cryptography, cryptographic, encryption, tls]
+  YARA: [yara]
+
+gomulu:
+  "embedded systems": ["embedded system", "embedded software", firmware, rtos]
+  STM32: [stm32, arm cortex, microcontroller, mcu]
+  PCB: [pcb, altium, kicad, "circuit design"]
+  CAD: [cad, solidworks, fusion 360, catia, freecad]
+
+arac:
+  LaTeX: [latex, xelatex, pdflatex]
+  Playwright: [playwright, selenium, puppeteer]
+  Jupyter: [jupyter, notebook]
+  Tableau: [tableau, "power bi", powerbi]
+  Excel: [excel, "vba"]
+
+# --- frontend / tasarım (ilk sürümde eksikti: junior web CV'sinde sadece 2 yetenek bulunuyordu) ---
+frontend:
+  HTML: [html, html5]
+  CSS: [css, css3, sass, scss, less, tailwind, "tailwind css"]
+  Bootstrap: [bootstrap]
+  jQuery: [jquery]
+
+# --- oyun motorları ve blockchain: rol ailelerinin tetikleri sözlükte YOKSA aile
+# hiç açılmaz. Ölçüldü: Unity ve Solidity eksikti, oyun ve blockchain CV'leri
+# kendi ailelerini kaybediyordu.
+oyun_motoru:
+  Unity: [unity, unity3d]
+  Unreal: [unreal, "unreal engine", udk]
+  Godot: [godot]
+  "gameplay programming": ["gameplay programming", "game programming", "level design"]
+
+blockchain_tek:
+  Solidity: [solidity]
+  Ethereum: [ethereum, evm, "l2", rollup]
+  "smart contracts": ["smart contract", "smart contracts"]
+  DeFi: [defi, "decentralized finance", web3]
+  Foundry: [foundry, hardhat, truffle]
+  WordPress: [wordpress, woocommerce, elementor]
+  Webpack: [webpack, vite, rollup, babel]
+  "responsive design": ["responsive design", "responsive web", "mobile-first"]
+  Figma: [figma, sketch, "adobe xd", invision]
+  "UI/UX": ["ui/ux", "user interface", "user experience", wireframe]
+  Shopify: [shopify, magento, prestashop]
+  SEO: [seo, "search engine optimization"]
+  Accessibility: [accessibility, wcag, a11y]
+
+# --- güvenlik operasyonu / sertifikalar (pentester CV'si için) ---
+guvenlik_ops:
+  SIEM: [siem, splunk, "elastic siem", qradar, sentinel]
+  "incident response": ["incident response", "incident triage", "threat hunting", soc]
+  Nmap: [nmap]
+  "Burp Suite": ["burp suite", burp]
+  Metasploit: [metasploit]
+  Wireshark: [wireshark, tcpdump]
+  OSCP: [oscp, "offensive security certified"]
+  CEH: [ceh, "certified ethical hacker"]
+  CISSP: [cissp]
+  "vulnerability management": ["vulnerability scanning", "vulnerability management", nessus, qualys]
+  "IDA Pro": ["ida pro", "ida"]
+  "cloud security": ["cloud security", "iam", "zero trust"]
+
+# --- gözlemlenebilirlik / operasyon (SRE CV'si için) ---
+operasyon:
+  Prometheus: [prometheus, grafana, "victoria metrics"]
+  Ansible: [ansible, chef, puppet, saltstack]
+  Jenkins: [jenkins]
+  Observability: [observability, "distributed tracing", opentelemetry, jaeger, datadog]
+  "incident management": ["on-call", "oncall", "incident management", sre, "error budget"]
+  Nginx: [nginx, apache, haproxy, envoy]
+  "load testing": ["load testing", "performance testing", k6, jmeter]
+  Networking: [networking, tcp/ip, dns, vpn, bgp, "network troubleshooting"]
+
+# --- iş / ürün / analitik (teknik olmayan roller de taransın) ---
+urun_analitik:
+  "product management": ["product manager", "product management", roadmap, "user stories"]
+  Agile: [agile, scrum, kanban, jira]
+  "A/B testing": ["a/b testing", "experimentation", "split test"]
+  "business intelligence": ["business intelligence", "bi", looker]
+  "data analysis": ["data analysis", "data analytics", "statistical analysis"]
+  CRM: [crm, salesforce, hubspot]

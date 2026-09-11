@@ -1,0 +1,107 @@
+# Taranacak şirketler. Hepsi HERKESE AÇIK, kimlik doğrulaması istemeyen ATS uçları.
+# Buradaki anahtarların tamamı canlı doğrulandı (11 Eyl 2026).
+#
+# Kendi listeni yapmak için:  python -m isbot dogrula <kaynak> <anahtar>
+# Anahtarı bulmak: şirketin kariyer sayfası URL'sinin sonundaki kısım.
+#   job-boards.greenhouse.io/ANAHTAR   |  jobs.lever.co/ANAHTAR
+#   jobs.ashbyhq.com/ANAHTAR           |  jobs.smartrecruiters.com/ANAHTAR
+
+greenhouse:
+  databricks:  Databricks
+  stripe:      Stripe
+  anthropic:   Anthropic
+  datadog:     Datadog
+  mongodb:     MongoDB
+  cloudflare:  Cloudflare
+  elastic:     Elastic
+  brex:        Brex
+  gitlab:      GitLab
+  scaleai:     Scale AI
+  coinbase:    Coinbase
+  affirm:      Affirm
+  fivetran:    Fivetran
+  figma:       Figma
+  twilio:      Twilio
+  reddit:      Reddit
+  robinhood:   Robinhood
+  instacart:   Instacart
+  asana:       Asana
+  duolingo:    Duolingo
+  chime:       Chime
+  neo4j:       Neo4j
+  discord:     Discord
+  dropbox:     Dropbox
+  assemblyai:  AssemblyAI
+  airtable:    Airtable
+  # --- uzaktan-öncelikli / EMEA işe alan şirketler (11 Eyl 2026 doğrulandı) ---
+  canonical:   Canonical (Ubuntu)
+  sumup:       SumUp
+  wolt:        Wolt
+  remotecom:   Remote.com
+  grafanalabs: Grafana Labs
+  n26:         N26
+  mozilla:     Mozilla
+  webflow:     Webflow
+  wikimedia:   Wikimedia
+  typeform:    Typeform
+  ghost:       Ghost
+  contentful:  Contentful
+  dreamgames:  Dream Games   # Lever'da da var; zengin metinli kopya burada
+
+lever:
+  spotify:     Spotify
+  palantir:    Palantir
+  matchgroup:  Match Group
+  toptal:      Toptal
+  pipedrive:   Pipedrive
+  jobandtalent: Job&Talent
+  # --- Türkiye (11 Eyl 2026: token + kimlik ilan konumlarından teyit edildi) ---
+  trendyol:    Trendyol
+  dreamgames:  Dream Games
+  peakgames:   Peak Games
+  iyzico:      iyzico
+  getmidas:    Midas
+  picus:       Picus Security
+  intenseye:   Intenseye
+
+ashby:
+  openai:      OpenAI
+  harvey:      Harvey
+  elevenlabs:  ElevenLabs
+  sierra:      Sierra
+  ramp:        Ramp
+  decagon:     Decagon
+  notion:      Notion
+  mercor:      Mercor
+  deepgram:    Deepgram
+  modal:       Modal
+  linear:      Linear
+  browserbase: Browserbase
+  replit:      Replit
+  supabase:    Supabase
+  sentry:      Sentry
+  workos:      WorkOS
+  posthog:     PostHog
+  railway:     Railway
+  resend:      Resend
+  neon:        Neon
+  clerk:       Clerk
+
+workable: {}
+# NOT: Workable bağlayıcısı çalışıyor ve sınandı, ama denenen Türk şirketlerinde
+# ilan bulunamadı. 'ttech' anahtarı ısrarla 429 (hız sınırı) döndürdü — üç ayrı
+# denemede de. Workable'ın bu ucu agresif sınırlıyor; yeni anahtar eklerken
+# 'python -m isbot dogrula workable <anahtar>' ile tek tek sına.
+
+# NOT — Türkiye kapsamının gerçek sınırı:
+# Türk şirketlerinin büyük kısmı kariyer.net / kendi sistemleri üzerinden ilan veriyor ve
+# herkese açık API'si YOK. Yalnızca uluslararası ölçekli olanlar Lever/Greenhouse kullanıyor.
+# Bu yüzden TR kapsamı için ikinci kanal şart: kariyer.net + LinkedIn İŞ ALARMI E-POSTALARI
+# (kullanıcı alarmı kurar, platform ilanı kendi gönderir, bot kullanıcının gelen kutusunu okur).
+# Böylece platforma hiç otomatik istek gitmez. Bir sonraki adım bu.
+#
+# DİKKAT: token tahmini sahte eşleşme üretir. Doğrulamada 'greenhouse/peak' Teksas'ta bir
+# fizik tedavi kliniği, 'greenhouse/insider' ABD'li haber sitesi, 'ashby/novo' başka bir
+# şirket çıktı. Yeni şirket eklerken 'python -m isbot dogrula <kaynak> <token>' ile
+# İLAN KONUMLARINA bakıp kimliği teyit et.
+smartrecruiters: {}

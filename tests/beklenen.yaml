@@ -1,0 +1,119 @@
+# Benchmark beklentileri — CV'ler ELLE okunarak yazıldı, motorun çıktısına bakılarak DEĞİL.
+# Döngüsel doğrulamayı önlemek için önce beklenen yazılır, sonra motor koşulur.
+#
+# deneyim   : beklenen profesyonel yıl (tolerans ±1.5)
+# kidem     : beklenen kıdem TAVANI (aranacak en üst seviye). DİKKAT: junior bir aday
+#             bir kademe yukarı bakabildiği için junior CV'de tavan "mid" olur — bu
+#             tasarım gereğidir, hata değil.
+# olmali    : CV'de açıkça yazan, mutlaka tespit edilmesi gereken yetenekler
+# olmamali  : CV'de OLMAYAN, tespit edilirse yanlış pozitif sayılacak yetenekler
+# alan      : ilk sonuçların ilgili olması beklenen alan anahtar kelimeleri
+# negatif   : true ise bu CV yazılım havuzundan neredeyse hiç sonuç ALMAMALI
+
+1_junior_frontend:
+  deneyim: 4.2
+  kidem: mid
+  olmali: [JavaScript, HTML, CSS, WordPress, Figma]
+  olmamali: [PyTorch, Kubernetes, Ghidra, Solidity]
+  alan: [frontend, web, javascript, react, ui]
+
+2_staff_ml:
+  deneyim: 12.0
+  kidem: staff
+  olmali: [PyTorch, TensorFlow, LLM, RAG, Kubernetes, Spark]
+  olmamali: [Ghidra, Solidity, Unity, SolidWorks]
+  alan: [machine learning, ml, ai, research, data]
+
+3_fintech_data_eng:
+  deneyim: 6.1
+  kidem: senior
+  olmali: [Python, SQL, Airflow, dbt, Snowflake, Kafka]
+  olmamali: [PyTorch, Ghidra, Unity, Solidity]
+  alan: [data, engineer, pipeline, analytics, platform]
+
+4_devops_sre:
+  deneyim: 12.5
+  kidem: senior
+  olmali: [Kubernetes, Terraform, AWS, Docker, Prometheus]
+  olmamali: [PyTorch, Ghidra, Unity, Solidity]
+  alan: [sre, infrastructure, platform, devops, reliability, backend]
+
+5_security_pentester:
+  deneyim: 12.9
+  kidem: senior
+  olmali: [penetration testing, Ghidra, Metasploit, YARA, Burp Suite]
+  olmamali: [PyTorch, Unity, Solidity, SolidWorks]
+  alan: [security, cyber, penetration, vulnerability, threat]
+
+6_makine_muh_yenimezun:
+  deneyim: 0.3
+  kidem: mid              # junior tespit edilir, tavan bir kademe yukarı = mid
+  olmali: [CAD, MATLAB]
+  olmamali: [Python, Kubernetes, PyTorch, JavaScript]
+  alan: [mechanical, manufacturing, cad]
+  negatif: true          # yazılım ilan havuzunda makine mühendisine iş olmamalı
+
+7_ios_gelistirici:
+  deneyim: 5.9
+  kidem: mid
+  olmali: [Swift, Kotlin, Git]
+  olmamali: [PyTorch, Ghidra, Solidity, Terraform]
+  alan: [ios, mobile, swift, app]
+
+8_qa_otomasyon:
+  deneyim: 7.2
+  kidem: senior
+  olmali: [Playwright, Python, Docker, SQL]
+  olmamali: [PyTorch, Ghidra, Solidity, Unity]
+  alan: [qa, test, quality, automation, sdet]
+
+9_veri_bilimci_phd:
+  deneyim: 5.0
+  kidem: senior
+  olmali: [Python, R, SQL, scikit-learn, XGBoost, pandas]
+  olmamali: [Ghidra, Unity, Solidity, Kubernetes]
+  alan: [data scientist, analytics, machine learning, statistics]
+
+10_gomulu_sistem:
+  deneyim: 6.1
+  kidem: senior
+  olmali: [C, STM32, embedded systems, Linux]
+  olmamali: [PyTorch, Solidity, Unity, Snowflake]
+  alan: [embedded, firmware, systems, low-level, kernel]
+
+11_platform_junior:
+  deneyim: 1.9
+  kidem: mid              # junior tespit edilir, tavan bir kademe yukarı = mid
+  olmali: [Kubernetes, Docker, Terraform, AWS, Python]
+  olmamali: [PyTorch, Ghidra, Unity, Solidity]
+  alan: [platform, infrastructure, devops, sre, backend]
+
+12_urun_yoneticisi:
+  deneyim: 7.2
+  kidem: senior
+  olmali: [product management, Agile, SQL]
+  olmamali: [PyTorch, Ghidra, Kubernetes, Unity]
+  alan: [product manager, product]
+  # NEGATİF KONTROL DEĞİL: havuzdaki şirketler gerçekten ürün yöneticisi arıyor
+  # (ilk sonuç "Senior Product Manager, APIs" çıktı). İlk beklentim hatalıydı.
+
+13_oyun_gelistirici:
+  deneyim: 7.0
+  kidem: senior
+  olmali: ["C#", Python, Git]
+  olmamali: [PyTorch, Ghidra, Solidity, Terraform]
+  alan: [game, unity, gameplay, graphics]
+
+14_blockchain_solidity:
+  deneyim: 6.5
+  kidem: senior
+  olmali: [Go, TypeScript, Python, PostgreSQL, Docker]
+  olmamali: [PyTorch, Ghidra, Unity, SolidWorks]
+  alan: [blockchain, crypto, smart contract, protocol, backend]
+
+15_akademik_ai_research:
+  deneyim: 6.9
+  kidem: senior
+  olmali: [PyTorch, physics-informed, neural operator, CFD, HPC, CUDA]
+  olmamali: [Unity, Solidity, SolidWorks, Snowflake]
+  alan: [research, machine learning, ai, scientific, simulation]

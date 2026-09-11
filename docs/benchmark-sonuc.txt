@@ -1,0 +1,45 @@
+havuz önbellekten: 10928 ilan
+tekil havuz: 8314 ilan
+
+========================================================================================================
+A) YAPISAL — CV ayrıştırma
+========================================================================================================
+CV                                  deneyim          kıdem    yetenek  y.pozitif
+1_junior_frontend             4.2/4.2   OK        mid  OK          OK         OK
+2_staff_ml                   12.0/12.0  OK      staff  OK          OK         OK
+3_fintech_data_eng            6.1/6.1   OK     senior  OK          OK         OK
+4_devops_sre                 12.4/12.5  OK     senior  OK          OK         OK
+5_security_pentester         12.8/12.9  OK     senior  OK          OK         OK
+6_makine_muh_yenimezun        0.2/0.3   OK        mid  OK          OK         OK
+7_ios_gelistirici             5.9/5.9   OK        mid  OK          OK         OK
+8_qa_otomasyon                7.2/7.2   OK     senior  OK          OK         OK
+9_veri_bilimci_phd            5.0/5.0   OK     senior  OK          OK         OK
+10_gomulu_sistem              6.1/6.1   OK     senior  OK          OK         OK
+11_platform_junior            1.9/1.9   OK        mid  OK          OK         OK
+12_urun_yoneticisi            7.2/7.2   OK     senior  OK          OK         OK
+13_oyun_gelistirici           7.0/7.0   OK     senior  OK          OK         OK
+14_blockchain_solidity        6.5/6.5   OK     senior  OK          OK         OK
+15_akademik_ai_research       6.9/6.9   OK     senior  OK          OK         OK
+
+========================================================================================================
+B) ALAKA — aynı havuz, 15 profil
+========================================================================================================
+CV                          aday  ilk5 alan  sızıntı   konum   ilk sonuç
+1_junior_frontend              1       0/5        0       0   ElevenLabs / Full-Stack Engineer - Creative Stu
+2_staff_ml                    82       4/5        0       0   iyzico / Data Engineer
+3_fintech_data_eng            43       5/5        0       0   iyzico / Data Engineer
+4_devops_sre                  60       5/5        0       0   Fivetran / Senior Site Reliability Engineer
+5_security_pentester          29       5/5        0       0   Elastic / Consulting Architect - Security (E
+6_makine_muh_yenimezun         1       0/5        0       0   ElevenLabs / Design Engineer - Creative & Studi
+7_ios_gelistirici              4       0/5        0       0   Canonical (Ub / Ubuntu Linux Kernel Test Engineer
+8_qa_otomasyon                38       3/5        0       0   Canonical (Ub / Ubuntu Linux Kernel Test Engineer
+9_veri_bilimci_phd            31       1/5        0       0   Trendyol / Data Scientist (Pre-Search)
+10_gomulu_sistem              36       4/5        0       0   Canonical (Ub / Ubuntu Linux Kernel Test Engineer
+11_platform_junior            14       2/5        0       0   Canonical (Ub / Ubuntu Linux Kernel Test Engineer
+12_urun_yoneticisi            20       5/5        0       0   Remote.com / Senior Product Manager, APIs
+13_oyun_gelistirici           22       0/5        0       0   Lemon.io / Senior QA Engineer
+14_blockchain_solidity        61       1/5        0       0   Fivetran / Senior Software Engineer - Databas
+15_akademik_ai_research       17       4/5        0       0   Picus Securit / Associate Security Research Engine
+
+========================================================================================================
+SONUÇ: 105 geçti, 0 başarısız  (100% geçiş)

@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>İş Başvuru Botu</title>
+<style>
+:root{
+  --ze:#0f1216; --ze2:#171c22; --ze3:#1f262e; --ke:#2b343e;
+  --me:#e6edf3; --me2:#9aa7b4; --vu:#4c9aff; --ye:#3fb950; --sa:#d29922; --kir:#f85149;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ze);color:var(--me);
+  font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif}
+a{color:var(--vu)}
+header{padding:16px 20px;border-bottom:1px solid var(--ke);display:flex;
+  align-items:center;gap:14px;flex-wrap:wrap;background:var(--ze2)}
+h1{font-size:17px;margin:0;font-weight:600}
+.kucuk{color:var(--me2);font-size:12px}
+button{background:var(--ze3);color:var(--me);border:1px solid var(--ke);border-radius:6px;
+  padding:7px 13px;font-size:13px;cursor:pointer;font-family:inherit}
+button:hover:not(:disabled){background:var(--ke)}
+button:disabled{opacity:.45;cursor:default}
+button.ana{background:var(--vu);border-color:var(--vu);color:#fff;font-weight:600}
+button.ana:hover:not(:disabled){filter:brightness(1.12)}
+.duzen{display:grid;grid-template-columns:262px 1fr;gap:0;min-height:calc(100vh - 61px)}
+aside{border-right:1px solid var(--ke);padding:16px;background:var(--ze2);overflow-y:auto}
+main{padding:16px 20px;overflow-y:auto}
+.blok{margin-bottom:22px}
+.blok h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--me2);
+  margin:0 0 9px;font-weight:600}
+label.sat{display:flex;align-items:center;gap:8px;padding:3px 0;cursor:pointer;font-size:13px}
+input[type=checkbox]{accent-color:var(--vu);width:15px;height:15px;cursor:pointer}
+input[type=text],input[type=range],select{width:100%;background:var(--ze);color:var(--me);
+  border:1px solid var(--ke);border-radius:6px;padding:7px 9px;font-size:13px;font-family:inherit}
+input[type=range]{padding:0;accent-color:var(--vu)}
+#birak{border:2px dashed var(--ke);border-radius:8px;padding:18px 12px;text-align:center;
+  color:var(--me2);cursor:pointer;transition:.15s;font-size:13px}
+#birak:hover,#birak.uzerinde{border-color:var(--vu);color:var(--me);background:#4c9aff14}
+.kart{background:var(--ze2);border:1px solid var(--ke);border-radius:9px;padding:13px 15px;
+  margin-bottom:10px;cursor:pointer;transition:.12s}
+.kart:hover{border-color:var(--vu)}
+.kart.acik{border-color:var(--vu);background:var(--ze3)}
+.kbas{display:flex;align-items:flex-start;gap:12px}
+.puan{font-weight:700;font-size:16px;min-width:46px;text-align:right}
+.p-iyi{color:var(--ye)} .p-orta{color:var(--sa)} .p-zayif{color:var(--me2)}
+.kbaslik{font-weight:600;font-size:14.5px;margin:0 0 3px}
+.ksirket{color:var(--me2);font-size:12.5px}
+.etiketler{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.et{font-size:11px;padding:2.5px 8px;border-radius:20px;background:var(--ze3);
+  border:1px solid var(--ke);color:var(--me2)}
+.et.uzak{color:var(--ye);border-color:#3fb95055}
+.et.taze{color:var(--vu);border-color:#4c9aff55}
+.et.supheli{color:var(--sa);border-color:#d2992255}
+.et.hayalet{color:var(--kir);border-color:#f8514955}
+.et.yetenek{color:var(--me);background:#4c9aff1f;border-color:#4c9aff44}
+.kaynak{font-size:11px;padding:2.5px 9px;border-radius:20px;background:#8957e51f;
+  border:1px solid #8957e555;color:#c9a4ff;white-space:nowrap;font-weight:600}
+.kaynak.tr{background:#3fb9501f;border-color:#3fb95055;color:#7ee787}
+.detay{margin-top:13px;padding-top:13px;border-top:1px solid var(--ke);font-size:13px}
+.detay h4{margin:14px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--me2)}
+.detay pre{white-space:pre-wrap;font-family:inherit;margin:0;color:var(--me2);
+  max-height:340px;overflow-y:auto;line-height:1.6}
+.gerekce{margin:4px 0;color:var(--me2)}
+.im{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.06em;padding:1.5px 6px;border-radius:4px;margin-right:8px;
+  vertical-align:1px;min-width:54px;text-align:center}
+.im-uyari{background:#d2992222;color:#e8c86a;border:1px solid #d2992250}
+.im-hayalet{background:#f8514920;color:#ff9d95;border:1px solid #f8514950}
+.im-taze{background:#3fb95020;color:#7ee787;border:1px solid #3fb95050}
+.im-ok{background:#3fb95020;color:#7ee787;border:1px solid #3fb95050}
+.satir{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
+.ozet{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:13px;
+  border-bottom:1px solid var(--ke);font-size:13px;color:var(--me2)}
+.ozet b{color:var(--me);font-size:15px}
+.bos{text-align:center;padding:56px 20px;color:var(--me2)}
+.hos{max-width:520px;margin:52px auto;text-align:center}
+.hos h2{font-size:21px;margin:0 0 10px;color:var(--me)}
+.hos p{color:var(--me2);margin:0 0 26px;font-size:14px}
+.adimlar{text-align:left;background:var(--ze2);border:1px solid var(--ke);border-radius:10px;
+  padding:20px 22px}
+.adim{display:flex;gap:13px;align-items:flex-start;padding:11px 0}
+.adim+.adim{border-top:1px solid var(--ke)}
+.adim .no{display:flex;align-items:center;justify-content:center;min-width:25px;height:25px;
+  border-radius:50%;background:var(--vu);color:#fff;font-size:12.5px;font-weight:700;flex:0 0 auto}
+.adim b{color:var(--me)}
+.adim div{font-size:13.5px;color:var(--me)}
+.adim span{display:block;color:var(--me2);font-size:12.5px;margin-top:2px}
+#birak.buyuk{padding:30px 14px;font-size:14px}
+.ilerleme{height:3px;background:var(--ze3);border-radius:2px;overflow:hidden;margin-top:9px}
+.ilerleme i{display:block;height:100%;background:var(--vu);width:30%;
+  animation:kay 1.1s ease-in-out infinite}
+@keyframes kay{0%{margin-left:-30%}100%{margin-left:100%}}
+.alt{color:var(--me2);font-size:11.5px;line-height:1.45;margin:0 0 8px 23px}
+.ayrac{height:1px;background:var(--ke);margin:13px 0 11px}
+.cipler{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.cip{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 5px 3px 9px;
+  border-radius:20px;background:#4c9aff1f;border:1px solid #4c9aff44;color:var(--me)}
+.cip button{background:none;border:none;color:var(--me2);padding:0 3px;font-size:14px;
+  line-height:1;cursor:pointer;border-radius:50%}
+.cip button:hover{color:var(--kir);background:none}
+.oneri{margin-top:5px;max-height:196px;overflow-y:auto;border:1px solid var(--ke);
+  border-radius:6px;background:var(--ze)}
+.oneri div{padding:6px 9px;cursor:pointer;font-size:13px;display:flex;gap:8px;
+  align-items:baseline;justify-content:space-between}
+.oneri div:hover,.oneri div.secili{background:var(--ze3)}
+.oneri span{color:var(--me2);font-size:11px;white-space:nowrap}
+.oneri .yok{color:var(--me2);cursor:default;font-size:12px}
+.oneri .yok:hover{background:none}
+.uyari{background:#d299221f;border:1px solid #d2992255;border-radius:7px;padding:10px 12px;
+  font-size:12.5px;margin-bottom:13px;color:#e8c86a}
+.hata{background:#f851491f;border:1px solid #f8514955;color:#ff9d95}
+@media(max-width:860px){.duzen{grid-template-columns:1fr}aside{border-right:none;
+  border-bottom:1px solid var(--ke)}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>İş Başvuru Botu</h1>
+  <span class="kucuk" id="ustBilgi">CV yükleyip taramaya başla</span>
+  <span style="flex:1"></span>
+  <button class="ana" id="btnTara" disabled title="Önce CV yükle">Tara</button>
+</header>
+
+<div class="duzen">
+<aside>
+  <div class="blok">
+    <h3>1 · Özgeçmiş</h3>
+    <div id="birak">CV dosyasını buraya bırak<br><span class="kucuk">PDF · TeX · DOCX · MD · TXT</span></div>
+    <input type="file" id="dosya" accept=".pdf,.tex,.docx,.md,.txt" hidden>
+    <div id="profilOzet" class="kucuk" style="margin-top:10px"></div>
+  </div>
+
+  <div class="blok" id="konumBlok" style="display:none">
+    <h3>2 · Nereden çalışabilirsin</h3>
+    <div class="kucuk" style="margin-bottom:7px">Bu CV'den çıkarılamaz, sen işaretle.</div>
+
+    <label class="sat"><input type="checkbox" class="izin" value="turkey" checked> Türkiye</label>
+    <div class="alt">Türkiye'deki ilanlar: <b>yerinde, hibrit ve uzaktan hepsi</b> gelir.
+      Yalnız birini istiyorsan aşağıdaki <b>Çalışma şekli</b> filtresini kullan;
+      ilanın hangisi olduğu kartın üstünde etiketle yazar.</div>
+
+    <label class="sat"><input type="checkbox" class="izin" value="remote_global" checked> Uzaktan (global)</label>
+    <div class="alt">"Worldwide / anywhere" diyen, nerede oturduğunu sormayan ilanlar.</div>
+
+    <label class="sat"><input type="checkbox" class="izin" value="remote_emea" checked> Uzaktan (EMEA)</label>
+    <div class="alt">"Anywhere in Europe/EMEA" diyen ilanlar. Tek ülkeye çivilenmiş
+      "Germany (remote)" bunlara girmez — onun için aşağıdan Almanya'yı ekle.</div>
+
+    <div class="ayrac"></div>
+    <div class="kucuk" style="margin-bottom:6px"><b>Çalışma iznin olan ülkeler</b><br>
+      Oturma/çalışma izni ya da vatandaşlığın varsa ekle — o ülkenin ilanları da listelenir.</div>
+    <div id="ulkeCip" class="cipler"></div>
+    <input type="text" id="ulkeAra" autocomplete="off" placeholder="ülke ara: İsviçre, Kanada…">
+    <div id="ulkeOner" class="oneri" hidden></div>
+
+    <button id="btnKonum" style="margin-top:9px;width:100%">Kaydet</button>
+  </div>
+
+  <div class="blok">
+    <h3>Filtreler</h3>
+    <input type="text" id="ara" placeholder="pozisyon / şirket ara…">
+  </div>
+
+  <div class="blok">
+    <h3>Çalışma şekli</h3>
+    <label class="sat"><input type="checkbox" class="f-calisma" value="uzaktan" checked> Uzaktan</label>
+    <label class="sat"><input type="checkbox" class="f-calisma" value="hibrit" checked> Hibrit</label>
+    <label class="sat"><input type="checkbox" class="f-calisma" value="ofis" checked> Ofis</label>
+    <label class="sat"><input type="checkbox" class="f-calisma" value="bilinmiyor" checked> Belirtilmemiş</label>
+  </div>
+
+  <div class="blok">
+    <h3>İstihdam türü</h3>
+    <label class="sat"><input type="checkbox" class="f-istihdam" value="tam zamanlı" checked> Tam zamanlı</label>
+    <label class="sat"><input type="checkbox" class="f-istihdam" value="yarı zamanlı" checked> Yarı zamanlı</label>
+    <label class="sat"><input type="checkbox" class="f-istihdam" value="sözleşmeli" checked> Sözleşmeli</label>
+    <label class="sat"><input type="checkbox" class="f-istihdam" value="staj" checked> Staj</label>
+    <label class="sat"><input type="checkbox" class="f-istihdam" value="bilinmiyor" checked> Belirtilmemiş</label>
+  </div>
+
+  <div class="blok">
+    <h3>Yayın tarihi</h3>
+    <select id="fYas">
+      <option value="9999">Tümü</option>
+      <option value="7">Son 7 gün</option>
+      <option value="30" selected>Son 30 gün</option>
+      <option value="90">Son 3 ay</option>
+      <option value="365">Son 1 yıl</option>
+    </select>
+  </div>
+
+  <div class="blok">
+    <h3>En az uygunluk: <span id="puanEtiket">20</span></h3>
+    <input type="range" id="fPuan" min="0" max="90" step="5" value="20">
+  </div>
+
+  <div class="blok">
+    <h3>Hayalet ilanlar</h3>
+    <select id="fHayalet">
+      <option value="normal" selected>Şüpheli ve hayaletleri gizle</option>
+      <option value="supheli">Şüphelileri göster, hayaletleri gizle</option>
+      <option value="hepsi">Hepsini göster</option>
+    </select>
+  </div>
+
+  <div class="blok">
+    <h3>Şirket</h3>
+    <select id="fSirket"><option value="">Tümü</option></select>
+  </div>
+
+  <div class="blok">
+    <h3>Kaynak</h3>
+    <select id="fKaynak"><option value="">Tümü</option></select>
+  </div>
+
+  <div class="blok">
+    <h3>Şirket başına en fazla</h3>
+    <select id="fSirketBasi">
+      <option value="2">2 ilan</option>
+      <option value="3" selected>3 ilan</option>
+      <option value="5">5 ilan</option>
+      <option value="999">sınırsız</option>
+    </select>
+    <div class="kucuk" style="margin-top:6px">Tek şirket listeyi işgal etmesin diye.</div>
+  </div>
+</aside>
+
+<main>
+  <div id="uyariAlan"></div>
+  <div class="ozet" id="ozet" style="display:none"></div>
+  <div id="liste"></div>
+</main>
+</div>
+
+<script>
+/* Kaynak kimliğini kullanıcıya okunur göster: ilanın hangi siteden geldiğini
+   bilmek, başvururken nereye gideceğini bilmek demek. */
+const KAYNAK_AD = {
+  greenhouse: "Greenhouse", lever: "Lever", ashby: "Ashby", workable: "Workable",
+  smartrecruiters: "SmartRecruiters", remotive: "Remotive", remoteok: "RemoteOK",
+  arbeitnow: "Arbeitnow", themuse: "The Muse", himalayas: "Himalayas",
+  jobicy: "Jobicy", weworkremotely: "We Work Remotely",
+  kariyernet: "Kariyer.net", elemannet: "Eleman.net",
+};
+const TR_KAYNAK = new Set(["kariyernet", "elemannet"]);
+const kaynakAdi = k => KAYNAK_AD[k] || k;
+
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+let VERI = null, ACIK = null;
+
+/* ---------- yardımcı ---------- */
+const kacar = s => String(s ?? "").replace(/[&<>"']/g, c =>
+  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const puanSinif = p => p >= 55 ? "p-iyi" : p >= 35 ? "p-orta" : "p-zayif";
+function uyari(metin, hataMi) {
+  $("#uyariAlan").innerHTML = metin
+    ? `<div class="uyari${hataMi ? " hata" : ""}">${kacar(metin)}</div>` : "";
+}
+
+/* ---------- CV yükleme ---------- */
+const birak = $("#birak");
+birak.onclick = () => $("#dosya").click();
+birak.ondragover = e => { e.preventDefault(); birak.classList.add("uzerinde"); };
+birak.ondragleave = () => birak.classList.remove("uzerinde");
+birak.ondrop = e => {
+  e.preventDefault(); birak.classList.remove("uzerinde");
+  if (e.dataTransfer.files[0]) cvGonder(e.dataTransfer.files[0]);
+};
+$("#dosya").onchange = e => e.target.files[0] && cvGonder(e.target.files[0]);
+
+async function cvGonder(f) {
+  birak.textContent = "okunuyor: " + f.name;
+  const fd = new FormData(); fd.append("cv", f);
+  try {
+    const r = await fetch("/api/cv", { method: "POST", body: fd });
+    const d = await r.json();
+    if (d.hata) { uyari("CV okunamadı — " + d.hata, true); birak.textContent = "tekrar dene"; return; }
+    uyari("");
+    birak.innerHTML = "<span class='im im-ok'>yüklü</span>" + kacar(f.name) +
+      "<br><span class='kucuk'>değiştirmek için tıkla</span>";
+    profilYaz(d);
+    birak.classList.remove("buyuk");
+    $("#konumBlok").style.display = "block";
+    await ulkeleriYukle();
+    // CV yüklenince sunucu profili SIFIRDAN üretir; kullanıcının önceki konum
+    // seçimi profilden silinir. Kutular eski seçimi gösterip profilde başka bir
+    // koşul durursa tarama sessizce yanlış koşulla koşar — o yüzden gösterilen
+    // koşul aynı anda profile de yazılır.
+    const kosul = ONCEKI_KONUM.length ? ONCEKI_KONUM
+                                      : ["turkey", "remote_global", "remote_emea"];
+    konumYaz(kosul);
+    await konumGonder(kosul);
+    $("#btnTara").disabled = false;
+    $("#liste").innerHTML = `<div class="bos">Profil hazır. Soldan konumunu işaretle,
+      sonra sağ üstten <b>Tara</b>'ya bas.</div>`;
+    if (d.gozden_gecir) uyari("Çalışma iznin CV'den çıkarılamadı. Soldaki 2. adımdan işaretleyip kaydet — yoksa konum filtresi yanlış çalışır.");
+  } catch (e) { uyari("bağlantı hatası: " + e.message, true); }
+}
+
+function profilYaz(d) {
+  $("#profilOzet").innerHTML =
+    `<b>${d.deneyim_yil} yıl</b> deneyim · kıdem tavanı <b>${kacar(d.max_kidem)}</b><br>` +
+    `${d.guclu_yetenek.length} güçlü yetenek<br>` +
+    `<span style="opacity:.7">${kacar(d.guclu_yetenek.slice(0, 9).join(", "))}…</span>`;
+  $("#ustBilgi").textContent = d.deneyim_yil + " yıl deneyim · " + d.guclu_yetenek.length + " yetenek";
+}
+
+/* ---------- konum: dinamik ülke seçici ----------
+   Ülke listesi sunucudan gelir (/api/ulkeler); arayüzde sabit ülke kutusu YOKTUR.
+   Önceden ABD/BK/Almanya diye üç kutu vardı, İsviçre'de izni olan kullanıcı
+   bunu hiçbir yere yazamıyordu. */
+let ULKELER = [];                    // [{etiket, ad, bolge, arama}]
+let SECILI_ULKE = new Set();         // kullanıcının eklediği ülke etiketleri
+let ONER = [];                       // o an gösterilen öneriler
+let ONER_IDX = -1;
+const SABIT_IZIN = new Set(["turkey", "remote_global", "remote_emea"]);
+
+/* Türkçe duyarsız arama: "isvicre" yazan "İsviçre"yi bulmalı.
+   toLowerCase() Türkçede İ -> "i̇" (i + birleşik nokta) verir, o yüzden önce
+   harfler sadeleştirilir, sonra kalan aksanlar atılır. */
+const sadelestir = t => (t || "").toLowerCase()
+  .replace(/[\u0307]/g, "").replace(/[ıi]/g, "i").replace(/[şs]/g, "s")
+  .replace(/[ğg]/g, "g").replace(/[üu]/g, "u").replace(/[öo]/g, "o")
+  .replace(/[çc]/g, "c").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+async function ulkeleriYukle() {
+  if (ULKELER.length) return;
+  try { ULKELER = await (await fetch("/api/ulkeler")).json(); }
+  catch (e) { ULKELER = []; uyari("Ülke listesi yüklenemedi: " + e.message, true); }
+  ULKELER.forEach(u => u._ara = sadelestir(u.arama));
+}
+
+function ulkeAdi(e) {
+  const u = ULKELER.find(x => x.etiket === e);
+  return u ? u.ad : e;
+}
+
+function cipCiz() {
+  const k = $("#ulkeCip");
+  if (!SECILI_ULKE.size) {
+    k.innerHTML = `<span class="kucuk" style="opacity:.6">Eklemedin — yalnız
+      yukarıdaki üç koşul geçerli.</span>`;
+    return;
+  }
+  k.innerHTML = [...SECILI_ULKE].map(e =>
+    `<span class="cip">${kacar(ulkeAdi(e))}<button data-sil="${kacar(e)}"
+       title="çıkar">×</button></span>`).join("");
+  k.querySelectorAll("[data-sil]").forEach(b => b.onclick = () => {
+    SECILI_ULKE.delete(b.dataset.sil); cipCiz(); konumDegisti();
+  });
+}
+
+function onerCiz(q) {
+  const kutu = $("#ulkeOner"), ara = sadelestir(q);
+  if (!ara) { kutu.hidden = true; ONER = []; ONER_IDX = -1; return; }
+  ONER = ULKELER.filter(u => !SECILI_ULKE.has(u.etiket) && u._ara.includes(ara)).slice(0, 9);
+  ONER_IDX = ONER.length ? 0 : -1;
+  kutu.hidden = false;
+  kutu.innerHTML = ONER.length
+    ? ONER.map((u, i) => `<div data-ekle="${kacar(u.etiket)}" class="${i === 0 ? "secili" : ""}">
+        ${kacar(u.ad)}<span>${kacar(u.bolge)}</span></div>`).join("")
+    : `<div class="yok">eşleşen ülke yok</div>`;
+  kutu.querySelectorAll("[data-ekle]").forEach(d =>
+    d.onclick = () => ulkeEkle(d.dataset.ekle));
+}
+
+function ulkeEkle(etiket) {
+  if (!etiket) return;
+  SECILI_ULKE.add(etiket);
+  $("#ulkeAra").value = "";
+  $("#ulkeOner").hidden = true;
+  ONER = []; ONER_IDX = -1;
+  cipCiz(); konumDegisti();
+}
+
+function konumDegisti() {
+  const b = $("#btnKonum");
+  b.classList.add("ana");
+  b.textContent = "Kaydet — değişiklik var";
+}
+
+/* Profildeki koşulları arayüze dağıtır: üçü sabit kutu, gerisi ülke çipi. */
+function konumYaz(kosullar) {
+  kosullar = kosullar || [];
+  $$(".izin").forEach(c => c.checked = kosullar.includes(c.value));
+  SECILI_ULKE = new Set(kosullar.filter(x => !SABIT_IZIN.has(x)));
+  cipCiz();
+  $("#btnKonum").classList.remove("ana");
+  $("#btnKonum").textContent = "Kaydet";
+}
+
+$("#ulkeAra").oninput = e => onerCiz(e.target.value);
+$("#ulkeAra").onkeydown = e => {
+  if (e.key === "Escape") { $("#ulkeOner").hidden = true; return; }
+  if (!ONER.length) return;
+  if (e.key === "Enter") { e.preventDefault(); ulkeEkle(ONER[Math.max(0, ONER_IDX)].etiket); return; }
+  if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+  e.preventDefault();
+  ONER_IDX = (ONER_IDX + (e.key === "ArrowDown" ? 1 : ONER.length - 1)) % ONER.length;
+  $$("#ulkeOner [data-ekle]").forEach((d, i) => d.classList.toggle("secili", i === ONER_IDX));
+};
+$$(".izin").forEach(c => c.onchange = konumDegisti);
+
+async function konumGonder(izinler) {
+  const r = await fetch("/api/profil/konum", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ izinler })
+  });
+  return r.json();
+}
+
+$("#btnKonum").onclick = async () => {
+  const izinler = [...$$(".izin:checked").map(x => x.value), ...SECILI_ULKE];
+  if (!izinler.length) { uyari("En az bir koşul seç, yoksa hiçbir ilan geçemez.", true); return; }
+  const d = await konumGonder(izinler);
+  if (d.hata) { uyari(d.hata, true); return; }
+  konumYaz(d.izinler);
+  const ad = e => ({ turkey: "Türkiye", remote_global: "uzaktan (global)",
+                     remote_emea: "uzaktan (EMEA)" })[e] || ulkeAdi(e);
+  uyari("Konum koşulu kaydedildi: " + d.izinler.map(ad).join(", "));
+};
+
+/* ---------- tarama ---------- */
+$("#btnTara").onclick = async () => {
+  // Konum kutuları değişip KAYDEDİLMEDİYSE tarama eski koşulla koşardı ve kullanıcı
+  // bunu hiç fark etmezdi. Kaydetmeyi kullanıcıya bırakmak yerine burada tamamlıyoruz.
+  if ($("#btnKonum").classList.contains("ana")) {
+    await $("#btnKonum").onclick();
+  }
+  $("#btnTara").disabled = true;
+  $("#liste").innerHTML = `<div class="bos">İlanlar çekiliyor…<div class="ilerleme"><i></i></div>
+    <div class="kucuk" id="ilerBilgi" style="margin-top:10px"></div></div>`;
+  const r = await fetch("/api/tara", { method: "POST" });
+  const d = await r.json();
+  if (d.hata) { uyari(d.hata, true); $("#btnTara").disabled = false; return; }
+  izle();
+};
+
+function izle() {
+  // Sunucu tarama sırasında yeniden başlarsa durum "ne çalışıyor ne bitti" olur ve
+  // bu döngü sonsuza kadar dönerdi. İki çıkış daha: durumun kaybolması ve üst süre.
+  let tur = 0;
+  const t = setInterval(async () => {
+    let d;
+    try { d = await (await fetch("/api/tara/durum")).json(); }
+    catch (e) { return; }                       // sunucu bir an cevap vermedi, tekrar dene
+    const b = $("#ilerBilgi");
+    if (b) b.textContent = `${kacar(d.asama || "")} — ${d.cekilen} ilan · `
+      + `${kacar(d.sirket || "")} · ${d.gecen_sn || 0} sn`;
+    const dusmus = !d.calisiyor && !d.bitti && ++tur > 5;   // sunucu yeniden başlamış
+    if (d.bitti || dusmus || tur > 900) {       // 900 tur ≈ 18 dakika
+      clearInterval(t); $("#btnTara").disabled = false;
+      if (d.hata) { uyari("Tarama hatası: " + d.hata, true); $("#liste").innerHTML = ""; }
+      else if (dusmus || tur > 900) uyari("Tarama izlenemedi (sunucu yanıt vermiyor). "
+                                          + "Tara'ya yeniden basabilirsin.", true);
+      else yukle();
+    }
+  }, 1200);
+}
+
+/* ---------- sonuçlar ---------- */
+async function yukle() {
+  VERI = await (await fetch("/api/sonuclar")).json();
+  if (!VERI.ilanlar || !VERI.ilanlar.length) {
+    $("#liste").innerHTML = `<div class="bos">Henüz sonuç yok. CV yükleyip <b>Tara</b>'ya bas.</div>`;
+    return;
+  }
+  // Kaynak hataları KULLANICIYA söylenir. Eskiden yalnız JSON'a yazılıyordu:
+  // yarım kalan taramada "az ilan geldi" görünüyor, sebebi hiçbir yerde yazmıyordu.
+  if (VERI.hatalar && VERI.hatalar.length) {
+    const ilk = VERI.hatalar.slice(0, 3).map(h => h.split(":")[0]).join(", ");
+    uyari(`${VERI.hatalar.length} kaynak ilan veremedi (${ilk}${VERI.hatalar.length > 3 ? "…" : ""}). `
+          + `Liste eksik olabilir — genelde geçici hız sınırı, tekrar taramayı dene.`);
+  }
+  const kaynaklar = [...new Set(VERI.ilanlar.map(x => x.kaynak))].sort();
+  $("#fKaynak").innerHTML = `<option value="">Tümü (${kaynaklar.length} kaynak)</option>` +
+    kaynaklar.map(k => `<option value="${kacar(k)}">${kacar(kaynakAdi(k))}</option>`).join("");
+  const sirketler = [...new Set(VERI.ilanlar.map(x => x.sirket))].sort();
+  $("#fSirket").innerHTML = `<option value="">Tümü (${sirketler.length} şirket)</option>` +
+    sirketler.map(s => `<option value="${kacar(s)}">${kacar(s)}</option>`).join("");
+  ciz();
+}
+
+function suz() {
+  const q = $("#ara").value.trim().toLowerCase();
+  const cal = $$(".f-calisma:checked").map(x => x.value);
+  const ist = $$(".f-istihdam:checked").map(x => x.value);
+  const enAzPuan = +$("#fPuan").value, enFazlaYas = +$("#fYas").value;
+  const hy = $("#fHayalet").value, sirket = $("#fSirket").value;
+  const izinliBant = hy === "hepsi" ? ["taze", "normal", "şüpheli", "hayalet"]
+    : hy === "supheli" ? ["taze", "normal", "şüpheli"] : ["taze", "normal"];
+  return VERI.ilanlar.filter(x =>
+    x.puan >= enAzPuan &&
+    (x.yas_gun === null || x.yas_gun <= enFazlaYas) &&
+    cal.includes(x.calisma_sekli) && ist.includes(x.istihdam_turu) &&
+    izinliBant.includes(x.hayalet_bant) &&
+    (!sirket || x.sirket === sirket) &&
+    (!$("#fKaynak").value || x.kaynak === $("#fKaynak").value) &&
+    (!q || (x.baslik + " " + x.sirket + " " + x.bolum).toLowerCase().includes(q))
+  ).sort((a, b) => b.puan - a.puan);
+}
+
+/* Tek şirketin listeyi işgal etmesini engeller: en yüksek puanlı N ilanı kalır.
+   (ölçüldü: Canonical ilk 12 satırın 9'unu alıyordu) */
+function sirketSinirla(liste) {
+  const enFazla = +$("#fSirketBasi").value, sayac = {}, cikti = [];
+  for (const x of liste) {
+    const n = sayac[x.sirket] || 0;
+    if (n >= enFazla) continue;
+    sayac[x.sirket] = n + 1;
+    cikti.push(x);
+  }
+  return cikti;
+}
+
+function ciz() {
+  const hepsi = suz();
+  const s = sirketSinirla(hepsi);
+  $("#ozet").style.display = "flex";
+  $("#ozet").innerHTML =
+    `<div><b>${s.length}</b> ilan gösteriliyor</div>
+     ${hepsi.length > s.length ? `<div><b>${hepsi.length - s.length}</b> şirket sınırıyla gizlendi</div>` : ""}
+     <div><b>${VERI.ilanlar.length}</b> aday havuzda</div>
+     <div><b>${VERI.cekilen}</b> ilan tarandı</div>
+     <div><b>${VERI.hayalet_elenen}</b> hayalet elendi</div>
+     <div><b>${VERI.tekrar_atilan}</b> tekrar atıldı</div>`;
+  if (!s.length) {
+    $("#liste").innerHTML = `<div class="bos">Bu filtrelerle ilan yok.<br>
+      <span class="kucuk">Uygunluk eşiğini indir veya yayın tarihini genişlet.</span></div>`;
+    return;
+  }
+  $("#liste").innerHTML = s.map(kartHTML).join("");
+  $$(".kart").forEach(k => k.onclick = e => {
+    if (e.target.tagName === "A" || e.target.tagName === "BUTTON") return;
+    ACIK = ACIK === k.dataset.uid ? null : k.dataset.uid; ciz();
+  });
+}
+
+function kartHTML(x) {
+  const acikMi = ACIK === x.uid;
+  const et = [];
+  if (x.calisma_sekli !== "bilinmiyor")
+    et.push(`<span class="et ${x.calisma_sekli === "uzaktan" ? "uzak" : ""}">${kacar(x.calisma_sekli)}</span>`);
+  if (x.istihdam_turu !== "bilinmiyor") et.push(`<span class="et">${kacar(x.istihdam_turu)}</span>`);
+  if (x.yas_gun !== null) {
+    const sn = x.hayalet_bant === "hayalet" ? "hayalet" : x.hayalet_bant === "şüpheli"
+      ? "supheli" : x.yas_gun <= 14 ? "taze" : "";
+    et.push(`<span class="et ${sn}">${x.yas_gun} gün önce</span>`);
+  }
+  if (x.maas) et.push(`<span class="et">${kacar(x.maas)}</span>`);
+  if (x.istenen_yil) et.push(`<span class="et">${x.istenen_yil}+ yıl ister</span>`);
+  et.push(...x.eslesen.slice(0, 6).map(y => `<span class="et yetenek">${kacar(y)}</span>`));
+
+  return `<div class="kart ${acikMi ? "acik" : ""}" data-uid="${kacar(x.uid)}">
+    <div class="kbas">
+      <div style="flex:1">
+        <div class="kbaslik">${kacar(x.baslik)}</div>
+        <div class="ksirket">${kacar(x.sirket)} · ${kacar(x.konum_durumu)}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="puan ${puanSinif(x.puan)}">${x.puan}</div>
+        <div class="kaynak ${TR_KAYNAK.has(x.kaynak) ? "tr" : ""}" style="margin-top:6px;display:inline-block">${kacar(kaynakAdi(x.kaynak))}</div>
+      </div>
+    </div>
+    <div class="etiketler">${et.join("")}</div>
+    ${acikMi ? detayHTML(x) : ""}
+  </div>`;
+}
+
+function detayHTML(x) {
+  const g = [];
+  if (x.eksik.length) g.push(`<div class="gerekce"><span class="im im-uyari">eksik</span>İlanın istediği ama CV'de zayıf: <b>${kacar(x.eksik.slice(0, 6).join(", "))}</b></div>`);
+  x.uyarilar.forEach(u => g.push(`<div class="gerekce"><span class="im im-uyari">uyarı</span>${kacar(u)}</div>`));
+  x.hayalet_gerekce.forEach(u => {
+    const taze = u.includes("yeni yayımlanmış");
+    g.push(`<div class="gerekce"><span class="im ${taze ? "im-taze" : "im-hayalet"}">${taze ? "taze" : "hayalet"}</span>${kacar(u)}</div>`);
+  });
+  return `<div class="detay">
+    <div class="kucuk">Rol eşleşmesi <b>${kacar(x.rol_ailesi)}</b> (${x.rol_puan}/40) ·
+      yetenek <b>${x.yetenek_puan}/45</b> · kıdem <b>${kacar(x.kidem)}</b> ·
+      tazelik <b>${kacar(x.hayalet_bant)}</b> (risk ${x.hayalet_risk})</div>
+    ${g.length ? `<h4>Gerekçe</h4>${g.join("")}` : ""}
+    <h4>Eşleşen yetenekler</h4>
+    <div class="kucuk">${kacar(x.eslesen.join(", ")) || "—"}</div>
+    <h4>İlan metni</h4>
+    <pre>${kacar(x.aciklama.slice(0, 4500))}</pre>
+    <div class="satir">
+      <a href="${kacar(x.url)}" target="_blank" rel="noopener noreferrer">
+        <button class="ana">${kacar(kaynakAdi(x.kaynak))} sitesinde aç ve başvur →</button></a>
+      <button onclick="navigator.clipboard.writeText('${kacar(x.url)}')">Bağlantıyı kopyala</button>
+    </div>
+    <div class="kucuk" style="margin-top:9px;opacity:.7">
+      Otomatik form doldurma henüz yazılmadı — şimdilik ilan yeni sekmede açılıyor,
+      başvuruyu sen tamamlıyorsun.</div>
+  </div>`;
+}
+
+/* ---------- filtre olayları ---------- */
+["#ara", "#fYas", "#fHayalet", "#fSirket", "#fSirketBasi", "#fKaynak"].forEach(s => {
+  $(s).oninput = () => VERI && ciz(); $(s).onchange = () => VERI && ciz();
+});
+$("#fPuan").oninput = e => { $("#puanEtiket").textContent = e.target.value; VERI && ciz(); };
+$$(".f-calisma, .f-istihdam").forEach(c => c.onchange = () => VERI && ciz());
+
+/* ---------- açılış ---------- */
+function hosgeldin() {
+  $("#liste").innerHTML = `<div class="hos">
+    <h2>Başlamak için özgeçmişini yükle</h2>
+    <p>CV'n bu bilgisayardan çıkmaz. Tüm işlem burada, kendi makinende yapılır.</p>
+    <div class="adimlar">
+      <div class="adim"><span class="no">1</span><div>Soldaki kutuya CV dosyanı sürükle
+        <span>PDF, TeX, DOCX, MD veya TXT — ya da kutuya tıklayıp seç</span></div></div>
+      <div class="adim"><span class="no">2</span><div>Nereden çalışabileceğini işaretle
+        <span>Bu CV'den anlaşılamaz: Türkiye, uzaktan kapsamları ve çalışma iznin olan
+        ülkeler — İsviçre, Kanada, Hollanda… listeden arayıp eklersin</span></div></div>
+      <div class="adim"><span class="no">3</span><div>Sağ üstteki <b>Tara</b> düğmesine bas
+        <span>Şirketlerin açık ilan uçları taranır, yaklaşık 2-3 dakika sürer</span></div></div>
+    </div></div>`;
+  $("#ozet").style.display = "none";
+  birak.classList.add("buyuk");
+}
+
+let ONCEKI_KONUM = [];
+
+(async () => {
+  const p = await (await fetch("/api/profil")).json();
+  if (!p.var) {
+    // Oturum yeni: karşılama göster, ama kullanıcının önceki konum tercihlerini
+    // hatırla — CV yüklenince kutular hazır işaretli gelsin, baştan seçmesin.
+    ONCEKI_KONUM = p.onceki_konum || [];
+    ulkeleriYukle();                 // CV yüklenince seçici hazır beklesin
+    hosgeldin();
+    return;
+  }
+  if (p.var) {
+    // Tarama sürerken sayfa yenilenirse izleme kopuyordu: panel "sonuç yok" diyor,
+    // Tara düğmesi açık kalıyor, basınca 409 hatası veriyordu.
+    const td = await (await fetch("/api/tara/durum")).json();
+    if (td.calisiyor) {
+      $("#liste").innerHTML = `<div class="bos">İlanlar çekiliyor…<div class="ilerleme"><i></i></div>
+        <div class="kucuk" id="ilerBilgi" style="margin-top:10px"></div></div>`;
+      $("#btnTara").disabled = true;
+      izle();
+    }
+    profilYaz({ deneyim_yil: p.deneyim_yil, max_kidem: p.max_kidem, guclu_yetenek: p.guclu_yetenek });
+    $("#btnTara").disabled = false;
+    $("#konumBlok").style.display = "block";
+    await ulkeleriYukle();
+    konumYaz(p.konum_kosulu);
+    birak.innerHTML = "<span class='im im-ok'>yüklü</span>profil hazır" +
+      "<br><span class='kucuk'>yeni CV için tıkla</span>";
+    birak.classList.remove("buyuk");
+  }
+  yukle();
+})();
+</script>
+</body>
+</html>

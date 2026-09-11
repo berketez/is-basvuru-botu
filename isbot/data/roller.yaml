@@ -1,0 +1,138 @@
+# Rol aileleri — CV'de tespit edilen yeteneklerden TÜRETİLİR.
+#
+# tetik_guclu: TANIMLAYICI yetenekler — biri bile varsa aile etkinleşir.
+#              (SwiftUI/UIKit = iOS uygulaması yazan biri; Solidity = blockchain'ci)
+# tetik      : DESTEKLEYİCİ yetenekler — tek başına yetmez, en az `tetik_min` tane gerek.
+#
+# NEDEN BU AYRIM: Başta tek yetenek koca bir kariyer ailesini açıyordu. Berke'nin
+# CV'sinde "Swift" yalnızca "ObjC/Swift/C++ dispatch resolution" bağlamında geçiyor —
+# yani Swift ikililerini TERSİNE MÜHENDİSLİKLE çözüyor, uygulama yazmıyor. Motor onu
+# iOS geliştiricisi sandı ve kısa listeye iOS/Android ilanları geldi (73,6 ve 51,1 puan).
+# Artık Swift tek başına yetmiyor; SwiftUI/UIKit gibi uygulama çatıları gerekiyor.
+#
+# agirlik  : etkinleşirse taşıdığı ağırlık (0-1)
+# basliklar: ilan başlığında aranan kalıplar (tek satır olmalı)
+# tr_pozisyonlar: Türk panoları için Türkçe pozisyon adları (kanonik olmalı)
+
+mobil:
+  tetik_guclu: ["SwiftUI", "UIKit", "Flutter", "React Native"]
+  tetik: ["Swift", "Kotlin"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["mobil uygulama geliştirici", "android geliştirici", "ios geliştirici"]
+  basliklar: ['(?i)\b(ios|android|mobile|swift|kotlin|flutter|react native)\b']
+
+oyun:
+  tetik_guclu: ["Unity", "Unreal"]
+  tetik: ["C#"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["oyun geliştirici", "yazılım mühendisi"]
+  basliklar: ['(?i)\b(game|unity|unreal|gameplay|graphics engineer|technical artist)\b']
+
+gomulu:
+  tetik_guclu: ["embedded systems", "STM32"]
+  tetik: ["PCB", "C", "Assembly"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["gömülü yazılım mühendisi", "elektronik mühendisi", "donanım mühendisi"]
+  basliklar: ['(?i)\b(embedded|firmware|rtos|microcontroller|kernel|driver|low[- ]level|bsp)\b']
+
+guvenlik:
+  tetik_guclu: ["penetration testing", "Ghidra", "Metasploit", "Burp Suite", "OSCP"]
+  tetik: ["reverse engineering", "YARA", "SIEM", "binary analysis", "vulnerability management"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["siber güvenlik uzmanı", "bilgi güvenliği uzmanı", "sızma testi uzmanı"]
+  basliklar: ['(?i)\b(security|cyber|penetration|appsec|infosec|malware|threat|vulnerabilit|reverse engineer|cryptograph)\b']
+
+platform_sre:
+  tetik_guclu: ["Kubernetes", "Terraform"]
+  tetik: ["Ansible", "Prometheus", "incident management", "Jenkins", "Observability"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["sistem mühendisi", "altyapı mühendisi", "sistem yöneticisi"]
+  basliklar: ['(?i)\b(sre|site reliability|platform engineer|infrastructure|devops|cloud engineer|reliability)\b']
+
+veri_muh:
+  tetik_guclu: ["Airflow", "dbt", "Snowflake"]
+  tetik: ["Kafka", "Spark", "ETL"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["veri mühendisi", "veri tabanı uzmanı", "iş zekası uzmanı"]
+  basliklar: ['(?i)\b(data engineer|data platform|data infrastructure|analytics engineer|etl|pipeline)\b']
+
+veri_bilimi:
+  tetik_guclu: ["scikit-learn", "statistical analysis", "A/B testing"]
+  tetik: ["XGBoost", "pandas", "R", "LightGBM"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["veri bilimci", "veri analisti", "istatistik uzmanı"]
+  basliklar: ['(?i)\b(data scientist|data science|applied scientist|analytics|statistic|quantitative)\b']
+
+ml_ai:
+  tetik_guclu: ["PyTorch", "TensorFlow", "JAX", "LLM", "RAG", "neural operator", "physics-informed"]
+  tetik: ["fine-tuning", "MLOps", "reinforcement learning", "computer vision", "NLP"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["veri bilimci", "yazılım mühendisi", "iş zekası uzmanı"]
+  basliklar: ['(?i)\b(machine learning|ml engineer|mlops|deep learning|ai engineer|applied ai|genai|generative ai|llm|research engineer|research scientist)\b']
+
+bilimsel_hpc:
+  tetik_guclu: ["CFD", "Navier-Stokes", "spectral method"]
+  tetik: ["LES", "FEA", "HPC", "numerical methods", "Fortran", "Simulation", "orbital mechanics"]
+  tetik_min: 2
+  agirlik: 0.95
+  tr_pozisyonlar: ["arge mühendisi", "simülasyon mühendisi", "makine mühendisi"]
+  basliklar: ['(?i)\b(scientific comput|computational|simulation|numerical|hpc|cfd|physics|research engineer)\b']
+
+blockchain:
+  tetik_guclu: ["Solidity", "smart contracts", "DeFi"]
+  tetik: ["Ethereum", "Cryptography"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["yazılım mühendisi", "yazılım geliştirme uzmanı"]
+  basliklar: ['(?i)\b(blockchain|crypto|web3|smart contract|solidity|defi|protocol engineer)\b']
+
+qa:
+  # Playwright/Selenium TANIMLAYICI DEĞİL: tarayıcı otomasyonu için de kullanılıyor.
+  # (Berke'nin CV'sinde Playwright bir AI ajanı projesinde geçiyor; motor onu
+  # test mühendisi sandı — Swift/mobil hatasının aynısı.)
+  tetik_guclu: []
+  tetik: ["Playwright", "Selenium", "pytest", "load testing", "k6"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["test uzmanı", "yazılım test mühendisi", "kalite kontrol uzmanı"]
+  basliklar: ['(?i)\b(qa|sdet|test engineer|quality (assurance|engineer)|automation engineer|test automation)\b']
+
+frontend:
+  tetik_guclu: ["React", "Vue", "responsive design"]
+  tetik: ["HTML", "CSS", "TypeScript", "Webflow", "Bootstrap", "jQuery"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["arayüz uygulama geliştiricisi", "arayüz yazılım uzmanı", "web arayüz geliştirici"]
+  basliklar: ['(?i)\b(frontend|front[- ]end|web developer|ui engineer|javascript|react|full[- ]?stack)\b']
+
+backend:
+  tetik_guclu: ["FastAPI", "Django", "gRPC", "GraphQL"]
+  tetik: ["Flask", "Node.js", "REST", "PostgreSQL", "Go", "Java"]
+  tetik_min: 2
+  agirlik: 0.8
+  tr_pozisyonlar: ["yazılım mühendisi", "yazılım geliştirme uzmanı", "altyapı mühendisi"]
+  basliklar: ['(?i)\b(backend|back[- ]end|software engineer|platform|api|services|distributed systems)\b']
+
+urun:
+  tetik_guclu: ["product management"]
+  tetik: ["Agile", "A/B testing", "CRM", "business intelligence"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["ürün yöneticisi", "proje yöneticisi", "iş analisti"]
+  basliklar: ['(?i)\b(product (manager|owner|lead)|program manager|product analyst)\b']
+
+makine_tasarim:
+  tetik_guclu: ["CAD"]
+  tetik: ["MATLAB", "FEA"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["makine mühendisi", "tasarım mühendisi", "üretim mühendisi"]
+  basliklar: ['(?i)\b(mechanical|manufacturing|design engineer|cad|process engineer|industrial engineer)\b']

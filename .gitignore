@@ -1,0 +1,22 @@
+# --- kişisel veri (asla paylaşılmaz) ---
+# CV'den üretilen profil, deneme CV'leri, tarama çıktıları
+/config/profile.local.yaml
+/config/profile.yaml
+/test-cvs/
+/out/
+
+# --- büyük yerel önbellekler ---
+# ilan geçmişi (65 MB+), benchmark havuzu (70 MB+), pano damgaları.
+# DİKKAT: yalnız KÖKTEKİ data/ hariç tutulur; isbot/data/ paketin zorunlu
+# veri dosyalarını taşır (roller.yaml, skills.yaml) ve depoda BULUNMALIDIR.
+/data/
+/tests/ornekler/
+
+# --- python / paketleme ---
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+/build/
+/dist/
+.DS_Store
