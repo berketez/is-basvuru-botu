@@ -263,6 +263,48 @@ MENATEK, Lentatek ve Leonardo Turkey vardı. Sektör sayfası olduğu için kar�
 **Sınır:** bu kurumların ilanlarının tamamı kariyer.net'e düşmez; bir bölümü yalnız kendi
 kariyer portallarında durur. Araç onları göremez ve göremediğini söyler.
 
+#### Kapsam nasıl genişletiliyor
+
+Ölçüldü (14 Eyl 2026): bir taramada 12.154 ilanın %82'si yabancı ATS'lerden geliyordu
+(Greenhouse 5.694, Ashby 2.064) ama kariyer.net'ten yalnız **329** ilan alınıyordu —
+oysa kısa listedeki 124 ilanın **122'si** o panodandı. En değerli kaynak en dar olanıydı.
+
+Sebep: sorgu başına yalnız en iyi 2 kategori sayfası çekiliyordu ve kariyer.net kategori
+sayfaları **sayfalanmıyor** (sitemap'in 60.441 yolunda tek bir sayfa parametresi yok);
+her sayfa ilk ~50 ilanı veriyor. Üç değişiklik yapıldı:
+
+- **İl çeşitliliği.** Sitemap aynı pozisyonun il bazlı sayfalarını ilan ediyor
+  ("otomasyon mühendisi" için 125, "savunma sanayi" için 74 yol) ve bunlar *farklı*
+  ilanlar taşıyor. Sorgu başına 4 yol alınır; ülke geneli sayfa her zaman dâhil,
+  aynı ilden ikinci yol alınmaz, iller iş hacmine göre önceliklidir (Kırıkkale ve
+  Eskişehir listede yüksek — MKE ve TUSAŞ orada).
+- **Sektör sayfaları.** Pozisyon sorgusu yalnız o unvanı getirir; sektör sayfası
+  (`otomasyon`, `bankacilik`, `gida`) o sektördeki *tüm* firmaların ilanlarını verir.
+  Bu sayfalar **elle listelenmez, sitemap'ten türetilir**: şehirsiz + unvan eki
+  taşımayan + en çok 3 sözcüklü + *altında en az 3 pozisyon yolu bulunan* yollar.
+  İkinci kural şart — onsuz "makine+enspektoru" gibi unvanlar sektör sanılıyor, ve
+  unvan eki listesini büyütmek çözüm değil, sonsuz elle bakım demek. Hâlen 143 sektör
+  türetiliyor; site yeni bir sektör açarsa kod değişmeden gelir.
+- **Firma profili (isteğe bağlı).** Bir kuruma odaklanmak isteyen kullanıcı
+  `tr_hedef_sirketler` listesine şirket adı yazar; o şirketin kariyer.net firma profili
+  taranır (`firma:ASELSAN`). Varsayılan **boştur**: Türkiye'de binlerce banka, sigorta,
+  otomotiv ve fabrika var, elle şirket listesi tutmak ölçeklenmiyor — sektör sayfaları
+  aynı işi ölçeklenebilir yapıyor.
+
+**Google üzerinden çekilebilir mi?** Denendi, bu iş için çalışmıyor. Google'ın arama
+sonuçlarını kazımak zaten yapılmıyor (ToS ihlali, CAPTCHA, IP yasağı — LinkedIn'e
+girmeme sebebiyle aynı). Resmî Programmable Search API meşrudur ama kullanıcıdan kendi
+anahtarını ister ve günde 100 sorgu = 1.000 sonuç tavanı vardır; doğrudan pano
+taramasından *daha az* verimlidir. Tek avantajı bot korumalı siteler olurdu — ama
+ölçüldü: ASELSAN'ın kendi kariyer portalı **Google'da da indeksli değil**, aramada
+yalnız haber siteleri ve iş ilanı toplayıcıları çıkıyor.
+
+> **Doğrulama notu:** bu üç değişiklik çevrimdışı (sitemap üzerinde) doğrulandı ve
+> tüm testler geçiyor, ama **canlı tarama ile sınanmadı** — geliştirme sırasında üst
+> üste gelen istekler panodan 6 saatlik engel getirdi. Kod güvenli başarısız oluyor:
+> yol bulunamazsa boş liste, sayfa yapısı farklıysa 0 kart döner, tarama normal devam
+> eder. Gerçek kapsam artışı (329 → ?) ölçülmeyi bekliyor.
+
 ## Türk panoları ve nezaket kuralları
 
 kariyer.net ve eleman.net'ten ilan okunur. Bu panolarda herkese açık API yoktur,
@@ -279,6 +321,10 @@ dolayısıyla HTML okunur — ama yapılan şey **nazik tarama**dır, atlatma de
   sınırı kasten dolanmak olur ve aracı kullanan herkesi riske atar.
 
 ### Geliştirirken canlı siteye istek atma
+
+> Bu kural ciddiye alınmalı: 14 Eyl 2026'da ham `curl` denemeleri, botun kendi taraması
+> ve detay çekimi aynı gün üst üste gelince kariyer.net **6 saatlik engel** verdi.
+> Ayrıştırıcı değişiklikleri `ISBOT_ORNEK=oku` ile kayıtlı örnekler üzerinde sınanmalı.
 
 Ayrıştırıcı üzerinde çalışırken kayıtlı sayfa örnekleri kullanılır:
 
@@ -372,11 +418,17 @@ motor komşu alandan sonuç getirir ve bunları **"alan dışı"** diye etiketle
 
 ## Yol haritası
 
-- [ ] Lokal web paneli + `.app`/`.exe` paketleme (Python kurulumu gerekmesin)
-- [ ] İş alarmı e-postalarından ilan okuma (LinkedIn / Kariyer.net kapsamı)
+- [x] ~~Lokal web paneli + `.app` paketleme~~ (`./calistir.sh` tek komut; `./kur.sh` .app üretir)
+- [x] ~~15 CV'lik yapısal benchmark~~ (tests/benchmark.py, 112 kontrol)
+- [x] ~~Yazılım dışı meslek kapsamı~~ (518 yetenek / 37 rol ailesi; 32 CV'lik
+      `tests/meslek_kapsami.py`). **ESCO kullanılmadı:** taksonomide Türkçe yok ve
+      "skill" etiketleri fiil öbeği ("operate welding equipment"), bu motorun aradığı
+      anahtar sözcük değil. Kalemler elle küratörlendi.
+- [x] ~~Gelişmiş arama: yerel uyum modeli~~ (ONNX int8, `.app` içine gömülü)
+- [ ] **Türkiye kapsamının canlı ölçümü** — il çeşitliliği + sektör sayfaları yazıldı
+      ama gerçek tarama ile sınanmadı (pano engeli). 329 → ? ilan ölçülecek.
+- [ ] İş alarmı e-postalarından ilan okuma (LinkedIn kapsamı için tek meşru yol)
 - [ ] Başvuru hazırlama: ilana özel CV + ön yazı, formu doldur, gönderimi kullanıcıya bırak
-- [x] ~~15 CV'lik yapısal benchmark~~ (tests/benchmark.py, 105 kontrol)
-- [ ] ESCO taksonomisi + serbest terim çıkarımı (yazılım dışı meslek kapsamı)
 
 ## Paket bütünlüğü
 
