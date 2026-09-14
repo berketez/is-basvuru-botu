@@ -36,7 +36,15 @@ class Sonuc:
         """Uygunluk puanı, hayalet riskiyle cezalandırılır.
         Hayalet ilana başvurmak zaman israfı; skorun tamamını silmek yerine
         riskle orantılı kısıyoruz ki 'belki gerçektir' ilan tamamen kaybolmasın."""
-        return round(self.puan.toplam * (1.0 - 0.75 * self.hayalet.risk), 1)
+        taban = self.puan.toplam * (1.0 - 0.75 * self.hayalet.risk)
+        u = self.puan.uyum
+        if u is not None:
+            # UYUM DÜZELTMESİ dar tutulur (±%18). Model ELEMEZ, yalnız sıralamayı
+            # düzeltir — kendisi de yanılabiliyor (ölçümde bir pazarlama ilanına
+            # pozitif skor verdi). Ölçülen kontrast aralığı ±0,04 olduğu için
+            # 4,5 ile ölçeklenip bu banda oturtulur.
+            taban *= max(0.82, min(1.18, 1.0 + 4.5 * u))
+        return round(taban, 1)
 
 
 @dataclass
@@ -47,6 +55,7 @@ class TaramaRaporu:
     hayalet_elenen: int = 0
     hatalar: list[str] = field(default_factory=list)
     kapanan: int = 0
+    uyum_denetlenen: int = 0
     tekrar_atilan: int = 0
     tr_detay_cekilen: int = 0
     eleme_dagilimi: dict = field(default_factory=dict)
@@ -150,6 +159,7 @@ def tara(
     min_puan: float = 25.0,
     hayalet_esigi: float = 0.70,
     tr_detay_siniri: int = 30,
+    gelismis: bool = False,
     ilerleme=None,
     asama_bildir=None,
 ) -> TaramaRaporu:
@@ -297,9 +307,38 @@ def tara(
                 yeniden.append(s_)
         rapor.sonuclar = yeniden
 
+    # --- ÜÇÜNCÜ AŞAMA: uyum hakemi (yalnız "gelişmiş arama" seçiliyse) ---
+    # Motor sözcüğe bakar, anlama bakmaz. Bu katman kısa listeye giren ilanların
+    # adayın İŞİNE ait olup olmadığını denetler ve sıralamayı düzeltir.
+    # Yalnız kısa listeye uygulanır: 10.000 ilanı gömmek gereksiz, elenenler zaten
+    # listeye girmiyor. Model yoksa/yüklenemezse sessizce atlanır.
+    if gelismis and rapor.sonuclar:
+        try:
+            from .uyum import hakem
+            h = hakem()
+            if h is not None:
+                _asama(f"{len(rapor.sonuclar)} ilan uyum açısından denetleniyor")
+                skorlar = h.skorla(profil, [s_.job for s_ in rapor.sonuclar])
+                for s_, u in zip(rapor.sonuclar, skorlar):
+                    if u is None:          # sınır dışında kaldı (zayıf donanım koruması)
+                        continue
+                    s_.puan.uyum = u
+                    if u < 0:
+                        s_.puan.uyarilar.append(
+                            "uyum denetimi: bu ilan senin alanınla aynı sözcükleri "
+                            "kullanıyor ama başka bir mesleği tarif ediyor olabilir")
+                rapor.uyum_denetlenen = sum(1 for x in skorlar if x is not None)
+            else:
+                rapor.hatalar.append("gelişmiş arama istendi ama model yüklenemedi — "
+                                     "yalnız motor sonuçları gösteriliyor")
+        except Exception as e:
+            rapor.hatalar.append(f"uyum denetimi atlandı: {type(e).__name__}")
+
     rapor.kapanan = depo.kapananlari_isaretle(run_id, tokenlar)
     depo.kosu_bitir(run_id, rapor.cekilen)
     depo.close()
+    # min_puan eşiği uyum düzeltmesinden ÖNCE uygulanmıştı; düzeltme sonrası
+    # eşiğin altına düşenler listede kalır (kullanıcı neden düştüğünü görsün).
     rapor.sonuclar.sort(key=lambda s: -s.nihai)
     return rapor
 
@@ -333,6 +372,8 @@ def sonuc_sozlugu(s: "Sonuc") -> dict:
         "eslesen": p.eslesen_yetenekler,
         "eksik": p.eksik_yetenekler,
         "uyarilar": p.uyarilar,
+        # Gelişmiş aramada dolu; None ise o tarama hızlı modda koşmuştur.
+        "uyum": round(p.uyum, 4) if p.uyum is not None else None,
         "maas": j.raw.get("salary") or (
             f"{j.raw['salary_min']}-{j.raw['salary_max']} USD"
             if j.raw.get("salary_min") else None),
@@ -356,6 +397,7 @@ def json_yaz(rapor: "TaramaRaporu", yol: str = "out/sonuclar.json") -> str:
         "tekrar_atilan": rapor.tekrar_atilan,
         "eleme_dagilimi": rapor.eleme_dagilimi,
         "hatalar": rapor.hatalar,
+        "uyum_denetlenen": rapor.uyum_denetlenen,
         "ilanlar": [sonuc_sozlugu(s) for s in rapor.sonuclar],
     }
     h.write_text(json.dumps(govde, ensure_ascii=False, indent=1), encoding="utf-8")

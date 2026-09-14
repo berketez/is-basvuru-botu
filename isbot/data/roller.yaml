@@ -20,7 +20,8 @@ mobil:
   tetik_min: 2
   agirlik: 1.0
   tr_pozisyonlar: ["mobil uygulama geliştirici", "android geliştirici", "ios geliştirici"]
-  basliklar: ['(?i)\b(ios|android|mobile|swift|kotlin|flutter|react native)\b']
+  en_pozisyonlar: ["mobile engineer", "ios engineer"]
+  basliklar: ['(?i)(?:\b(ios|android|mobile|swift|kotlin|flutter|react native)\b)|\b(?:mobil uygulama|android geliştir|ios geliştir)\w*']
 
 oyun:
   tetik_guclu: ["Unity", "Unreal"]
@@ -28,7 +29,8 @@ oyun:
   tetik_min: 2
   agirlik: 1.0
   tr_pozisyonlar: ["oyun geliştirici", "yazılım mühendisi"]
-  basliklar: ['(?i)\b(game|unity|unreal|gameplay|graphics engineer|technical artist)\b']
+  en_pozisyonlar: ["game developer", "gameplay engineer"]
+  basliklar: ['(?i)(?:\b(game|unity|unreal|gameplay|graphics engineer|technical artist)\b)|\b(?:oyun geliştir|oyun programcı|oyun motoru)\w*']
 
 gomulu:
   tetik_guclu: ["embedded systems", "STM32"]
@@ -36,7 +38,8 @@ gomulu:
   tetik_min: 2
   agirlik: 1.0
   tr_pozisyonlar: ["gömülü yazılım mühendisi", "elektronik mühendisi", "donanım mühendisi"]
-  basliklar: ['(?i)\b(embedded|firmware|rtos|microcontroller|kernel|driver|low[- ]level|bsp)\b']
+  en_pozisyonlar: ["embedded engineer", "firmware engineer"]
+  basliklar: ['(?i)(?:\b(embedded|firmware|rtos|microcontroller|kernel|driver|low[- ]level|bsp)\b)|\b(?:gömülü|mikrodenetleyici|donanım yazılım)\w*']
 
 guvenlik:
   tetik_guclu: ["penetration testing", "Ghidra", "Metasploit", "Burp Suite", "OSCP"]
@@ -44,7 +47,8 @@ guvenlik:
   tetik_min: 2
   agirlik: 1.0
   tr_pozisyonlar: ["siber güvenlik uzmanı", "bilgi güvenliği uzmanı", "sızma testi uzmanı"]
-  basliklar: ['(?i)\b(security|cyber|penetration|appsec|infosec|malware|threat|vulnerabilit|reverse engineer|cryptograph)\b']
+  en_pozisyonlar: ["security engineer", "penetration tester"]
+  basliklar: ['(?i)(?:\b(security|cyber|penetration|appsec|infosec|malware|threat|vulnerabilit|reverse engineer|cryptograph)\b)|\b(?:siber güvenlik|bilgi güvenliği|sızma test|güvenlik uzman|zafiyet)\w*']
 
 platform_sre:
   tetik_guclu: ["Kubernetes", "Terraform"]
@@ -52,7 +56,8 @@ platform_sre:
   tetik_min: 2
   agirlik: 1.0
   tr_pozisyonlar: ["sistem mühendisi", "altyapı mühendisi", "sistem yöneticisi"]
-  basliklar: ['(?i)\b(sre|site reliability|platform engineer|infrastructure|devops|cloud engineer|reliability)\b']
+  en_pozisyonlar: ["site reliability engineer", "platform engineer"]
+  basliklar: ['(?i)(?:\b(sre|site reliability|platform engineer|infrastructure|devops|cloud engineer|reliability)\b)|\b(?:sistem yönetic|altyapı mühendis|ağ uzman|ağ mühendis|sunucu uzman)\w*']
 
 veri_muh:
   tetik_guclu: ["Airflow", "dbt", "Snowflake"]
@@ -60,7 +65,8 @@ veri_muh:
   tetik_min: 2
   agirlik: 1.0
   tr_pozisyonlar: ["veri mühendisi", "veri tabanı uzmanı", "iş zekası uzmanı"]
-  basliklar: ['(?i)\b(data engineer|data platform|data infrastructure|analytics engineer|etl|pipeline)\b']
+  en_pozisyonlar: ["data engineer", "analytics engineer"]
+  basliklar: ['(?i)(?:\b(data engineer|data platform|data infrastructure|analytics engineer|etl|pipeline)\b)|\b(?:veri mühendis|veri tabanı|iş zekası|veri ambar)\w*']
 
 veri_bilimi:
   tetik_guclu: ["scikit-learn", "statistical analysis", "A/B testing"]
@@ -68,7 +74,8 @@ veri_bilimi:
   tetik_min: 2
   agirlik: 1.0
   tr_pozisyonlar: ["veri bilimci", "veri analisti", "istatistik uzmanı"]
-  basliklar: ['(?i)\b(data scientist|data science|applied scientist|analytics|statistic|quantitative)\b']
+  en_pozisyonlar: ["data scientist", "data analyst"]
+  basliklar: ['(?i)(?:\b(data scientist|data science|applied scientist|analytics|statistic|quantitative)\b)|\b(?:veri bilimci|veri analist|istatistik uzman)\w*']
 
 ml_ai:
   tetik_guclu: ["PyTorch", "TensorFlow", "JAX", "LLM", "RAG", "neural operator", "physics-informed"]
@@ -76,7 +83,8 @@ ml_ai:
   tetik_min: 2
   agirlik: 1.0
   tr_pozisyonlar: ["veri bilimci", "yazılım mühendisi", "iş zekası uzmanı"]
-  basliklar: ['(?i)\b(machine learning|ml engineer|mlops|deep learning|ai engineer|applied ai|genai|generative ai|llm|research engineer|research scientist)\b']
+  en_pozisyonlar: ["machine learning engineer", "ai engineer"]
+  basliklar: ['(?i)(?:\b(machine learning|ml engineer|mlops|deep learning|ai engineer|applied ai|genai|generative ai|llm|research engineer|research scientist)\b)|\b(?:yapay zeka|yapay zekâ|makine öğren|derin öğren|görüntü işleme|dil işleme)\w*']
 
 bilimsel_hpc:
   tetik_guclu: ["CFD", "Navier-Stokes", "spectral method"]
@@ -84,7 +92,8 @@ bilimsel_hpc:
   tetik_min: 2
   agirlik: 0.95
   tr_pozisyonlar: ["arge mühendisi", "simülasyon mühendisi", "makine mühendisi"]
-  basliklar: ['(?i)\b(scientific comput|computational|simulation|numerical|hpc|cfd|physics|research engineer)\b']
+  en_pozisyonlar: ["research engineer", "simulation engineer"]
+  basliklar: ['(?i)(?:\b(scientific comput|computational|simulation|numerical|hpc|cfd|physics|research engineer)\b)|\b(?:simülasyon mühendis|hesaplamalı|sayısal analiz|modelleme mühendis)\w*']
 
 blockchain:
   tetik_guclu: ["Solidity", "smart contracts", "DeFi"]
@@ -92,7 +101,8 @@ blockchain:
   tetik_min: 2
   agirlik: 1.0
   tr_pozisyonlar: ["yazılım mühendisi", "yazılım geliştirme uzmanı"]
-  basliklar: ['(?i)\b(blockchain|crypto|web3|smart contract|solidity|defi|protocol engineer)\b']
+  en_pozisyonlar: ["blockchain engineer", "smart contract engineer"]
+  basliklar: ['(?i)(?:\b(blockchain|crypto|web3|smart contract|solidity|defi|protocol engineer)\b)|\b(?:blokzincir|blok zincir|kripto para)\w*']
 
 qa:
   # Playwright/Selenium TANIMLAYICI DEĞİL: tarayıcı otomasyonu için de kullanılıyor.
@@ -103,7 +113,8 @@ qa:
   tetik_min: 2
   agirlik: 1.0
   tr_pozisyonlar: ["test uzmanı", "yazılım test mühendisi", "kalite kontrol uzmanı"]
-  basliklar: ['(?i)\b(qa|sdet|test engineer|quality (assurance|engineer)|automation engineer|test automation)\b']
+  en_pozisyonlar: ["qa engineer", "test automation engineer"]
+  basliklar: ['(?i)(?:\b(qa|sdet|test engineer|quality (assurance|engineer)|automation engineer|test automation)\b)|\b(?:test mühendis|kalite güvence|test uzman|test otomasyon)\w*']
 
 frontend:
   tetik_guclu: ["React", "Vue", "responsive design"]
@@ -111,7 +122,8 @@ frontend:
   tetik_min: 2
   agirlik: 1.0
   tr_pozisyonlar: ["arayüz uygulama geliştiricisi", "arayüz yazılım uzmanı", "web arayüz geliştirici"]
-  basliklar: ['(?i)\b(frontend|front[- ]end|web developer|ui engineer|javascript|react|full[- ]?stack)\b']
+  en_pozisyonlar: ["frontend engineer", "web developer"]
+  basliklar: ['(?i)(?:\b(frontend|front[- ]end|web developer|ui engineer|javascript|react|full[- ]?stack)\b)|\b(?:önyüz|arayüz geliştir|web geliştir|web tasarım)\w*']
 
 backend:
   tetik_guclu: ["FastAPI", "Django", "gRPC", "GraphQL"]
@@ -119,7 +131,8 @@ backend:
   tetik_min: 2
   agirlik: 0.8
   tr_pozisyonlar: ["yazılım mühendisi", "yazılım geliştirme uzmanı", "altyapı mühendisi"]
-  basliklar: ['(?i)\b(backend|back[- ]end|software engineer|platform|api|services|distributed systems)\b']
+  en_pozisyonlar: ["backend engineer", "software engineer"]
+  basliklar: ['(?i)(?:\b(backend|back[- ]end|software engineer|platform|api|services|distributed systems)\b)|\b(?:yazılım mühendis|yazılım geliştir|yazılım uzman|uygulama geliştir)\w*']
 
 urun:
   tetik_guclu: ["product management"]
@@ -127,7 +140,8 @@ urun:
   tetik_min: 2
   agirlik: 1.0
   tr_pozisyonlar: ["ürün yöneticisi", "proje yöneticisi", "iş analisti"]
-  basliklar: ['(?i)\b(product (manager|owner|lead)|program manager|product analyst)\b']
+  en_pozisyonlar: ["product manager", "product owner"]
+  basliklar: ['(?i)(?:\b(product (manager|owner|lead)|program manager|product analyst)\b)|\b(?:ürün yönetic|ürün sahib|proje yönetic|iş analist)\w*']
 
 makine_tasarim:
   tetik_guclu: ["CAD"]
@@ -135,4 +149,318 @@ makine_tasarim:
   tetik_min: 2
   agirlik: 1.0
   tr_pozisyonlar: ["makine mühendisi", "tasarım mühendisi", "üretim mühendisi"]
-  basliklar: ['(?i)\b(mechanical|manufacturing|design engineer|cad|process engineer|industrial engineer)\b']
+  en_pozisyonlar: ["mechanical engineer", "design engineer"]
+  basliklar: ['(?i)(?:\b(mechanical|manufacturing|design engineer|cad|process engineer|industrial engineer)\b)|\b(?:makine mühendis|tasarım mühendis|üretim mühendis|imalat mühendis|kalıp tasarım|mekanik tasarım)\w*']
+
+# --- kontrol / otomasyon / mekatronik ------------------------------------------
+# NEDEN EKLENDİ: 16 ailenin tamamı yazılım-veri eksenindeydi. Kontrol mühendisi
+# hiçbirine tutmuyor, `genel_yazilim`a düşüyordu — ve o aile "engineer|developer|
+# analyst|specialist" diye TARADIĞI için kısa listeye "People Ops Onboarding
+# Specialist" gibi ilanlar giriyordu. Türkiye'de bu alan işe alımın merkezinde.
+# Başlık kalıpları hem İngilizce hem Türkçe: TR panolarında ilan başlığı Türkçedir.
+kontrol_otomasyon:
+  tetik_guclu: ["control systems", "LQR", "adaptive control", "PLC", "autonomous systems"]
+  tetik: ["PID", "Simulink", "state-space", "sensor fusion", "LabVIEW", "ROS",
+          "Robotics", "system identification", "MATLAB"]
+  tetik_min: 2
+  agirlik: 1.0
+  # ÖLÇÜLDÜ (kariyer.net, "kontrol mühendisi"): 51 ilanın tamamı KALİTE KONTROL /
+  # kontrol odası operatörlüğüydü. Türkçede "kontrol" hem control-systems hem
+  # quality-control demek; çıplak "kontrol mühendisi" bu alanı getirmiyor. Bu yüzden
+  # sorgular ayırt edici sözcüklere dayandırıldı (otomasyon, mekatronik, gömülü).
+  # Bu adların HEPSİ kariyer.net sitemap'inde kanonik yol olarak DOĞRULANDI
+  # (data/kariyernet-sitemap.json, 60.441 yol). Karşılığı olmayan ad site tarafından
+  # sessizce genel listeye düşürülüyor ve alakasız ilan getiriyor — bu yüzden
+  # "kontrol sistemleri mühendisi" LİSTEDE YOK: sitede böyle bir kategori yok.
+  tr_pozisyonlar: ["otomasyon mühendisi", "mekatronik mühendisi",
+                   "elektrik otomasyon mühendisi", "elektrik elektronik mühendisi",
+                   "gömülü yazılım mühendisi", "gömülü sistem mühendisi"]
+  # `kontrol` Türkçe kalıpta YALNIZ "kontrol sistem..." biçiminde geçer ve "kalite
+  # kontrol" öncüsü negatif bakışla dışlanır — yoksa her kalite kontrol ilanı
+  # bu ailenin tam puanını alır.
+  en_pozisyonlar: ["control systems engineer", "automation engineer"]
+  basliklar: ['(?i)(?:\b(control (system|engineer|software)|controls engineer|automation|mechatronic|robotic|motion control|autonomous|adas|plc|scada|otomasyon|mekatronik|robotik|(?<!kalite )kontrol sistem\w*))|\b(?:elektronik mühendis|elektrik elektronik|donanım mühendis|donanım tasarım|elektro.?optik|sinyal işleme|güç elektroniği)\w*']
+
+# --- havacılık / uzay / savunma sanayii ----------------------------------------
+havacilik_savunma:
+  tetik_guclu: ["flight dynamics", "avionics", "UAV", "autopilot", "rocketry", "satellite",
+                "propulsion"]
+  tetik: ["aerospace", "defence industry", "hardware-in-the-loop", "control systems",
+          "sensor fusion", "Simulink"]
+  tetik_min: 2
+  agirlik: 1.0
+  # "savunma sanayi" ve "havacılık" kariyer.net'te POZİSYON değil SEKTÖR sayfası —
+  # ama tam da bu yüzden değerli: savunma/havacılık firmalarının o sektördeki tüm
+  # ilanlarını tek sayfada veriyorlar. Türkiye'de bu şirketlerin (ASELSAN, TUSAŞ,
+  # ROKETSAN…) herkese açık ATS ucu YOK; bu sektör sayfaları onlara ulaşan tek
+  # robots-izinli kanal. Hepsi sitemap'te doğrulandı.
+  tr_pozisyonlar: ["savunma sanayi", "havacılık", "aviyonik mühendisi",
+                   "simülasyon mühendisi", "sistem mühendisi", "test mühendisi"]
+  # EK/ÇOĞUL: hem Türkçe ("savunma sistemleri", "uçuşa") hem İngilizce ("Avionics",
+  # "drones", "flight dynamics") gövdeye ek alır. Kapanış \b'si bunları KESİYORDU —
+  # ölçüldü: "Avionics Engineer" başlığı bu aileye hiç eşleşmiyordu. Kapanış sınırı
+  # yerine \w* kullanılır; açılış \b korunur ki kelime ortasında eşleşme olmasın.
+  en_pozisyonlar: ["aerospace engineer", "avionics engineer"]
+  basliklar: ['(?i)(?:(\b(aerospace|avionic|aeronautic|uav|drone|unmanned|satellite|spacecraft|propulsion|defen[cs]e|gnc)\w*|\bflight (control|dynamic|software|test|mechanic)\w*|\bguidance (and )?navigation|\b(havacılık|aviyonik|uçuş|insansız hava|savunma|füze|roket|uydu|hava arac)\w*))|\b(?:elektro.?optik|radar|güdüm|harp mühendis|balistik)\w*']
+
+# =============================================================================
+# --- YAZILIM DIŞI MESLEK AİLELERİ ---
+# =============================================================================
+# Sözlüğe 20 meslek alanı eklendi (bkz. skills.yaml) ama rol ailesi olmadan
+# yarım kalıyordu: yetenekler tanınıyor, hedef rol yine `genel_yazilim`
+# çıkıyordu. Bu aileler o boşluğu kapatır.
+#
+# tr_pozisyonlar UYDURULMADI: her biri kariyer.net'in kendi sitemap'inde
+# kanonik yol olarak DOĞRULANDI (data/kariyernet-sitemap.json). Karşılığı
+# olmayan ad site tarafından sessizce genel listeye düşürülüyor ve alakasız
+# ilan getiriyor — ölçülen bir hata, varsayım değil.
+#
+# basliklar hem Türkçe hem İngilizce daldan oluşur; Türkçe dal ek toleranslıdır
+# (\w*), çünkü Türkçe eklemeli bir dil: "mühendis" -> "mühendisi".
+# =============================================================================
+
+saglik:
+  tetik_guclu: ["Nursing", "Patient Care", "Intensive Care", "Emergency Medicine", "Operating Room"]
+  # tetik listesi kategorinin KALAN TÜM kalemlerini kapsar. Önceki hâlinde
+  # yalnız ilk birkaç kalem vardı ve kategorinin yarısı hiçbir tetikte yoktu;
+  # o kalemlerle gelen aday (ör. diş hekimi, veteriner, ebe) aileyi HİÇ açamıyordu.
+  tetik: ["Anesthesia", "Radiology", "Medical Laboratory", "Physiotherapy", "Dietetics", "Pharmacy", "Dentistry", "Veterinary Medicine", "Midwifery", "Medical Secretary", "First Aid", "Sterilization", "Biomedical Equipment", "Psychology", "Elderly Care", "Public Health"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["hemşire", "sağlık memur", "fizyoterapist", "laborant", "acil tıp teknisyeni"]
+  en_pozisyonlar: ["registered nurse", "clinical specialist"]
+  basliklar: ["(?i)(\\b(?:nurse|nursing|clinical|physician|paramedic|radiolog|physiotherap|pharmacist|dental|patient care)\\w*|\\b(?:hemşire|sağlık memur|fizyoterapist|laborant|hasta bakım|klinik|poliklinik|ameliyathane|yoğun bakım|diyetisyen|eczacı|diş hekim|paramedik|tıbbi sekreter)\\w*)"]
+
+ilac_biyotek:
+  tetik_guclu: ["Good Manufacturing Practice", "Clinical Research", "Pharmacovigilance", "Regulatory Affairs"]
+  # tetik listesi kategorinin KALAN TÜM kalemlerini kapsar. Önceki hâlinde
+  # yalnız ilk birkaç kalem vardı ve kategorinin yarısı hiçbir tetikte yoktu;
+  # o kalemlerle gelen aday (ör. diş hekimi, veteriner, ebe) aileyi HİÇ açamıyordu.
+  tetik: ["Process Validation", "Chromatography", "Analytical Method Development", "Biotechnology", "Sterile Manufacturing", "Microbiology", "Medical Device Regulation", "Drug Formulation"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["ruhsatlandırma uzmanı", "kalite güvence uzmanı"]
+  en_pozisyonlar: ["regulatory affairs specialist", "clinical research associate"]
+  basliklar: ["(?i)(\\b(?:regulatory affairs|pharmacovigilance|clinical research|gmp|validation|biotech)\\w*|\\b(?:ruhsatlandırma|farmakovijilans|klinik araştırma|validasyon|biyoteknolo|ilaç)\\w*)"]
+
+hukuk:
+  tetik_guclu: ["Attorney", "Contract Law", "Litigation", "Corporate Law"]
+  # tetik listesi kategorinin KALAN TÜM kalemlerini kapsar. Önceki hâlinde
+  # yalnız ilk birkaç kalem vardı ve kategorinin yarısı hiçbir tetikte yoktu;
+  # o kalemlerle gelen aday (ör. diş hekimi, veteriner, ebe) aileyi HİÇ açamıyordu.
+  tetik: ["Labour Law", "Debt Enforcement", "Data Protection Law", "Legal Compliance", "Intellectual Property", "Real Estate Law", "Mediation and Arbitration", "Legal Counsel", "Notary", "Tax Law", "Public Procurement Law", "Legal Research"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["avukat", "hukuk müşaviri", "hukuk danışmanı"]
+  en_pozisyonlar: ["legal counsel", "corporate lawyer"]
+  basliklar: ["(?i)(\\b(?:legal counsel|lawyer|attorney|paralegal|compliance officer|contract manager)\\w*|\\b(?:avukat|hukuk müşavir|hukuk danışman|icra takip|sözleşme uzman|uyum uzman|hukuk uzman)\\w*)"]
+
+insaat:
+  tetik_guclu: ["Construction Site Management", "Structural Design", "Reinforced Concrete", "Steel Structures", "Quantity Surveying"]
+  # tetik listesi kategorinin KALAN TÜM kalemlerini kapsar. Önceki hâlinde
+  # yalnız ilk birkaç kalem vardı ve kategorinin yarısı hiçbir tetikte yoktu;
+  # o kalemlerle gelen aday (ör. diş hekimi, veteriner, ebe) aileyi HİÇ açamıyordu.
+  tetik: ["Cost Estimation", "Construction Planning", "Building Information Modeling", "Geotechnical Engineering", "Land Surveying", "Building Inspection", "Mechanical Installation", "Electrical Installation", "HVAC", "Infrastructure Works", "Architectural Design", "Interior Design", "Scaffolding", "Precast Concrete", "Formwork"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["inşaat mühendisi", "şantiye şefi", "mimar", "statik proje mühendisi"]
+  en_pozisyonlar: ["civil engineer", "site manager"]
+  basliklar: ["(?i)(\\b(?:civil engineer|structural engineer|site (manager|engineer)|architect|quantity surveyor|construction)\\w*|\\b(?:inşaat mühendis|şantiye|mimar|statik|hakediş|metraj|yapı denetim|altyapı|betonarme)\\w*)"]
+
+muhasebe:
+  tetik_guclu: ["Bookkeeping", "Payroll", "Social Security Filings", "Tax Compliance", "Electronic Invoicing"]
+  # tetik listesi kategorinin KALAN TÜM kalemlerini kapsar. Önceki hâlinde
+  # yalnız ilk birkaç kalem vardı ve kategorinin yarısı hiçbir tetikte yoktu;
+  # o kalemlerle gelen aday (ör. diş hekimi, veteriner, ebe) aileyi HİÇ açamıyordu.
+  tetik: ["Financial Reporting", "IFRS", "External Audit", "Internal Audit", "Cost Accounting", "Budgeting", "Cash Flow Management", "Accounts Receivable", "Financial Analysis", "Certified Public Accountant", "Foreign Trade Accounting", "Turkish Accounting Software", "SAP ERP", "Treasury", "Transfer Pricing"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["muhasebe elemanı", "ön muhasebe elemanı", "mali müşavir", "finans uzmanı", "muhasebe müdürü"]
+  en_pozisyonlar: ["accountant", "financial analyst"]
+  basliklar: ["(?i)(\\b(?:accountant|accounting|financial (analyst|controller)|bookkeep|payroll|audit|tax)\\w*|\\b(?:muhasebe|mali müşavir|ön muhasebe|finans uzman|bütçe|raporlama uzman|maliyet|vergi)\\w*)"]
+
+bankacilik:
+  tetik_guclu: ["Retail Banking", "Corporate Banking", "Credit Analysis", "Financial Risk Management"]
+  # tetik listesi kategorinin KALAN TÜM kalemlerini kapsar. Önceki hâlinde
+  # yalnız ilk birkaç kalem vardı ve kategorinin yarısı hiçbir tetikte yoktu;
+  # o kalemlerle gelen aday (ör. diş hekimi, veteriner, ebe) aileyi HİÇ açamıyordu.
+  tetik: ["Banking Regulation", "Anti-Money Laundering", "Know Your Customer", "Portfolio Management", "Capital Markets", "Insurance", "Claims Handling", "Loss Adjusting", "Actuarial", "Reinsurance", "Private Pension", "Payment Systems"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["kredi uzmanı", "sigorta uzmanı", "müşteri temsilcisi"]
+  en_pozisyonlar: ["credit analyst", "relationship manager"]
+  basliklar: ["(?i)(\\b(?:banking|credit analyst|underwrit|actuar|treasury|wealth management|relationship manager)\\w*|\\b(?:banka|kredi uzman|kredi analiz|sigorta|hazine|portföy yönetic|bireysel müşteri|kurumsal müşteri)\\w*)"]
+
+lojistik:
+  tetik_guclu: ["Supply Chain Management", "Procurement", "Warehouse Management", "Inventory Management", "Customs Clearance"]
+  # tetik listesi kategorinin KALAN TÜM kalemlerini kapsar. Önceki hâlinde
+  # yalnız ilk birkaç kalem vardı ve kategorinin yarısı hiçbir tetikte yoktu;
+  # o kalemlerle gelen aday (ör. diş hekimi, veteriner, ebe) aileyi HİÇ açamıyordu.
+  tetik: ["Foreign Trade", "Incoterms", "Freight Forwarding", "Road Transport", "Container Shipping", "Air Freight", "Fleet Management", "Distribution Planning", "Warehouse Management System", "Forklift Operation", "Dangerous Goods Transport", "Demand Planning", "Production Planning", "SAP Logistics Modules", "Bonded Warehouse"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["lojistik uzmanı", "satın alma uzmanı", "depo sorumlus", "ihracat uzmanı", "tedarik zinciri uzmanı"]
+  en_pozisyonlar: ["supply chain specialist", "procurement specialist"]
+  basliklar: ["(?i)(\\b(?:supply chain|procurement|logistics|warehouse (manager|supervisor)|customs|import|export|purchasing)\\w*|\\b(?:lojistik|satın alma|tedarik zincir|depo sorumlu|ihracat|ithalat|gümrük|sevkiyat|nakliye|planlama uzman)\\w*)"]
+
+uretim_kalite:
+  tetik_guclu: ["Lean Manufacturing", "Kaizen", "Six Sigma", "Total Productive Maintenance", "Equipment Effectiveness"]
+  # tetik listesi kategorinin KALAN TÜM kalemlerini kapsar. Önceki hâlinde
+  # yalnız ilk birkaç kalem vardı ve kategorinin yarısı hiçbir tetikte yoktu;
+  # o kalemlerle gelen aday (ör. diş hekimi, veteriner, ebe) aileyi HİÇ açamıyordu.
+  tetik: ["Quality Management System", "Quality Control", "Problem Solving Methods", "FMEA", "Statistical Process Control", "Metrology and Calibration", "Dimensional Inspection", "Non-Destructive Testing", "CNC Machining", "Machining", "Welding", "Sheet Metal Fabrication", "Metal Casting", "Injection Molding", "Mold Design", "Maintenance Engineering", "Assembly Line"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["üretim müdürü", "endüstri mühendisi", "bakım mühendisi", "kalite kontrol mühendisi"]
+  en_pozisyonlar: ["manufacturing engineer", "quality engineer"]
+  basliklar: ["(?i)(\\b(?:manufacturing|production (engineer|manager|supervisor)|industrial engineer|quality (engineer|control|assurance)|lean|six sigma|maintenance engineer)\\w*|\\b(?:üretim (mühendis|müdür|şef|sorumlu)|endüstri mühendis|bakım (mühendis|şef)|kalite (kontrol|güvence|sistem)|yalın|proses geliştirme)\\w*)"]
+
+gida_tarim:
+  tetik_guclu: ["Food Engineering", "HACCP", "Food Safety Management", "Hygiene and Sanitation"]
+  # tetik listesi kategorinin KALAN TÜM kalemlerini kapsar. Önceki hâlinde
+  # yalnız ilk birkaç kalem vardı ve kategorinin yarısı hiçbir tetikte yoktu;
+  # o kalemlerle gelen aday (ör. diş hekimi, veteriner, ebe) aileyi HİÇ açamıyordu.
+  tetik: ["Food Analysis", "Cold Chain", "Bakery Production", "Dairy Production", "Meat Processing", "Beverage Production", "Agronomy", "Crop Protection", "Greenhouse Cultivation", "Irrigation", "Animal Husbandry", "Seed Production", "Organic Farming", "Agricultural Machinery"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["gıda mühendisi", "ziraat mühendisi", "kalite güvence uzmanı"]
+  en_pozisyonlar: ["food engineer", "agricultural engineer"]
+  basliklar: ["(?i)(\\b(?:food (engineer|scientist|technolog)|agricultur|veterinar|haccp|food safety)\\w*|\\b(?:gıda mühendis|ziraat mühendis|veteriner|su ürünleri|hijyen|haccp|tarım)\\w*)"]
+
+enerji_cevre:
+  # DİKKAT: aile otomatik üretilirken "kategorinin ilk 5 kalemi tanımlayıcıdır"
+  # varsayıldı; bu kategoride ilk 5 kalemin hepsi ENERJİ olduğu için çevre
+  # mühendisleri aileyi hiç açamıyordu. ÖLÇÜLDÜ: atık su arıtma + emisyon izleme +
+  # ÇED yazan bir çevre mühendisi CV'si yalnız `isg` ailesine düştü.
+  tetik_guclu: ["Power Distribution", "Substation Engineering", "Solar Energy", "Wind Energy",
+                "Hydroelectric Power", "Environmental Engineering", "Water Treatment",
+                "Environmental Impact Assessment", "Emission Monitoring"]
+  # tetik listesi kategorinin KALAN TÜM kalemlerini kapsar. Önceki hâlinde
+  # yalnız ilk birkaç kalem vardı ve kategorinin yarısı hiçbir tetikte yoktu;
+  # o kalemlerle gelen aday (ör. diş hekimi, veteriner, ebe) aileyi HİÇ açamıyordu.
+  tetik: ["Natural Gas Systems", "Oil and Gas", "Boilers and Pressure Vessels", "Energy Efficiency", "Electrical Maintenance", "Waste Management", "Environmental Management System", "Carbon Footprint", "Geothermal Energy"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["elektrik mühendisi", "enerji mühendisi", "çevre mühendisi"]
+  en_pozisyonlar: ["electrical engineer", "energy engineer"]
+  basliklar: ["(?i)(\\b(?:electrical engineer|energy engineer|environmental engineer|renewable|solar|wind|power (systems|distribution)|water treatment)\\w*|\\b(?:elektrik mühendis|enerji (mühendis|uzman)|çevre (mühendis|uzman)|güneş enerji|rüzgar enerji|trafo|şebeke|arıtma|atık)\\w*)"]
+
+isg:
+  tetik_guclu: ["Occupational Health and Safety", "Occupational Risk Assessment", "Safety Management System"]
+  # tetik listesi kategorinin KALAN TÜM kalemlerini kapsar. Önceki hâlinde
+  # yalnız ilk birkaç kalem vardı ve kategorinin yarısı hiçbir tetikte yoktu;
+  # o kalemlerle gelen aday (ör. diş hekimi, veteriner, ebe) aileyi HİÇ açamıyordu.
+  tetik: ["Emergency Action Plan", "Work Permit System", "Accident Investigation", "Personal Protective Equipment", "Occupational Health Surveillance", "Fire Safety", "Chemical Safety", "Safety Training", "Health Safety Environment"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["iş güvenliği uzmanı"]
+  en_pozisyonlar: ["hse specialist", "safety engineer"]
+  basliklar: ["(?i)(\\b(?:\bhse\b|health and safety|safety (engineer|specialist|officer)|ehs\b|occupational)\\w*|\\b(?:iş (güvenliği|sağlığı)|isg uzman|risk değerlendirme|acil durum|çevre güvenlik)\\w*)"]
+
+egitim:
+  tetik_guclu: ["Teaching", "Curriculum Development", "Classroom Management", "Assessment and Evaluation"]
+  # tetik listesi kategorinin KALAN TÜM kalemlerini kapsar. Önceki hâlinde
+  # yalnız ilk birkaç kalem vardı ve kategorinin yarısı hiçbir tetikte yoktu;
+  # o kalemlerle gelen aday (ör. diş hekimi, veteriner, ebe) aileyi HİÇ açamıyordu.
+  tetik: ["Preschool Education", "Special Education", "Guidance Counselling", "English Language Teaching", "Online Education", "Instructional Design", "Corporate Training", "Academic Research", "Exam Preparation", "Educational Administration", "Vocational Training"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["öğretmen", "eğitim uzmanı", "okul öncesi öğretmeni", "ingilizce öğretmeni"]
+  en_pozisyonlar: ["instructional designer", "corporate trainer"]
+  basliklar: ["(?i)(\\b(?:teacher|instructor|trainer|curriculum|education (specialist|coordinator)|academic|lecturer|tutor)\\w*|\\b(?:öğretmen|eğitmen|eğitim (uzman|sorumlu|müdür)|akademisyen|rehber öğretmen|müfredat|okul öncesi)\\w*)"]
+
+turizm:
+  tetik_guclu: ["Front Office", "Hotel Housekeeping", "Food and Beverage Service", "Culinary Arts", "Kitchen Management"]
+  # tetik listesi kategorinin KALAN TÜM kalemlerini kapsar. Önceki hâlinde
+  # yalnız ilk birkaç kalem vardı ve kategorinin yarısı hiçbir tetikte yoktu;
+  # o kalemlerle gelen aday (ör. diş hekimi, veteriner, ebe) aileyi HİÇ açamıyordu.
+  tetik: ["Barista", "Hotel Reservations", "Property Management System", "Revenue Management", "Guest Relations", "Tour Operations", "Travel Agency", "Tourist Guiding", "Event Management", "Catering", "Spa and Wellness", "Hotel Animation", "Resort Operations"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["resepsiyonist", "aşçı", "restoran müdürü"]
+  en_pozisyonlar: ["front office agent", "hospitality manager"]
+  basliklar: ["(?i)(\\b(?:hospitality|front office|hotel|chef|sous chef|housekeeping|restaurant manager|concierge|barista)\\w*|\\b(?:resepsiyon|ön büro|aşçı|şef garson|otel|turizm|kat hizmet|misafir ilişkiler|animasyon|barmen|servis elemanı)\\w*)"]
+
+satis:
+  tetik_guclu: ["Retail Store Management", "Sales Representative", "Field Sales", "Key Account Management", "Business to Business Sales"]
+  # tetik listesi kategorinin KALAN TÜM kalemlerini kapsar. Önceki hâlinde
+  # yalnız ilk birkaç kalem vardı ve kategorinin yarısı hiçbir tetikte yoktu;
+  # o kalemlerle gelen aday (ör. diş hekimi, veteriner, ebe) aileyi HİÇ açamıyordu.
+  tetik: ["Sales Target Management", "Tender Management", "Merchandising", "Visual Merchandising", "Cashier Operations", "Customer Service", "Call Centre", "After Sales Service", "Dealer Network Management", "Loss Prevention", "E-commerce Operations"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["satış temsilcisi", "satış müdürü", "mağaza müdürü", "müşteri temsilcisi"]
+  en_pozisyonlar: ["sales representative", "account manager"]
+  basliklar: ["(?i)(\\b(?:sales (representative|manager|executive|associate)|account (manager|executive)|retail (manager|associate)|store manager|business development)\\w*|\\b(?:satış (temsilci|uzman|müdür|danışman|sorumlu)|mağaza (müdür|sorumlu|yönetic)|müşteri temsilci|kasiyer|bölge müdür|saha satış)\\w*)"]
+
+pazarlama:
+  tetik_guclu: ["Digital Marketing", "Social Media Management", "Content Marketing", "Search Engine Marketing"]
+  # tetik listesi kategorinin KALAN TÜM kalemlerini kapsar. Önceki hâlinde
+  # yalnız ilk birkaç kalem vardı ve kategorinin yarısı hiçbir tetikte yoktu;
+  # o kalemlerle gelen aday (ör. diş hekimi, veteriner, ebe) aileyi HİÇ açamıyordu.
+  tetik: ["Email Marketing", "Brand Management", "Public Relations", "Advertising", "Market Research", "Graphic Design", "Adobe Creative Suite", "Video Production", "Photography", "Influencer Marketing", "Marketing Analytics", "Trade Marketing"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["dijital pazarlama uzmanı", "pazarlama uzmanı", "sosyal medya uzmanı"]
+  en_pozisyonlar: ["marketing specialist", "digital marketing manager"]
+  basliklar: ["(?i)(\\b(?:marketing (specialist|manager|executive)|digital marketing|brand manager|social media|content (marketing|strategist)|communications|public relations|seo specialist)\\w*|\\b(?:pazarlama|dijital pazarlama|sosyal medya|marka (yönetic|uzman)|reklam|halkla ilişkiler|içerik (uzman|editör)|kampanya)\\w*)"]
+
+ik:
+  tetik_guclu: ["Human Resources", "Talent Acquisition", "Technical Recruitment", "Employee Relations"]
+  # tetik listesi kategorinin KALAN TÜM kalemlerini kapsar. Önceki hâlinde
+  # yalnız ilk birkaç kalem vardı ve kategorinin yarısı hiçbir tetikte yoktu;
+  # o kalemlerle gelen aday (ör. diş hekimi, veteriner, ebe) aileyi HİÇ açamıyordu.
+  tetik: ["Personnel Affairs", "Performance Management", "Compensation and Benefits", "Learning and Development", "Job Analysis", "Organizational Development", "HR Information Systems", "Employee Onboarding", "Employer Branding", "Labour Relations"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["insan kaynakları uzmanı", "işe alım uzmanı", "bordro uzmanı"]
+  en_pozisyonlar: ["hr specialist", "talent acquisition specialist"]
+  basliklar: ["(?i)(\\b(?:human resources|\bhr\b (specialist|manager|business partner)|talent acquisition|recruit|people (operations?|ops|partner)|compensation)\\w*|\\b(?:insan kaynak|işe alım|bordro|özlük|yetenek yönetim|eğitim ve gelişim|ik (uzman|müdür|sorumlu))\\w*)"]
+
+denizcilik:
+  tetik_guclu: ["Maritime Operations", "Deck Officer", "Marine Engineering", "Ship Captain"]
+  # tetik listesi kategorinin KALAN TÜM kalemlerini kapsar. Önceki hâlinde
+  # yalnız ilk birkaç kalem vardı ve kategorinin yarısı hiçbir tetikte yoktu;
+  # o kalemlerle gelen aday (ör. diş hekimi, veteriner, ebe) aileyi HİÇ açamıyordu.
+  tetik: ["STCW Certification", "Marine Navigation", "Port Operations", "Shipbuilding", "Ship Repair", "Classification Societies", "Maritime Safety Regulations", "Ship Chartering", "Yacht Operations", "Fisheries", "Offshore Operations"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["makine zabiti", "güverte zabiti"]
+  en_pozisyonlar: ["marine engineer", "deck officer"]
+  basliklar: ["(?i)(\\b(?:marine (engineer|officer)|maritime|deck officer|vessel|shipping|port operations|naval)\\w*|\\b(?:gemi|denizcilik|güverte|makine zabit|liman|kaptan|tersane)\\w*)"]
+
+tekstil:
+  tetik_guclu: ["Textile Engineering", "Weaving", "Knitting", "Yarn Production"]
+  # tetik listesi kategorinin KALAN TÜM kalemlerini kapsar. Önceki hâlinde
+  # yalnız ilk birkaç kalem vardı ve kategorinin yarısı hiçbir tetikte yoktu;
+  # o kalemlerle gelen aday (ör. diş hekimi, veteriner, ebe) aileyi HİÇ açamıyordu.
+  tetik: ["Dyeing and Finishing", "Garment Manufacturing", "Pattern Making", "Sewing Operations", "Sample Development", "Fabric Quality Control", "Fashion Design", "Textile CAD Software", "Leather Processing", "Footwear Production", "Home Textiles", "Textile Sourcing"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["tekstil mühendisi", "modelist", "kalıp ustası"]
+  en_pozisyonlar: ["textile engineer", "apparel product manager"]
+  basliklar: ["(?i)(\\b(?:textile|apparel|garment|weaving|knitting|dyeing|fashion (design|product)|pattern maker)\\w*|\\b(?:tekstil|modelist|kalıp (ustası|hazırlama)|konfeksiyon|dokuma|örme|boyahane|terbiye|moda tasarım)\\w*)"]
+
+kimya:
+  tetik_guclu: ["Chemical Engineering", "Process Engineering", "Analytical Chemistry", "Polymer Science", "Composite Materials"]
+  # tetik listesi kategorinin KALAN TÜM kalemlerini kapsar. Önceki hâlinde
+  # yalnız ilk birkaç kalem vardı ve kategorinin yarısı hiçbir tetikte yoktu;
+  # o kalemlerle gelen aday (ör. diş hekimi, veteriner, ebe) aileyi HİÇ açamıyordu.
+  tetik: ["Surface Coating", "Corrosion Engineering", "Paint and Coatings", "Metallurgy", "Heat Treatment", "Materials Characterization", "Laboratory Management", "Petrochemical Processing", "Cosmetics Production", "Cement and Ceramics"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["kimya mühendisi", "kimyager"]
+  en_pozisyonlar: ["chemical engineer", "process engineer"]
+  basliklar: ["(?i)(\\b(?:chemical engineer|process engineer|polymer|composite|materials (science|engineer)|analytical chemist|formulation)\\w*|\\b(?:kimya (mühendis|ger)|proses mühendis|polimer|kompozit|malzeme (mühendis|bilim)|laboratuvar (şef|sorumlu)|ar-ge kimya)\\w*)"]
+
+madencilik:
+  tetik_guclu: ["Mining Engineering", "Underground Mining", "Open Pit Mining", "Drilling and Blasting"]
+  # tetik listesi kategorinin KALAN TÜM kalemlerini kapsar. Önceki hâlinde
+  # yalnız ilk birkaç kalem vardı ve kategorinin yarısı hiçbir tetikte yoktu;
+  # o kalemlerle gelen aday (ör. diş hekimi, veteriner, ebe) aileyi HİÇ açamıyordu.
+  tetik: ["Mineral Processing", "Mine Ventilation", "Geology", "Geophysics", "Mine Surveying", "Quarry Operations", "Mine Safety", "Heavy Equipment Operation"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["maden mühendisi", "jeoloji mühendisi"]
+  en_pozisyonlar: ["mining engineer", "geologist"]
+  basliklar: ["(?i)(\\b(?:mining engineer|geolog|geophys|drilling|mineral processing|quarry|excavation)\\w*|\\b(?:maden (mühendis|ocağı)|jeolo|jeofizik|sondaj|cevher|yeraltı|patlatma|zenginleştirme)\\w*)"]

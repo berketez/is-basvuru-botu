@@ -16,6 +16,7 @@ Kulüp/gönüllü/öğrenci takımı satırları profesyonel deneyimden düşül
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass
 from datetime import date
 
@@ -35,14 +36,39 @@ ARALIK = re.compile(
     rf"\s*(?:-{{1,2}}|–|—|to|ile)\s*"
     rf"(?:(?:({_AYAD})\s*\.?\s*)?((?:19|20)\d{{2}})|({SIMDI_KALIP}))"
 )
+# "Haziran – Temmuz 2024" / "June – July 2024": YIL YALNIZ SONDA yazılmış, aynı yıl
+# içindeki kısa dönem. Yukarıdaki kalıp ilk tarafta yıl beklediği için bunu hiç
+# görmüyordu. ÖLÇÜLDÜ: bir stajyer CV'sinde iki staj (2+2 ay) tamamen kayboldu —
+# kısa dönemler iş deneyimi geçmişinin tamamı olabilir, kaybı doğrudan kıdemi düşürür.
+AY_AY_YIL = re.compile(
+    rf"(?i)(?<![\w/])({_AYAD})\s*(?:-{{1,2}}|–|—|to|ile)\s*({_AYAD})\s+((?:19|20)\d{{2}})(?![\w/])"
+)
 TEK_DONEM = re.compile(rf"(?i)\b(summer|yaz|winter|spring|fall|autumn)\s+((?:19|20)\d{{2}})\b")
 
+# TÜRKÇE EKLER: başlık sözcüğü çekim eki alır ("Beceri" değil "Beceriler",
+# "Sertifika" değil "Sertifikalar ve Eğitimler"). Kalıp `\b...\b` ile yazılınca
+# ekli hâl eşleşmez ve bölüm hiç bulunmaz. ÖLÇÜLDÜ: Türkçe bir CV'de deneyim bölümü
+# bulunamayınca süre CV GENELİNDEN toplanıyor, Projeler/Eğitim tarihleri de deneyime
+# karışıyordu. Bu yüzden gövdeye `\w*` eklenir ve başlık satırının sonunda kısa bir
+# kuyruğa ("… ve Eğitimler", ": ") izin verilir.
+# Kuyruk SERBEST METİN OLAMAZ. İlk hâli `[^\n]{0,32}$` idi ve bölüm başlığı sanılan
+# şey aslında bir UNVAN satırı oluyordu: "Proje Mimarı" -> `proje\w*` dalına,
+# "Project Manager" -> `projects?` dalına takıldı ve DENEYİM BÖLÜMÜ orada kesildi.
+# ÖLÇÜLDÜ: bir mimar CV'sinde bölüm 44 karakterde bitti, 7,1 yıllık deneyim 3,3
+# göründü. Artık yalnız gerçek başlıkların aldığı kuyruğa izin verilir:
+# bağlaçla bağlanmış ikinci bir başlık sözcüğü ("Sertifikalar ve Eğitimler"),
+# iki nokta, ya da hiçbir şey.
+_BAS_KUYRUK = r"(?:\s*(?:ve|and|&|/|,|-|–)\s*[\wçğıöşüÇĞİÖŞÜ]+){0,3}\s*:?\s*$"
 BOLUM_BAS = re.compile(
-    r"(?im)^\s*(experience|work experience|employment|professional experience|"
-    r"deneyim|iş deneyimi|iş tecrübesi|çalışma geçmişi|career)\s*:?\s*$")
+    r"(?im)^[\s•·\-]*((?:work |professional |relevant )?experience|employment(?: history)?|"
+    r"(?:iş |profesyonel |mesleki )?deneyim\w*|(?:iş )?tecrübe\w*|çalışma geçmişi|career)"
+    + _BAS_KUYRUK)
 BOLUM_SON = re.compile(
-    r"(?im)^\s*(education|projects|skills|technical skills|publications|awards|"
-    r"certifications|eğitim|projeler|yetenekler|beceriler|sertifika|yayınlar)\s*:?\s*$")
+    r"(?im)^[\s•·\-]*(education|projects|skills|technical skills|publications|awards|"
+    r"certifications?|references|languages|"
+    r"eğitim\w*|projeler\w*|yetenek\w*|beceri\w*|yetkinlik\w*|sertifika\w*|yayın\w*|"
+    r"başarı\w*|ödül\w*|referans\w*|yabancı dil\w*|diller)"
+    + _BAS_KUYRUK)
 
 # Profesyonel deneyimden düşülecek oluşumlar. Dikkat: çıplak "team" ELENMEZ —
 # gerçek işte "Team Lead" olur. Sadece üniversite/öğrenci bağlamı niteleyicileriyle
@@ -69,7 +95,18 @@ def metin_normalize(metin: str) -> str:
     Onarılmazsa o tarih aralığı hiç görülmez ve deneyim eksik hesaplanır
     (ölçülen: 12,8 yıl -> 6,2 yıl). Satır yapısı korunur, yalnız bölünmüş
     token'lar birleştirilir.
+
+    AYRICA Unicode'u NFC'ye birleştirir. Bu, Türkçe CV'lerde HAYATİ:
+    pdftotext (ve bazı LaTeX üretimi PDF'ler) harfleri AYRIŞTIRILMIŞ verir —
+    "Ç" tek karakter değil, "C" + birleştirici çengel (U+0327) olarak gelir.
+    Birleştirilmezse regex, aksanı harf saymadığı için tabanı TEK BAŞINA duran
+    bir harf sanır ve sahte yetenek üretir. ÖLÇÜLDÜ (Türkçe kontrol mühendisi
+    CV'si): "Gömülü/Görü/Gökkubbe" -> Go dili (güçlü, 1.0), "Çift/çalışma/Güç"
+    -> C dili (güçlü, 1.0), "sensör" -> R. Aday C/Go sistem programcısı sanıldı,
+    kısa listeye Ubuntu çekirdek ilanları geldi. Aynı bozulma "İş Deneyimi"
+    başlığını da tanınmaz yaptığı için deneyim 2,2 yıl yerine 1,2 çıkıyordu.
     """
+    metin = unicodedata.normalize("NFC", metin)
     # Yıl ikiye bölünmüş: parçaların toplamı tam 4 hane ise birleştir.
     def _yil(m: re.Match) -> str:
         a, b = m.group(1), m.group(2)
@@ -145,6 +182,17 @@ def _araliklari_topla(blok: str) -> tuple[list, list]:
             son = simdi if simdi_mi else _ondalik(int(y2), _ay(ay2))
             if son > bas and son - bas < 50:
                 hedef.append((bas, son)); bulundu = True
+        if not bulundu:
+            for m in AY_AY_YIL.finditer(satir):     # "Haziran – Temmuz 2024"
+                ay1, ay2, y = m.group(1), m.group(2), int(m.group(3))
+                a1, a2 = _ay(ay1), _ay(ay2)
+                # Ay adı sözlükte yoksa _ay() 7 döndürür; iki taraf da tanınmadıysa
+                # bu bir tarih değil, iki sıradan sözcüktür ("Kontrol – Otomasyon 2024").
+                if ay1.strip(". ").lower()[:3] not in AY and ay2.strip(". ").lower()[:3] not in AY:
+                    continue
+                if a2 >= a1:
+                    hedef.append((_ondalik(y, a1), _ondalik(y, a2 + 1)))
+                    bulundu = True
         if not bulundu:
             for m in TEK_DONEM.finditer(satir):     # "Summer 2025" ≈ 3 ay
                 y = int(m.group(2))

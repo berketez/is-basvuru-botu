@@ -27,7 +27,16 @@ from .yollar import kaynak_dosya
 SOZLUK = kaynak_dosya("isbot", "data", "skills.yaml")
 
 BASLIK_YIL = re.compile(r"(19|20)\d{2}")
-YETENEK_BOLUM = re.compile(r"(?is)\b(technical skills|skills|yetenek|beceri|teknolojiler|technologies)\b(.{0,1500})")
+# Türkçe başlıklar çekim eki alır: "Beceri" değil "Teknik Beceriler", "Yetkinlikler",
+# "Teknolojiler". `\b...\b` ile yazılınca ekli hâl eşleşmez ve bölüm hiç bulunmaz.
+# Bunun bedeli sessizdir: bölüm bulunamayınca hiçbir yetenek "Skills'te ilan edilmiş"
+# bonusunu (+0,35) alamaz, hepsi eşiğin altında kalır ve GÜÇLÜ yetenek listesi BOŞ çıkar.
+# ÖLÇÜLDÜ (Türkçe kontrol mühendisi CV'si): "Teknik Beceriler" başlığı altında 8 kalem
+# yazılı olduğu hâlde güçlü yetenek sayısı 0'dı.
+YETENEK_BOLUM = re.compile(
+    r"(?is)\b(technical skills|core competenc\w*|competenc\w*|technolog\w*|skills?|"
+    r"teknik beceri\w*|teknik yetkinlik\w*|beceri\w*|yetenek\w*|yetkinlik\w*|"
+    r"teknoloji\w*|uzmanlık alan\w*|bilgisayar bilgi\w*)\b(.{0,1500})")
 
 
 # ---------------- metin çıkarma ----------------
@@ -53,7 +62,8 @@ def metin_cikar(yol: str | Path) -> str:
 
     if son == ".docx":
         import docx
-        return "\n".join(par.text for par in docx.Document(str(p)).paragraphs)
+        # metin_normalize'dan GEÇMELİ: NFC birleştirmesi orada yapılıyor (bkz. experience.py).
+        return metin_normalize("\n".join(par.text for par in docx.Document(str(p)).paragraphs))
 
     ham = p.read_text(encoding="utf-8", errors="ignore")
     if son == ".tex":
@@ -67,9 +77,29 @@ def metin_cikar(yol: str | Path) -> str:
 
 
 # ---------------- yetenek tespiti ----------------
+# --- terim eşleştirme: ek ve çoğul toleransı -------------------------------------
+# SORUN: kelime sınırı (\b) hem Türkçe ekini hem İngilizce çoğulunu KESİYOR.
+#   "gömülü sistem"      ← "Gömülü sistemler için C++"   -> 0 eşleşme
+#   "kontrol sistemleri" ← "Kontrol sistemlerinde"        -> 0 eşleşme
+#   "control system"     ← "control systems experience"   -> 0 eşleşme
+# Bu sessiz bir kayıptı: sözlüğe terim eklenmiş görünüyor, gerçek metinde hiç
+# tutmuyordu. Türkçe eklemeli bir dil olduğu için bedeli Türkçe tarafta çok ağır.
+#
+# ÇÖZÜM: terimin SONUNA ek toleransı (\w*), ama yalnız yanlış eşleşme riski
+# düşük terimlerde:
+#   - çok kelimeli terim ("kontrol sistemleri")  -> zaten spesifik, güvenli
+#   - 7+ karakterli tek kelime ("aviyonik", "simulink") -> güvenli
+#   - kısa tek kelime ("java", "rust", "react", "go", "C") -> DOKUNULMAZ.
+#     Yoksa "java" -> "javascript", "react" -> "reactive" sahte eşleşmesi olur.
+def _ek_toleransli(terim: str) -> bool:
+    return " " in terim.strip() or len(terim) >= 7
+
+
 def _gecis_sayisi(metin: str, terim: str) -> int:
     if re.fullmatch(r"[A-Za-z+#.]{1,4}", terim):
         kalip = rf"(?<![\w+#.]){re.escape(terim)}(?![\w+#.])"
+    elif _ek_toleransli(terim):
+        kalip = rf"(?<!\w){re.escape(terim)}\w*"
     else:
         kalip = rf"(?<!\w){re.escape(terim)}(?!\w)"
     return len(re.findall(kalip, metin, re.IGNORECASE))
@@ -80,7 +110,13 @@ def yetenek_tespit(metin: str) -> tuple[dict[str, float], dict[str, float]]:
 
     Ağırlık, kanıt yoğunluğundan gelir: kaç kez geçiyor + 'Skills' bölümünde mi.
     Tek kez geçen bir teknoloji 'zayıf', birden çok yerde geçen 'güçlü' sayılır.
+
+    Girdi burada TEKRAR normalize edilir. Şu an tek çağıran metin_cikar'dan geçiyor,
+    yani zaten NFC; ama bu fonksiyon ham metinle çağrılırsa Türkçe CV'de sahte
+    yetenek üretir (Gömülü->Go, Çift->C, sensör->R) ve hata SESSİZDİR — çıktı
+    makul görünür, yalnızca yanlıştır. NFC idempotenttir, ikinci çağrının bedeli yok.
     """
+    metin = metin_normalize(metin)
     sozluk = yaml.safe_load(SOZLUK.read_text(encoding="utf-8"))
     bolum_m = YETENEK_BOLUM.search(metin)
     yetenek_bolumu = bolum_m.group(2) if bolum_m else ""
@@ -213,6 +249,24 @@ def _kidem_ustu_kaliplar(kidem: str) -> list[str]:
     return [yonetim]
 
 
+def _en_sorgular(roller: dict, ust_sinir: int = 3) -> list[str]:
+    """Etkin rol ailelerinden İngilizce pozisyon adları (ağırlığa göre sıralı).
+
+    Uluslararası kaynaklar (Remotive vb.) İngilizce sorgu alır. Aday hangi alandaysa
+    sorgu da o alandan gelmeli; sabit bir "software engineer" herkese aynı havuzu
+    getiriyordu.
+    """
+    tanimlar = yaml.safe_load(ROLLER.read_text(encoding="utf-8"))
+    cikti: list[str] = []
+    for ad in roller:                                   # roller zaten ağırlığa göre sıralı
+        for poz in (tanimlar.get(ad, {}) or {}).get("en_pozisyonlar", []):
+            if poz not in cikti:
+                cikti.append(poz)
+                if len(cikti) >= ust_sinir:
+                    return cikti
+    return cikti or ["engineer"]
+
+
 def _tr_sorgular(roller: dict, ust_sinir: int = 6) -> list[str]:
     """Etkin rol ailelerinden Türkçe pozisyon adları toplar (ağırlığa göre sıralı)."""
     tanimlar = yaml.safe_load(ROLLER.read_text(encoding="utf-8"))
@@ -260,10 +314,14 @@ def profil_uret(cv_yolu: str | Path) -> dict:
             "zorunlu_konum_kosulu": ["remote_global", "remote_emea"] + (["turkey"] if tr else []),
             "sponsorluk_gerektiren_ele": True,
         },
-        # Şirketler-arası kaynaklar için arama sorguları: en güçlü yeteneklerden türetilir.
-        "arama_sorgulari": list(dict.fromkeys(
-            [a.lower() for a in list(guclu)[:6]] + ["software engineer"]))[:8],
         "rol_aileleri": (_roller := rol_aileleri_turet(set(guclu) | set(zayif))),
+        # Şirketler-arası kaynaklar için İngilizce arama sorguları: en güçlü
+        # yetenekler + ROL AİLESİNDEN gelen pozisyon adları.
+        # NEDEN: eskiden listeye sabit olarak "software engineer" ekleniyordu. Bir
+        # kontrol/havacılık mühendisi adayında bu, havuzu yazılım ilanlarıyla
+        # dolduran tek en büyük kalemdi — aday yazılımcı olmadığı hâlde.
+        "arama_sorgulari": list(dict.fromkeys(
+            [a.lower() for a in list(guclu)[:5]] + _en_sorgular(_roller)))[:8],
         # Türk panoları İngilizce sorguyla çalışmaz; pozisyon adları Türkçe olmalı.
         # Rol ailelerinden türetilir (roller.yaml -> tr_pozisyonlar).
         "tr_arama_sorgulari": _tr_sorgular(_roller),

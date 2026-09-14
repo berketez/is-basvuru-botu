@@ -1,0 +1,28 @@
+# İş Başvuru Botu — çalışma bağımlılıkları
+#   pip install -r requirements.txt
+#
+# Sürümler ALT SINIRLA verilir: bu paketlerin hiçbirinde bilinen kırıcı değişiklik
+# yok, üst sınır koymak gereksiz yere kurulumu zorlaştırır.
+
+flask>=3.0          # yerel panel sunucusu (yalnız 127.0.0.1'e bağlanır)
+requests>=2.31      # ATS uçlarına HTTP
+PyYAML>=6.0         # profil / sözlük / rol dosyaları
+rich>=13.0          # komut satırı tabloları
+
+# --- CV okuma ---
+# PDF'in ASIL yolu 'pdftotext' (poppler) SİSTEM aracıdır; sütunlu CV'lerde
+# pypdf'ten belirgin biçimde daha iyi metin çıkarır. Kurulumu:
+#     macOS : brew install poppler
+#     Debian/Ubuntu : sudo apt install poppler-utils
+#     Windows : https://github.com/oschwartz10612/poppler-windows (PATH'e ekle)
+# pypdf, pdftotext YOKSA devreye giren yedektir — kurulu olması önerilir.
+pypdf>=4.0
+python-docx>=1.1    # yalnız .docx CV verilirse kullanılır
+
+# --- gelişmiş arama (uyum hakemi) ---
+# Yerel bir gömme modeli, ilanın adayın İŞİNE ait olup olmadığını anlam düzeyinde
+# denetler. İnternet gerektirmez; model .app içine gömülür (bkz. isbot-panel.spec).
+# Bu üçü YOKSA uygulama yine çalışır — panelde yalnız "hızlı arama" görünür.
+onnxruntime>=1.17     # CPU'da int8 çıkarım; PyTorch gerekmez
+tokenizers>=0.15      # SentencePiece/BPE (Rust eklentisi, hafif)
+numpy>=1.24           # gömme vektörleri

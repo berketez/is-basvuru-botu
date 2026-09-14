@@ -2,8 +2,13 @@
 # CV'den üretilen profil, deneme CV'leri, tarama çıktıları
 /config/profile.local.yaml
 /config/profile.yaml
-/test-cvs/
+/test-cvs/*
 /out/
+# İSTİSNA: bu tek dosya ANONİMDİR (kimlik bilgisi yok) ve Unicode NFD regresyonunu
+# tutan testtir — depoda BULUNMALI, yoksa hata sessizce geri gelir. Türkçe PDF'lerde
+# pdftotext harfleri ayrıştırılmış verir ("Ç" = C + çengel) ve normalizasyon olmadan
+# motor "Gömülü/Görü" içinde Go dilini, "Çift/çalışma" içinde C dilini bulur.
+!/test-cvs/16_kontrol_havacilik_tr.txt
 
 # --- büyük yerel önbellekler ---
 # ilan geçmişi (65 MB+), benchmark havuzu (70 MB+), pano damgaları.
@@ -12,6 +17,11 @@
 /data/
 /tests/ornekler/
 
+# --- uyum modeli (129 MB) ---
+# Depoda TUTULMAZ: ikili model dosyası git geçmişini şişirir. calistir.sh ve
+# kur.sh yoksa indirir; kur.sh .app'e GÖMER (çevrimdışı çalışsın diye).
+/isbot/model/
+
 # --- python / paketleme ---
 __pycache__/
 *.pyc
@@ -19,4 +29,5 @@ __pycache__/
 .pytest_cache/
 /build/
 /dist/
+.playwright-mcp/
 .DS_Store

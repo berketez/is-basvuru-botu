@@ -111,6 +111,44 @@ input[type=range]{padding:0;accent-color:var(--vu)}
 .uyari{background:#d299221f;border:1px solid #d2992255;border-radius:7px;padding:10px 12px;
   font-size:12.5px;margin-bottom:13px;color:#e8c86a}
 .hata{background:#f851491f;border:1px solid #f8514955;color:#ff9d95}
+/* --- CV yüklendikten sonraki "hazır" ekranı ---
+   NEDEN: eskiden CV yüklenince orta alan tek satırlık bir nota düşüyordu
+   ("Profil hazır. … sağ üstten Tara'ya bas") ve asıl eylem düğmesi sağ üst köşede,
+   sayfanın en ıssız yerindeydi. Kullanıcı boş bir ekrana bakıp ne yapacağını
+   aradı. Artık ana eylem SAYFANIN ORTASINDA ve yanında motorun CV'den ne
+   anladığı yazıyor — yanlış anladıysa taramadan ÖNCE görülsün. */
+.hazir{max-width:660px;margin:40px auto;text-align:center}
+.hazir h2{font-size:20px;margin:0 0 6px;color:var(--me)}
+.hazir .alti{color:var(--me2);font-size:13.5px;margin:0 0 22px}
+button.dev{font-size:16px;padding:13px 40px;border-radius:9px}
+.hazir .ipucu{color:var(--me2);font-size:12.5px;margin-top:11px}
+.okuma{text-align:left;background:var(--ze2);border:1px solid var(--ke);border-radius:10px;
+  padding:16px 18px;margin-top:26px}
+.okuma h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--me2);
+  margin:0 0 12px;font-weight:600}
+.okuma .sat{display:flex;gap:12px;align-items:baseline;padding:7px 0;font-size:13.5px}
+.okuma .sat+.sat{border-top:1px solid var(--ke)}
+.okuma .ad{color:var(--me2);min-width:112px;flex:0 0 auto;font-size:12.5px}
+.okuma .deg{color:var(--me)}
+.rol{display:inline-block;font-size:12px;padding:2.5px 9px;border-radius:20px;
+  background:#4c9aff1f;border:1px solid #4c9aff44;color:var(--me);margin:0 5px 5px 0}
+.rol i{font-style:normal;color:var(--me2);font-size:11px;margin-left:5px}
+.yanlis{margin-top:14px;padding-top:13px;border-top:1px solid var(--ke);
+  color:var(--me2);font-size:12.5px}
+/* --- arama modu seçici ---
+   Kullanıcı iki motoru da alır: "hızlı" yalnız sözlük+kural motoru, "gelişmiş"
+   buna uyum hakemini (yerel model) ekler. Model .app içinde gömülü gelir; yoksa
+   seçenek hiç gösterilmez, arayüz tek modda çalışır. */
+.modlar{display:flex;gap:10px;justify-content:center;margin:0 0 16px;flex-wrap:wrap}
+.mod{flex:0 1 258px;text-align:left;background:var(--ze2);border:1px solid var(--ke);
+  border-radius:9px;padding:11px 13px;cursor:pointer;transition:.12s}
+.mod:hover{border-color:var(--vu)}
+.mod.secili{border-color:var(--vu);background:#4c9aff14}
+.mod b{display:block;font-size:13.5px;margin-bottom:2px}
+.mod span{color:var(--me2);font-size:12px;line-height:1.4;display:block}
+.mod .sure{color:var(--me2);font-size:11px;margin-top:5px;display:block}
+.et.uyumsuz{color:var(--sa);border-color:#d2992255;background:#d299221a}
+.et.uyumlu{color:var(--ye);border-color:#3fb95055;background:#3fb9501a}
 @media(max-width:860px){.duzen{grid-template-columns:1fr}aside{border-right:none;
   border-bottom:1px solid var(--ke)}}
 </style>
@@ -295,10 +333,100 @@ async function cvGonder(f) {
     konumYaz(kosul);
     await konumGonder(kosul);
     $("#btnTara").disabled = false;
-    $("#liste").innerHTML = `<div class="bos">Profil hazır. Soldan konumunu işaretle,
-      sonra sağ üstten <b>Tara</b>'ya bas.</div>`;
+    SON_PROFIL = d;
+    hazirEkran(d);
     if (d.gozden_gecir) uyari("Çalışma iznin CV'den çıkarılamadı. Soldaki 2. adımdan işaretleyip kaydet — yoksa konum filtresi yanlış çalışır.");
   } catch (e) { uyari("bağlantı hatası: " + e.message, true); }
+}
+
+/* Motorun rol ailesi anahtarlarını okunur ada çevirir. Kullanıcı "kontrol_otomasyon"
+   değil "Kontrol & Otomasyon" görmeli. Listede olmayan anahtar için alt çizgi
+   boşluğa çevrilir — yeni aile eklendiğinde arayüz kırılmaz, sadece ham ad görünür. */
+const ROL_AD = {
+  kontrol_otomasyon: "Kontrol & Otomasyon", havacilik_savunma: "Havacılık & Savunma",
+  makine_tasarim: "Makine & Tasarım", gomulu: "Gömülü Sistemler", ml_ai: "Yapay Zekâ / ML",
+  veri_muh: "Veri Mühendisliği", veri_bilimi: "Veri Bilimi", platform_sre: "Platform / SRE",
+  backend: "Backend", frontend: "Önyüz", mobil: "Mobil", oyun: "Oyun", qa: "Test / QA",
+  guvenlik: "Siber Güvenlik", blockchain: "Blockchain", urun: "Ürün Yönetimi",
+  bilimsel_hpc: "Bilimsel Hesaplama", genel_yazilim: "Genel Yazılım",
+};
+const rolAdi = a => ROL_AD[a] || a.replace(/_/g, " ");
+
+/* Arama modu. "hizli" = yalnız sözlük+kural motoru. "gelismis" = buna uyum
+   hakemi (yerel model) eklenir: ilanın adayın İŞİNE ait olup olmadığını anlam
+   düzeyinde denetler ve sıralamayı düzeltir. Seçim tarayıcıda hatırlanır. */
+let UYUM_HAZIR = false;
+let MOD = (() => { try { return localStorage.getItem("isbot_mod") || "gelismis"; }
+                   catch (e) { return "gelismis"; } })();
+
+function modSec(m) {
+  MOD = m;
+  try { localStorage.setItem("isbot_mod", m); } catch (e) {}
+  modlariCiz();
+}
+
+function modlariCiz() {
+  const k = $("#modlar");
+  if (!k) return;
+  if (!UYUM_HAZIR) {            // model yok: seçenek gösterme, sessizce hızlı mod
+    k.innerHTML = "";
+    const ip = $("#modIpucu");
+    if (ip) ip.textContent = "Şirketlerin açık ilan uçları taranır · yaklaşık 2-3 dakika";
+    return;
+  }
+  const secenekler = [
+    ["hizli", "Hızlı arama", "Sözlük ve kural motoru. Yetenek, rol ve konum eşleşmesine bakar.", "yaklaşık 2-3 dakika"],
+    ["gelismis", "Gelişmiş arama", "Motora ek olarak yerel bir model, ilanın gerçekten senin işin olup olmadığını denetler.", "biraz daha uzun · internet gerekmez"],
+  ];
+  k.innerHTML = secenekler.map(([id, ad, aciklama, sure]) =>
+    `<div class="mod ${MOD === id ? "secili" : ""}" data-mod="${id}">
+       <b>${ad}</b><span>${aciklama}</span><span class="sure">${sure}</span></div>`).join("");
+  $$("#modlar .mod").forEach(el => el.onclick = () => modSec(el.dataset.mod));
+  const ip = $("#modIpucu");
+  if (ip) ip.textContent = MOD === "gelismis"
+    ? "Motor + uyum denetimi · her şey bu bilgisayarda çalışır"
+    : "Yalnız motor · en hızlı sonuç";
+}
+
+/* CV yüklendikten sonra orta alan. Ana eylem burada. */
+function hazirEkran(d) {
+  const roller = (d.rol_aileleri || []);
+  const rolHtml = roller.length
+    ? roller.map(r => `<span class="rol">${kacar(rolAdi(r.ad))}<i>${Math.round(r.agirlik * 100)}%</i></span>`).join("")
+    : `<span style="color:var(--sa)">belirlenemedi — aşağıya bak</span>`;
+  const yet = (d.guclu_yetenek || []);
+  const genel = roller.length === 1 && roller[0].ad === "genel_yazilim";
+
+  $("#liste").innerHTML = `<div class="hazir">
+    <h2>Profil hazır</h2>
+    <p class="alti">Soldan nereden çalışabileceğini işaretle, sonra taramayı başlat.</p>
+    <div class="modlar" id="modlar"></div>
+    <button class="ana dev" id="btnTaraOrta">Tara</button>
+    <div class="ipucu" id="modIpucu">Şirketlerin açık ilan uçları taranır</div>
+
+    <div class="okuma">
+      <h3>CV'den okunanlar</h3>
+      <div class="sat"><span class="ad">Deneyim</span>
+        <span class="deg"><b>${d.deneyim_yil}</b> yıl · kıdem tavanı <b>${kacar(d.max_kidem)}</b>
+        <span style="color:var(--me2);font-size:12px">(${kacar(d.deneyim_kaynagi || "—")})</span></span></div>
+      <div class="sat"><span class="ad">Aranan roller</span><span class="deg">${rolHtml}</span></div>
+      <div class="sat"><span class="ad">Güçlü yetenekler</span>
+        <span class="deg">${yet.length ? kacar(yet.slice(0, 14).join(" · ")) + (yet.length > 14 ? ` <span style="color:var(--me2)">+${yet.length - 14}</span>` : "")
+                                        : '<span style="color:var(--sa)">hiçbiri tespit edilemedi</span>'}</span></div>
+      ${(d.tr_sorgular || []).length ? `<div class="sat"><span class="ad">Türkçe aramalar</span>
+        <span class="deg" style="color:var(--me2)">${kacar(d.tr_sorgular.join(" · "))}</span></div>` : ""}
+      <div class="yanlis">
+        ${genel || !yet.length
+          ? "<b style='color:var(--sa)'>Bu okuma zayıf görünüyor.</b> Motor CV'nden belirgin bir alan çıkaramadı; sonuçlar alakasız gelebilir. CV'de yeteneklerin ayrı bir başlık altında (\"Teknik Beceriler\") listelenmesi tespiti belirgin biçimde iyileştirir."
+          : "Yukarıdaki okuma sana ait değilse tarama da alakasız gelir — CV'yi düzeltip yeniden yükle."}
+      </div>
+    </div>
+  </div>`;
+  modlariCiz();
+  // Ortadaki düğme üstteki ile AYNI işi yapar; tek bir işleyici olsun diye tıklama
+  // yukarıdakine devredilir. Böylece tarama akışı (izleme, 409 koruması) tek yerde kalır.
+  const orta = $("#btnTaraOrta");
+  if (orta) orta.onclick = () => $("#btnTara").click();
 }
 
 function profilYaz(d) {
@@ -434,7 +562,11 @@ $("#btnTara").onclick = async () => {
   $("#btnTara").disabled = true;
   $("#liste").innerHTML = `<div class="bos">İlanlar çekiliyor…<div class="ilerleme"><i></i></div>
     <div class="kucuk" id="ilerBilgi" style="margin-top:10px"></div></div>`;
-  const r = await fetch("/api/tara", { method: "POST" });
+  const r = await fetch("/api/tara", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ gelismis: UYUM_HAZIR && MOD === "gelismis" }),
+  });
   const d = await r.json();
   if (d.hata) { uyari(d.hata, true); $("#btnTara").disabled = false; return; }
   izle();
@@ -466,7 +598,10 @@ function izle() {
 async function yukle() {
   VERI = await (await fetch("/api/sonuclar")).json();
   if (!VERI.ilanlar || !VERI.ilanlar.length) {
-    $("#liste").innerHTML = `<div class="bos">Henüz sonuç yok. CV yükleyip <b>Tara</b>'ya bas.</div>`;
+    // Profil YÜKLÜ ama henüz tarama yapılmamış (ya da sayfa yenilenmiş): kullanıcıyı
+    // boş bir nota bakar hâlde bırakma, doğrudan taramayı başlatabileceği ekranı ver.
+    if (SON_PROFIL) hazirEkran(SON_PROFIL);
+    else $("#liste").innerHTML = `<div class="bos">Henüz sonuç yok. CV yükleyip <b>Tara</b>'ya bas.</div>`;
     return;
   }
   // Kaynak hataları KULLANICIYA söylenir. Eskiden yalnız JSON'a yazılıyordu:
@@ -553,6 +688,13 @@ function kartHTML(x) {
   }
   if (x.maas) et.push(`<span class="et">${kacar(x.maas)}</span>`);
   if (x.istenen_yil) et.push(`<span class="et">${x.istenen_yil}+ yıl ister</span>`);
+  // Uyum hakemi yalnız gelişmiş aramada dolu gelir. NEGATİF olanı işaretlemek
+  // pozitifi işaretlemekten önemli: kullanıcıya "bu ilan sana benziyor ama senin
+  // işin olmayabilir" demek, listede sessizce durmasından iyidir.
+  if (x.uyum !== null && x.uyum !== undefined) {
+    if (x.uyum < 0) et.push(`<span class="et uyumsuz" title="Yerel model bu ilanı senin alanınla aynı sözcükleri kullanan başka bir meslek olarak değerlendirdi">uyum şüpheli</span>`);
+    else if (x.uyum > 0.012) et.push(`<span class="et uyumlu" title="Yerel model ilanın senin alanına ait olduğunu doğruladı">uyumlu</span>`);
+  }
   et.push(...x.eslesen.slice(0, 6).map(y => `<span class="et yetenek">${kacar(y)}</span>`));
 
   return `<div class="kart ${acikMi ? "acik" : ""}" data-uid="${kacar(x.uid)}">
@@ -625,8 +767,15 @@ function hosgeldin() {
 }
 
 let ONCEKI_KONUM = [];
+/* En son okunan profil — sayfa yenilendiğinde hazır ekranını yeniden çizebilmek için. */
+let SON_PROFIL = null;
 
 (async () => {
+  // Uyum modeli var mı? Panel mod seçicisini buna göre gösterir.
+  try {
+    const u = await (await fetch("/api/uyum/durum")).json();
+    UYUM_HAZIR = !!u.hazir;
+  } catch (e) { UYUM_HAZIR = false; }
   const p = await (await fetch("/api/profil")).json();
   if (!p.var) {
     // Oturum yeni: karşılama göster, ama kullanıcının önceki konum tercihlerini
@@ -646,6 +795,7 @@ let ONCEKI_KONUM = [];
       $("#btnTara").disabled = true;
       izle();
     }
+    SON_PROFIL = p;
     profilYaz({ deneyim_yil: p.deneyim_yil, max_kidem: p.max_kidem, guclu_yetenek: p.guclu_yetenek });
     $("#btnTara").disabled = false;
     $("#konumBlok").style.display = "block";

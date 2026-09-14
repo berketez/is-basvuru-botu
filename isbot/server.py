@@ -91,11 +91,16 @@ def profil_oku():
     return jsonify({
         "var": True,
         "deneyim_yil": (p.get("kimlik") or {}).get("deneyim_yil"),
+        "deneyim_kaynagi": (p.get("kimlik") or {}).get("_deneyim_kaynagi"),
         "calisma_izni": (p.get("kimlik") or {}).get("calisma_izni", []),
         "max_kidem": (p.get("sert_filtreler") or {}).get("max_kidem"),
         "konum_kosulu": (p.get("sert_filtreler") or {}).get("zorunlu_konum_kosulu", []),
         "guclu_yetenek": list((p.get("yetenekler") or {}).get("guclu") or {}),
         "sorgular": p.get("arama_sorgulari", []),
+        "rol_aileleri": [{"ad": ad, "agirlik": d.get("agirlik", 0),
+                          "tetikleyen": d.get("_tetikleyen", [])}
+                         for ad, d in (p.get("rol_aileleri") or {}).items()],
+        "tr_sorgular": p.get("tr_arama_sorgulari", []),
         "not": p.get("_NOT"),
     })
 
@@ -130,6 +135,17 @@ def cv_yukle():
         "max_kidem": p["sert_filtreler"]["max_kidem"],
         "guclu_yetenek": list(p["yetenekler"]["guclu"]),
         "gozden_gecir": p["kimlik"]["calisma_izni"] == ["GÖZDEN GEÇİR"],
+        # Motorun CV'den ÇIKARDIĞI hedef roller. Arayüz bunu kullanıcıya gösterir.
+        # NEDEN: ayrıştırma sessizce yanlış olabiliyor ve kullanıcı bunu ancak
+        # tarama bitip alakasız ilanları görünce fark ediyor. ÖLÇÜLDÜ: Türkçe bir
+        # kontrol mühendisi CV'si "C/Go programcısı" olarak çıkarıldı; panel yalnız
+        # "1 güçlü yetenek" yazdığı için hata taramadan SONRA anlaşıldı. Hedef roller
+        # baştan gösterilirse kullanıcı "ben bu değilim" diyebilir.
+        "rol_aileleri": [{"ad": ad, "agirlik": d.get("agirlik", 0),
+                          "tetikleyen": d.get("_tetikleyen", [])}
+                         for ad, d in (p.get("rol_aileleri") or {}).items()],
+        "tr_sorgular": p.get("tr_arama_sorgulari", []),
+        "sorgular": p.get("arama_sorgulari", []),
     })
 
 
@@ -171,7 +187,7 @@ def konum_kaydet():
 
 
 # ----------------------------- tarama -----------------------------
-def _tara_arkaplan(min_puan: float):
+def _tara_arkaplan(min_puan: float, gelismis: bool = False):
     from .pipeline import json_yaz, tara
     try:
         # Motor güncellendiyse profilin türetilen kısımlarını tazele.
@@ -203,12 +219,12 @@ def _tara_arkaplan(min_puan: float):
             _durum.update(calisiyor=True, bitti=False, hata=None, cekilen=0,
                           asama="ilanlar çekiliyor", baslangic=time.time())
         r = tara(str(VARSAYILAN_PROFIL), str(SIRKETLER),
-                 str(veri_dosya("data", "jobs.db")), min_puan=min_puan, ilerleme=ilerle,
-                 asama_bildir=asama_bildir)
+                 str(veri_dosya("data", "jobs.db")), min_puan=min_puan,
+                 gelismis=gelismis, ilerleme=ilerle, asama_bildir=asama_bildir)
         json_yaz(r, str(SONUC_JSON))
         with _kilit:
             _durum.update(calisiyor=False, bitti=True, asama="tamamlandı",
-                          cekilen=r.cekilen)
+                          cekilen=r.cekilen, uyum_denetlenen=r.uyum_denetlenen)
     except Exception as e:
         with _kilit:
             _durum.update(calisiyor=False, bitti=True, hata=f"{type(e).__name__}: {e}")
@@ -221,8 +237,24 @@ def tarama_baslat():
             return jsonify({"hata": "tarama sürüyor"}), 409
     if not VARSAYILAN_PROFIL.exists():
         return jsonify({"hata": "önce CV yükle"}), 400
-    threading.Thread(target=_tara_arkaplan, args=(0.0,), daemon=True).start()
-    return jsonify({"basladi": True})
+    # "gelişmiş" = uyum hakemi de koşsun. İstemci istese bile model yoksa sessizce
+    # hızlı moda düşülür; kullanıcıya tarama sonunda `hatalar` içinde bildirilir.
+    istek = request.get_json(silent=True) or {}
+    gelismis = bool(istek.get("gelismis"))
+    threading.Thread(target=_tara_arkaplan, args=(0.0, gelismis), daemon=True).start()
+    return jsonify({"basladi": True, "gelismis": gelismis})
+
+
+@app.get("/api/uyum/durum")
+def uyum_durum():
+    """Panel 'gelişmiş arama' seçeneğini gösterip göstermeyeceğini buradan öğrenir.
+    Model .app içine gömülü gelir; yine de eksik/bozuk olabileceği için sorulur."""
+    try:
+        from .uyum import kullanilabilir
+        hazir, sebep = kullanilabilir()
+    except Exception as e:
+        hazir, sebep = False, f"{type(e).__name__}"
+    return jsonify({"hazir": hazir, "sebep": sebep})
 
 
 @app.get("/api/tara/durum")

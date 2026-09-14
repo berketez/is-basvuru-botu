@@ -1,0 +1,23 @@
+Jordan Avery - Mechanical Design Engineer
+Manchester, United Kingdom
+
+Education
+University of Manchester, BSc Mechanical Engineering          Sep 2014 - Jun 2018
+
+Experience
+
+Precision Components Ltd                                      Aug 2018 - Mar 2022
+Design Engineer
+   - Designed sheet metal assemblies and jigs using SolidWorks and CATIA.
+   - Ran finite element analysis in ANSYS for structural validation.
+   - Produced technical drawings with GD&T tolerancing.
+
+Industrial Equipment Manufacturer                             Apr 2022 - Present
+Manufacturing Engineer
+   - Led lean manufacturing and kaizen initiatives on the assembly line.
+   - Implemented total productive maintenance across three cells.
+
+Technical Skills
+   - SolidWorks, CATIA, AutoCAD          - Finite element analysis, ANSYS
+   - Lean manufacturing, Six Sigma       - GD&T, tolerancing
+   - MATLAB                              - Production planning

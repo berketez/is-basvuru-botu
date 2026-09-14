@@ -1,0 +1,21 @@
+Miguel Santos - Maintenance Technician
+Porto, Portugal
+
+Education
+Technical Institute, Diploma in Electrical Systems            Sep 2015 - Jun 2017
+
+Experience
+
+Textile Factory                                               Aug 2017 - Jan 2022
+Electrical Maintenance Technician
+   - Troubleshot production line electrical faults and ran preventive maintenance.
+   - Diagnosed PLC panels and calibrated sensors.
+
+Automotive Supplier                                           Feb 2022 - Present
+Maintenance Technician
+   - Maintained CNC machines and repaired hydraulic and pneumatic systems.
+
+Technical Skills
+   - PLC (Siemens S7), SCADA             - Electrical panels, motor drives
+   - Hydraulics and pneumatics           - CNC machine maintenance
+   - Preventive maintenance              - Fault analysis

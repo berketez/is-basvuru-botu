@@ -27,13 +27,15 @@ def _tara(a) -> int:
         def ilerle(ad, n):
             st.update(f"[bold]{ad}[/] — {n} ilan")
         r = tara(a.profil, a.sirketler, a.db, min_puan=a.min_puan,
-                 hayalet_esigi=a.hayalet_esigi, ilerleme=ilerle)
+                 hayalet_esigi=a.hayalet_esigi, gelismis=a.gelismis, ilerleme=ilerle)
 
     k.print(f"\n[bold]{r.cekilen}[/] ilan tarandı → "
             f"[red]{r.elenen}[/] filtrede elendi, "
             f"[yellow]{r.hayalet_elenen}[/] hayalet elendi, "
             f"[green]{len(r.sonuclar)}[/] aday kaldı"
-            + (f", [dim]{r.kapanan} ilan kapanmış[/]" if r.kapanan else ""))
+            + (f", [dim]{r.kapanan} ilan kapanmış[/]" if r.kapanan else "")
+            + (f"\n[dim]uyum hakemi {r.uyum_denetlenen} ilanı denetledi[/]"
+               if r.uyum_denetlenen else ""))
     for h in r.hatalar[:6]:
         k.print(f"  [dim red]! {h}[/]")
 
@@ -176,6 +178,9 @@ def main(argv=None) -> int:
     t.add_argument("--hayalet-esigi", type=float, default=0.70, dest="hayalet_esigi")
     t.add_argument("-n", "--adet", type=int, default=25)
     t.add_argument("-o", "--cikti", default=None)
+    t.add_argument("--gelismis", action="store_true",
+                   help="uyum hakemini de çalıştır (yavaş ama daha isabetli; "
+                        "ilanın adayın İŞİNE ait olup olmadığını anlam düzeyinde denetler)")
     t.add_argument("--sirket-basi", type=int, default=3, dest="sirket_basi",
                    help="kısa listede tek şirketten en fazla kaç ilan (varsayılan 3)")
     t.set_defaults(fn=_tara)

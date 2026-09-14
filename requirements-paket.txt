@@ -1,0 +1,4 @@
+# Yalnızca .app / .exe PAKETLEMEK için gerekli (kur.sh bunu kullanır).
+# Uygulamayı kaynaktan çalıştırmak için GEREKMEZ.
+-r requirements.txt
+pyinstaller>=6.0

@@ -1,0 +1,75 @@
+Aday
+
+                                     Kontrol Mühendisi Adayı
+                                       Kağıthane, İstanbul
+
+
+Eğitim
+
+İstanbul Teknik Üniversitesi
+    Fizik Mühendisliği Lisans Programı                          2021 Eylül – 2026 Ocak
+Not Ortalaması: 3.29 / 4.00
+    Kontrol ve Otomasyon Mühendisliği (Çift Anadal)             2022 Eylül – Devam Ediyor
+
+
+İş Deneyimi
+
+Havacılık ve Uzay Sanayii Kurumu                               Haziran – Temmuz 2024
+Otonom Sistemler Ar-Ge Stajyeri (İHA)
+
+   • İHA otonom sistemleri üzerine araştırma ve geliştirme çalışmaları yaptım.
+   • Kontrol algoritmaları ve sistem entegrasyonu üzerine yoğunlaştım.
+
+    Görüntü İşleme Akademisi                                   Temmuz – Ağustos 2024
+Bilgisayarlı Görü ve Otonom Sistemler Stajyeri
+
+   • OpenCV ve Haar Cascade kullanarak görüntü işleme araçları geliştirdim.
+   • Görü tabanlı otonom kontrol sistemleri üzerine deneyim kazandım.
+
+Üniversite Havacılık Enstitüsü                                 Şubat 2026 – Devam ediyor
+Uçuş mekaniği ve adaptif LQR kontrol
+
+   • Bitirme projesi olarak adaptif LQR uygulaması yapmaktayım. Sistem dinamiğini
+     kendim çıkartmış olup hala çalışmam devam etmektedir.
+
+    Üniversite Plazma Laboratuvarı                             Şubat 2025 – Şubat 2026
+Soğuk Plazma İtki motoru ve Aşındırıcı Sistem yapımı
+
+   • Güç elektroniği ile yüksek gerilim yüksek frekans üretip sıfırdan soğuk plazma
+     sistemi kurdum. Plazma fiziği davranışı üzerine Ar-Ge yaptım.
+
+Üniversite Havacılık Enstitüsü                                 Şubat 2026 – Devam ediyor
+Uçuş mekaniği ve model referans adaptif kontrol
+
+   • İkinci bitirme projesi olarak model referans adaptif kontrol (MRAC) uygulaması
+     yapmaktayım. Sistem dinamiğini kendim çıkardım.
+
+    Savunma Sanayii İştiraki                                   Temmuz 2026 – Ağustos 2026
+Uçuş mekaniği kontrol
+
+   • Kamikaze İHA üzerinde uçuş dinamiği ve kontrol üzerinde çalışıldı. Sensör füzyon
+     ve kalibrasyonu test edildi.
+
+
+Teknik Beceriler
+
+   • MATLAB (Simulink, Simscape, Onramp        • PID ve LQR kontrol sistemleri
+     Sertifikalı)                              • Otonom araç simülasyonu
+   • Uçak dinamikleri, Otopilot ve             • AutoCAD (Sertifikalı)
+     simülasyon                                • Fusion360
+   • Python (OpenCV, NumPy)                    • Labview
+   • Gömülü sistemler için C++
+
+
+Projeler
+
+Dikey İnişli Roket Yarışması (Finalist)
+
+   • PID ve LQR kontrolü ile dikey iniş-kalkış yapabilen bir roket tasarlandı.
+   • Hedef koordinatlara ulaşmak için sensör tabanlı navigasyon uygulandı.
+
+
+Yabancı Diller
+
+Türkçe: Ana Dil
+İngilizce: C1 (İleri Seviye)

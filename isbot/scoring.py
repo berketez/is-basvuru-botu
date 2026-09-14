@@ -9,6 +9,7 @@ Sebep: "neden bu ilan?" ve "neyi tutturamıyorum?" sorularının cevabı görün
 from __future__ import annotations
 
 import re
+from functools import lru_cache
 from dataclasses import dataclass, field
 
 from .models import Job
@@ -37,9 +38,23 @@ ALAN_ISARETI: dict[str, str] = {
     # ilan daima reddedilir. Ölçüldü: pentester'a "Safety & Security COUNSEL" (avukat),
     # ML mühendisine "Manager, PEOPLE ANALYTICS" (İK) geliyordu.
     "hukuk":          r"(?i)\b(counsel|attorney|lawyer|legal|compliance officer|paralegal)\b",
-    "insan_kaynaklari": r"(?i)\b(people (analytics|operations|partner|team)|human resources|"
-                        r"talent (acquisition|partner)|recruiting|hr business)\b",
+    # "People Ops" KISALTMASI yakalanmıyordu: kalıp yalnız "people operations" arıyordu.
+    # ÖLÇÜLDÜ: bir kontrol mühendisi adayının kısa listesinde "People Ops Onboarding
+    # Specialist, EMEA" ilanı 23,8 puanla duruyordu. Kısaltma + onboarding/işveren
+    # markası gibi İK'ya özgü işler eklendi.
+    "insan_kaynaklari": r"(?i)\b(people (analytics|operations?|ops|partner|team)|"
+                        r"human resources|talent (acquisition|partner|management)|"
+                        r"recruiting|recruitment|hr business|hris|"
+                        r"onboarding (specialist|partner|manager|coordinator)|"
+                        r"employer brand|compensation (and|&) benefits|payroll specialist|"
+                        r"insan kaynak|işe alım|özlük iş|bordro)\b",
     "finans_muhasebe": r"(?i)\b(accountant|accounting|payroll|auditor|tax |treasury)\b",
+    # Kalite/üretim kontrolü AYRI bir meslektir ve Türkçede kontrol mühendisliğiyle
+    # aynı sözcüğü paylaşır. ÖLÇÜLDÜ: "kontrol mühendisi" sorgusunun 51 sonucunun
+    # tamamı buydu (Kalite Kontrol Mühendisi, Kontrol Odası Operatörü). Adayda bu
+    # aile yoksa başlık bu işareti taşıdığında ilan alan çatışması sayılır.
+    "kalite_kontrol": r"(?i)(\bkalite kontrol|quality (control|assurance|inspect)|"
+                      r"\bkontrol odası|\bmuayene\b|incoming inspection|\bqc\b)",
 }
 # Hiçbir mühendislik ailesine ait olmayan, ama sık karışan roller
 YABANCI_ISARET = r"(?i)\b(trader|trading desk|portfolio manager|actuary|paralegal|nurse|chef)\b"
@@ -83,7 +98,67 @@ SART_IPUCU = re.compile(r"(?i)(minimum|at least|requires?|required|must have|you
                         r"qualification|\d\+\s*(years?|yıl))")
 
 # ---------- konum / çalışma izni ----------
-TR_KALIP = re.compile(r"(?i)\b(turkey|türkiye|turkiye|istanbul|i̇stanbul|ankara|izmir|eskişehir|eskisehir)\b")
+# Türkiye'nin 81 ili + sık geçen ilçe/sanayi bölgeleri. TEK KAYNAK: hem "bu ilan
+# Türkiye'de mi" kararı hem de kart üstünde gösterilen şehir adı buradan gelir.
+#
+# NEDEN TAM LİSTE: önce yalnız 6 şehir tanınıyordu (İstanbul, Ankara, İzmir,
+# Eskişehir + ülke adı). ÖLÇÜLDÜ: kariyer.net "savunma sanayi" havuzunda Konya,
+# Bursa, Antalya, Gaziantep ve Kırıkkale'deki ilanlar "Türkiye değil" sayılıp
+# konum filtresinde ELENDİ — oysa Türkiye'de savunma sanayii tam olarak o
+# şehirlerde yoğunlaşıyor (Kırıkkale MKE, Konya, Kayseri...).
+#
+# Yanlış NEGATİF (gerçek ilanı elemek) burada yanlış POZİTİFTEN pahalıdır: bir
+# ilanın sehven Türkiye sayılması onu listeye sokar, kullanıcı görüp geçer;
+# elenmesi ise ilanı görünmez yapar.
+TR_ILLER = {
+    "adana": "Adana", "adıyaman": "Adıyaman", "afyonkarahisar": "Afyonkarahisar",
+    "ağrı": "Ağrı", "aksaray": "Aksaray", "amasya": "Amasya", "ankara": "Ankara",
+    "antalya": "Antalya", "ardahan": "Ardahan", "artvin": "Artvin", "aydın": "Aydın",
+    "balıkesir": "Balıkesir", "bartın": "Bartın", "batman": "Batman", "bayburt": "Bayburt",
+    "bilecik": "Bilecik", "bingöl": "Bingöl", "bitlis": "Bitlis", "bolu": "Bolu",
+    "burdur": "Burdur", "bursa": "Bursa", "çanakkale": "Çanakkale", "çankırı": "Çankırı",
+    "çorum": "Çorum", "denizli": "Denizli", "diyarbakır": "Diyarbakır", "düzce": "Düzce",
+    "edirne": "Edirne", "elazığ": "Elazığ", "erzincan": "Erzincan", "erzurum": "Erzurum",
+    "eskişehir": "Eskişehir", "gaziantep": "Gaziantep", "giresun": "Giresun",
+    "gümüşhane": "Gümüşhane", "hakkari": "Hakkâri", "hatay": "Hatay", "ığdır": "Iğdır",
+    "isparta": "Isparta", "istanbul": "İstanbul", "izmir": "İzmir",
+    "kahramanmaraş": "Kahramanmaraş", "karabük": "Karabük", "karaman": "Karaman",
+    "kars": "Kars", "kastamonu": "Kastamonu", "kayseri": "Kayseri", "kırıkkale": "Kırıkkale",
+    "kırklareli": "Kırklareli", "kırşehir": "Kırşehir", "kilis": "Kilis", "kocaeli": "Kocaeli",
+    "konya": "Konya", "kütahya": "Kütahya", "malatya": "Malatya", "manisa": "Manisa",
+    "mardin": "Mardin", "mersin": "Mersin", "muğla": "Muğla", "muş": "Muş",
+    "nevşehir": "Nevşehir", "niğde": "Niğde", "ordu": "Ordu", "osmaniye": "Osmaniye",
+    "rize": "Rize", "sakarya": "Sakarya", "samsun": "Samsun", "siirt": "Siirt",
+    "sinop": "Sinop", "sivas": "Sivas", "şanlıurfa": "Şanlıurfa", "şırnak": "Şırnak",
+    "tekirdağ": "Tekirdağ", "tokat": "Tokat", "trabzon": "Trabzon", "tunceli": "Tunceli",
+    "uşak": "Uşak", "van": "Van", "yalova": "Yalova", "yozgat": "Yozgat",
+    "zonguldak": "Zonguldak",
+    # sık geçen ilçe / sanayi bölgeleri (ilan konumu ilçe adıyla yazılabiliyor)
+    "gebze": "Gebze", "çerkezköy": "Çerkezköy", "çorlu": "Çorlu", "pendik": "Pendik",
+    "kartal": "Kartal", "ümraniye": "Ümraniye", "beşiktaş": "Beşiktaş", "şişli": "Şişli",
+    "maltepe": "Maltepe", "tuzla": "Tuzla", "başakşehir": "Başakşehir", "çankaya": "Çankaya",
+    "yenimahalle": "Yenimahalle", "etimesgut": "Etimesgut", "gölbaşı": "Gölbaşı",
+    "nilüfer": "Nilüfer", "osmangazi": "Osmangazi", "çiğli": "Çiğli", "bornova": "Bornova",
+}
+
+
+def _ascii_tr(s: str) -> str:
+    """Türkçe harfleri ASCII karşılığına indirger: 'kırıkkale' -> 'kirikkale'.
+    İlan konumları çoğu zaman Türkçe karaktersiz yazılıyor ('Kirikkale', 'Sanliurfa')."""
+    return s.translate(str.maketrans("çğıöşüâîû", "cgiosuaiu"))
+
+
+# Arama için: hem Türkçe hem ASCII yazımı kabul edilir.
+TR_SEHIR_ADI = {**{a: ad for a, ad in TR_ILLER.items()},
+                **{_ascii_tr(a): ad for a, ad in TR_ILLER.items()},
+                # "İstanbul".lower() iki kod noktası üretir (i + birleştirici nokta);
+                # bu yazım gerçek verilerde görülüyor, ayrıca eklenir.
+                "i̇stanbul": "İstanbul", "i̇zmir": "İzmir"}
+
+TR_KALIP = re.compile(
+    r"(?i)\b(turkey|türkiye|turkiye|türkiyé|"
+    + "|".join(sorted({re.escape(a) for a in TR_SEHIR_ADI}, key=len, reverse=True))
+    + r")\b")
 UZAK_KALIP = re.compile(r"(?i)\b(remote|remoto|remota|uzaktan|work from home|wfh|distributed|anywhere|télétravail|fernarbeit)\b")
 GLOBAL_KALIP = re.compile(r"(?i)\b(remote[- ]?(global|worldwide|anywhere|first)|worldwide|globally|anywhere in the world|any (time ?zone|location))\b")
 EMEA_KALIP = re.compile(r"(?i)\b(emea|europe|european|eu[- ]based|cet|emea[- ]?remote)\b")
@@ -108,6 +183,9 @@ class Puan:
     alan_disi: bool = False
     bonuslar: list[str] = field(default_factory=list)
     uyarilar: list[str] = field(default_factory=list)
+    # Gelişmiş aramada doldurulur (bkz. isbot/uyum.py). None = model çalışmadı.
+    # Pozitif: iş adayın alanına ait. Negatif: sözcükleri paylaşan başka bir meslek.
+    uyum: float | None = None
 
 
 def _kidem_bul(job: Job) -> str:
@@ -434,11 +512,7 @@ def _ulke_etiketi(konum: str) -> str | None:
 # Türkiye'deki ilanda şehri okunur göstermek için. NEDEN: kullanıcı "Türkiye"yi
 # işaretlediğinde listede yalnız "Türkiye" yazıyordu; ilanın İstanbul ofisi mi
 # yoksa ülke içinden uzaktan mı olduğu karttan anlaşılmıyordu.
-TR_SEHIR_ADI = {"istanbul": "İstanbul", "i̇stanbul": "İstanbul", "ankara": "Ankara",
-                "izmir": "İzmir", "i̇zmir": "İzmir", "eskisehir": "Eskişehir",
-                "eskişehir": "Eskişehir", "bursa": "Bursa", "antalya": "Antalya",
-                "kocaeli": "Kocaeli", "adana": "Adana", "konya": "Konya",
-                "gebze": "Gebze", "tekirdag": "Tekirdağ", "tekirdağ": "Tekirdağ"}
+# (TR_SEHIR_ADI yukarıda TR_ILLER'den üretiliyor — tek kaynak.)
 
 
 def _tr_yer(konumlar: list[str]) -> str:
@@ -518,6 +592,24 @@ def _konum_degerlendir(job: Job, izinler: list[str]) -> tuple[str, bool]:
     return "konum belirtilmemiş", False
 
 
+# --- terim eşleştirme: ek ve çoğul toleransı -------------------------------------
+# SORUN: kelime sınırı (\b) hem Türkçe ekini hem İngilizce çoğulunu KESİYOR.
+#   "gömülü sistem"      ← "Gömülü sistemler için C++"   -> 0 eşleşme
+#   "kontrol sistemleri" ← "Kontrol sistemlerinde"        -> 0 eşleşme
+#   "control system"     ← "control systems experience"   -> 0 eşleşme
+# Bu sessiz bir kayıptı: sözlüğe terim eklenmiş görünüyor, gerçek metinde hiç
+# tutmuyordu. Türkçe eklemeli bir dil olduğu için bedeli Türkçe tarafta çok ağır.
+#
+# ÇÖZÜM: terimin SONUNA ek toleransı (\w*), ama yalnız yanlış eşleşme riski
+# düşük terimlerde:
+#   - çok kelimeli terim ("kontrol sistemleri")  -> zaten spesifik, güvenli
+#   - 7+ karakterli tek kelime ("aviyonik", "simulink") -> güvenli
+#   - kısa tek kelime ("java", "rust", "react", "go", "C") -> DOKUNULMAZ.
+#     Yoksa "java" -> "javascript", "react" -> "reactive" sahte eşleşmesi olur.
+def _ek_toleransli(terim: str) -> bool:
+    return " " in terim.strip() or len(terim) >= 7
+
+
 # Adı aynı zamanda sıradan bir İngilizce kelime olan teknolojiler.
 # BÜYÜK-KÜÇÜK HARF DUYARLI aranır; yoksa "candidates who excel at..." cümlesi Excel
 # yeteneği sayılır (ölçüldü: 1500 ilanın %62'sinde sahte eşleşme).
@@ -525,12 +617,59 @@ BELIRSIZ = {"Excel", "Go", "R", "C", "Rust", "Swift", "Julia", "Spark", "Scala",
             "Flask", "Django", "Access", "Word", "Shell", "Pascal", "Solid"}
 
 
-def _yetenek_ara(metin: str, ad: str) -> bool:
-    """Kelime sınırıyla arar: 'C' dili 'CI/CD' içinde eşleşmesin, 'Go' 'Google'da eşleşmesin."""
+@lru_cache(maxsize=1)
+def _esanlamli_harita() -> dict[str, list[str]]:
+    """Kanonik yetenek -> sözlükteki eşanlamlıları (yalnız 4+ karakterli olanlar).
+
+    NEDEN: İlan tarafında YALNIZCA kanonik ad aranıyordu. Bunun iki sessiz bedeli vardı:
+      - Türkçe ilan: kanonik "control systems", ilanda "kontrol sistemleri mühendisi"
+        yazıyor -> eşleşme YOK. TR panolarından gelen her ilan yetenek puanını
+        sistematik olarak kaybediyordu.
+      - İngilizce ilan: kanonik "computer vision", ilanda yalnız "OpenCV" geçiyor
+        -> yine eşleşme yok, oysa CV'deki yeteneği tespit eden terim TAM OLARAK oydu.
+    Kısa (<=3) eşanlamlılar ATLANIR: "re", "ida", "les", "dns" gibi kalemler sıradan
+    metinde eşleşip sahte puan üretir; kanonik ad zaten ayrıca aranıyor.
+    """
+    try:
+        import yaml as _yaml
+        from .yollar import kaynak_dosya
+        sozluk = _yaml.safe_load(
+            kaynak_dosya("isbot", "data", "skills.yaml").read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    harita: dict[str, list[str]] = {}
+    for kalemler in (sozluk or {}).values():
+        for kanonik, esanlamlilar in (kalemler or {}).items():
+            ek = [str(e) for e in (esanlamlilar or [])
+                  if len(str(e)) > 3 and str(e).lower() != kanonik.lower()]
+            if ek:
+                harita[kanonik] = ek
+    return harita
+
+
+@lru_cache(maxsize=4096)
+def _yetenek_kalibi(ad: str) -> re.Pattern:
+    """Kanonik ad + eşanlamlıları için TEK derlenmiş kalıp (ilan başına yeniden derlenmez)."""
+    terimler = [ad] + _esanlamli_harita().get(ad, [])
+    # Uzun terim önce: "kontrol sistemleri" , "kontrol sistem" sırası önemli değil ama
+    # alternation'da uzun olanın önce denenmesi eşleşmeyi daha bilgilendirici yapar.
+    terimler.sort(key=len, reverse=True)
     bayrak = 0 if ad in BELIRSIZ else re.IGNORECASE
     if re.fullmatch(r"[A-Za-z+#]{1,3}", ad):        # C, Go, R, C++, C#
-        return re.search(rf"(?<![\w+#]){re.escape(ad)}(?![\w+#])", metin, bayrak) is not None
-    return re.search(rf"(?<!\w){re.escape(ad)}(?!\w)", metin, bayrak) is not None
+        govde = "|".join(re.escape(t) for t in terimler)
+        return re.compile(rf"(?<![\w+#])(?:{govde})(?![\w+#])", bayrak)
+    # Ek/çoğul toleransı TERİM BAŞINA karar verilir: "control systems" ekli hâliyle
+    # de tutmalı ama aynı yetenek altındaki kısa bir eşanlamlı ("ida", "les")
+    # genişletilirse sahte eşleşme üretir.
+    parcalar = [re.escape(t) + (r"\w*" if _ek_toleransli(t) else r"(?!\w)")
+                for t in terimler]
+    return re.compile(rf"(?<!\w)(?:{'|'.join(parcalar)})", bayrak)
+
+
+def _yetenek_ara(metin: str, ad: str) -> bool:
+    """Kelime sınırıyla arar: 'C' dili 'CI/CD' içinde eşleşmesin, 'Go' 'Google'da eşleşmesin.
+    Kanonik adın yanı sıra sözlükteki eşanlamlıları da arar (bkz. _esanlamli_harita)."""
+    return _yetenek_kalibi(ad).search(metin) is not None
 
 
 def puanla(job: Job, profil: dict, idf: dict[str, float] | None = None) -> Puan:

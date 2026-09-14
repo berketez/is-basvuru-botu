@@ -4,14 +4,26 @@ CV'nizi alır, şirketlerin **herkese açık ilan API'lerinden** iş ilanı topl
 göre puanlar, **hayalet ilanları** ayıklar ve gerekçeli bir kısa liste çıkarır.
 
 Kişiye özel değildir: motor tamamen `config/profile.yaml` güdümlüdür, kendi CV'nizle
-çalışır. Profil dosyasını CV'nizden otomatik üretebilirsiniz.
+çalışır. Profil dosyasını CV'nizden otomatik üretebilirsiniz. Yazılım dışı meslekler
+de kapsanır — sağlık, hukuk, inşaat, muhasebe, lojistik, gıda, enerji, eğitim,
+turizm, satış, tekstil, kimya, madencilik, denizcilik ve savunma sanayii dâhil.
+
+İki arama kipi vardır:
+
+- **Hızlı arama** — sözlük ve kural motoru. Yetenek, rol ailesi, kıdem ve konum
+  eşleşmesine bakar. Açıklanabilir: her puanın gerekçesi yazılır.
+- **Gelişmiş arama** — buna ek olarak **yerel bir model**, ilanın gerçekten sizin
+  işiniz olup olmadığını anlam düzeyinde denetler. İnternet gerekmez, CV ve ilan
+  metni makineden çıkmaz.
 
 ```bash
 git clone https://github.com/berketez/is-basvuru-botu.git
 cd is-basvuru-botu
-pip install requests pyyaml rich pypdf flask
-python -m isbot panel
+./calistir.sh            # Windows: bkz. "Kurulum" başlığı
 ```
+
+`calistir.sh` kendi izole ortamını kurar (sistem Python'ına dokunmaz), eksik
+paketleri yükler ve paneli açar. Başka bir şey kurmana gerek yok.
 
 ## Neden scraping / bot yok
 
@@ -35,12 +47,44 @@ Onun yerine **ön kapıdan** girer:
 
 ## Kurulum
 
-### Seçenek A — hazır uygulama (Python kurmak gerekmez)
+Gereken tek şey **Python 3.10+**. Üç yol var; sırayla dene.
 
-macOS'ta `./kur.sh` bir kez koşturulur; uygulama `~/Applications/IsBasvuruBotu.app`
-altına kurulur (derleme çıktısı silinir, sistemde tek kopya kalır). Sonra çift tıkla:
-yerel sunucu açılır, tarayıcı kendiliğinden gelir; CV'yi sürükler, **Tara**'ya
-basarsın. Terminal görmezsin.
+### 1) Önerilen — `./calistir.sh`
+
+```bash
+./calistir.sh
+```
+
+Ne yapar: Python sürümünü denetler → `.venv/` içinde izole ortam kurar →
+eksik paketleri yükler → paneli açar. Sistem Python'ına **hiçbir şey yazmaz**.
+İkinci çalıştırmada kurulum adımlarını atlar, doğrudan açılır.
+
+Windows'ta (PowerShell):
+
+```powershell
+python -m venv .venv
+.venv\Scripts\pip install -r requirements.txt
+.venv\Scripts\python -m isbot panel
+```
+
+### 2) Elle — kendi ortamını yönetiyorsan
+
+```bash
+pip install -r requirements.txt
+python -m isbot panel
+```
+
+### 3) Çift tıklanan uygulama (.app) — macOS
+
+Terminal görmek istemiyorsan:
+
+```bash
+pip install -r requirements-paket.txt      # pyinstaller dahil
+./kur.sh
+```
+
+Uygulama `~/Applications/IsBasvuruBotu.app` altına kurulur, derleme çıktısı silinir,
+sistemde tek kopya kalır. Çift tıkla: yerel sunucu açılır, tarayıcı kendiliğinden gelir.
 
 - Veriler `~/is-basvuru-bot/` altında tutulur (profil, veritabanı, çıktılar).
 - Sunucu **yalnızca 127.0.0.1**'e bağlanır; ağdaki başka makineler erişemez.
@@ -50,25 +94,22 @@ basarsın. Terminal görmezsin.
 - **Bir şey ters giderse:** Finder'dan açılan uygulamanın terminal çıktısı yoktur;
   her şey `~/Library/Logs/IsBasvuruBotu.log` dosyasına yazılır. Önce oraya bak.
 
-Windows'ta ya da elle paketlemek için:
-
-```bash
-pip install pyinstaller
-pyinstaller --noconfirm isbot-panel.spec
-# macOS -> dist/IsBasvuruBotu.app     Windows -> dist/IsBasvuruBotu/IsBasvuruBotu.exe
-```
-
 macOS notu: paket ad-hoc imzalanır. Başka bir makineye kopyalarsan Gatekeeper uyarır;
 kullanıcı sağ tık → Aç demeli. Sorunsuz dağıtım için Apple geliştirici sertifikası +
-notarization gerekir (yıllık ücretli). `com.apple.provenance` niteliği yüzünden
-`codesign --deep` bazı sistemlerde hata verir; uygulamanın lokal çalışmasını etkilemez.
+notarization gerekir (yıllık ücretli).
 
-### Seçenek B — kaynaktan (geliştirme)
+### Sistem bağımlılığı: `pdftotext` (önerilir)
+
+PDF'ten metin çıkarmanın **asıl** yolu poppler'ın `pdftotext` aracıdır; sütunlu
+CV'lerde pypdf'ten belirgin biçimde daha iyi sonuç verir. Yoksa araç `pypdf`'e düşer
+ve çalışmaya devam eder — ama iki kolonlu bir CV'de metin karışabilir.
 
 ```bash
-pip install requests pyyaml rich pypdf flask
-python -m isbot panel      # web paneli
+brew install poppler                 # macOS
+sudo apt install poppler-utils       # Debian / Ubuntu
 ```
+
+Windows: <https://github.com/oschwartz10612/poppler-windows> (indir, `bin/` klasörünü PATH'e ekle)
 
 ## Kullanım (komut satırı)
 
@@ -82,6 +123,9 @@ python -m isbot cv-import ~/cv.pdf -o config/profile.local.yaml
 # 3) Tarayın
 python -m isbot tara --min-puan 25 -n 25
 
+#    Uyum hakemiyle (yerel model; ilanın gerçekten sizin işiniz olup olmadığını denetler)
+python -m isbot tara --gelismis -n 25
+
 # Yardımcılar
 python -m isbot dogrula greenhouse anthropic   # bir ATS anahtarını sına
 python -m isbot durum                          # veritabanı istatistikleri
@@ -90,6 +134,47 @@ python -m isbot panel                          # web panelini aç
 
 Çıktı: terminalde tablo + `out/ilanlar-<tarih>.md` içinde her ilan için gerekçe
 (hangi yetenekler eşleşti, neyi tutturamıyorsunuz, konum neden uygun, ilan kaç günlük).
+
+## Gelişmiş arama (uyum hakemi)
+
+Motor sözcüğe bakar, anlama bakmaz. İki tipik kırılma ölçüldü:
+
+- Türkçede **"kontrol"** hem *control systems* hem *quality control* demek.
+  kariyer.net'te "kontrol mühendisi" sorgusunun 51 sonucunun **tamamı** kalite
+  kontrol / kontrol odası ilanıydı.
+- CV'sinde "AutoCAD sertifikalı" yazan bir kontrol mühendisi adayına
+  **"CAD/CAM Operatör Yardımcısı"** ilanı 50,2 puanla kısa listenin ikinci
+  sırasından geldi. Başlık kalıbı tutuyor, yetenek tutuyor — ama iş adaya ait değil.
+
+Gelişmiş arama bu kararı anlam düzeyinde verir: adayın **ne olduğunu** ve **ne
+olmadığını** anlatan iki cümle kurulur, ilan ikisine de kıyaslanır, fark alınır.
+Yalnız "uygun mu" diye sormak yetmiyordu; "kalite kontrol mühendisi" ilanı da
+adaya benziyor. Ayrımı yaratan, adayın işi *olmayan* mesleklere olan yakınlığın
+düşülmesi.
+
+**Model elemez.** Kendisi de yanılıyor (ölçümde bir pazarlama ilanına olumlu skor
+verdi). Bu yüzden yalnız puanı dar bir bantta (±%18) düzeltir ve şüpheli bulduğunu
+`uyum şüpheli` etiketiyle işaretler. Eleme kararı motorun sert filtrelerinde kalır.
+
+Ölçülen (14 Eyl 2026):
+
+| | Yalnız motor | Gelişmiş arama |
+|---|---|---|
+| 10.834 ilan, 12 CV, alan isabeti | 52/60 | **54/60** |
+| Kötüleşen CV | — | **0** |
+
+Türkçe karışık havuzlarda fayda daha yüksek: savunma sanayii havuzunda CAD/CAM
+operatör ilanları negatife düştü, mühendislik ilanları pozitif kaldı.
+
+**Teknik:** çok dilli cümle gömme modeli (118M parametre), ONNX int8 — ~113 MB
+model + 16 MB sözlükleyici. PyTorch **gerekmez**. Model `.app` içine gömülür;
+kaynaktan çalıştırırken `./calistir.sh --model-indir` ile bir kez indirilir.
+Yoksa panelde gelişmiş seçeneği hiç görünmez, motor eskisi gibi çalışır.
+
+**Zayıf donanım:** en çok 400 ilan denetlenir ve denetim 90 saniyeyi aşarsa kalanı
+bırakılır. Denetlenmeyen ilan **kaybolmaz** — motorun kendi puanıyla listede kalır.
+Model dosyası donanıma özel değildir (genel int8; AVX512'ye bağlı sürüm bilerek
+kullanılmadı).
 
 ## Hayalet ilan tespiti
 
@@ -162,7 +247,21 @@ Anahtarı bulmak: şirketin kariyer sayfası URL'sinin son kısmı —
 Türk şirketlerinin büyük kısmı kariyer.net veya kendi sistemleri üzerinden ilan verir ve
 herkese açık API'leri yoktur. Yalnızca uluslararası ölçekte çalışanlar Lever/Greenhouse
 kullanır (Trendyol, Dream Games, Peak Games, iyzico, Midas, Picus, Intenseye doğrulandı).
-Türkiye kapsamının asıl çözümü yol haritasındaki **e-posta alarmı kanalıdır**.
+
+**Savunma sanayii ve havacılık** için ayrı bir kanal var. ASELSAN, TUSAŞ, ROKETSAN gibi
+kurumların herkese açık ATS ucu yoktur ve bir kısmının kendi sitesi bot korumasının
+arkasındadır — o kapılar zorlanmaz. Bunun yerine kariyer.net'in **sektör sayfaları**
+kullanılır (`/is-ilanlari/savunma+sanayi`, `/is-ilanlari/havacilik`): bunlar sitenin
+kendi sitemap'inde ilan ettiği, robots-izinli kanonik yollardır ve o sektördeki
+şirketlerin ilanlarını tek sayfada verir. Rol ailesi "havacılık/savunma" veya
+"kontrol/otomasyon" olarak tespit edilen profillerde bu sorgular otomatik eklenir.
+
+Ölçüldü (14 Eyl 2026): bu iki sorgu 152 ilan getirdi; içinde ASELSAN, ASİSGUARD, TEDEG,
+MENATEK, Lentatek ve Leonardo Turkey vardı. Sektör sayfası olduğu için karışık gelir
+(operatör, idari, üretim ilanları da dâhil) — ayıklama puanlamaya bırakılır.
+
+**Sınır:** bu kurumların ilanlarının tamamı kariyer.net'e düşmez; bir bölümü yalnız kendi
+kariyer portallarında durur. Araç onları göremez ve göremediğini söyler.
 
 ## Türk panoları ve nezaket kuralları
 
@@ -248,6 +347,20 @@ ISBOT_ORNEK=oku    python tests/test_regresyon.py   # ağa hiç çıkmadan ayrı
 ```
 
 Regresyon testi bu modu kullanır ve soketi kapatarak ağa çıkılmadığını doğrular.
+
+## Meslek kapsamı testi
+
+`tests/meslek_kapsami.py` — 16 sentetik CV (8 Türkçe + 8 İngilizce; makine, inşaat,
+muhasebe, hemşirelik, teknisyenlik, lojistik, mimarlık, öğretmenlik, kimya, pazarlama)
+doğru rol ailesine gidiyor mu? Ağ istemez, saniyeler sürer.
+
+Türkçe CV'ler bilerek **NFD** (ayrıştırılmış Unicode) yazılmıştır — `pdftotext`
+gerçeğini taklit eder. Normalizasyon kaldırılırsa testler anında kırmızıya döner.
+CV'lerin tamamı uydurmadır, gerçek kişi bilgisi içermez.
+
+```bash
+python tests/meslek_kapsami.py
+```
 
 ## Benchmark'ın ölçmediği şey
 

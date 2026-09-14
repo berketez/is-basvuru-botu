@@ -117,3 +117,19 @@
   olmali: [PyTorch, physics-informed, neural operator, CFD, HPC, CUDA]
   olmamali: [Unity, Solidity, SolidWorks, Snowflake]
   alan: [research, machine learning, ai, scientific, simulation]
+
+# TÜRKÇE CV — kapsamdaki en büyük boşluktu. 15 vakanın tamamı İngilizce/ASCII olduğu
+# için Unicode NFD hatası hiç yakalanmadı: pdftotext Türkçe harfleri AYRIŞTIRILMIŞ
+# verince ("Ç" = C + çengel) motor "Gömülü/Görü/Gökkubbe" içinde Go dilini,
+# "Çift/çalışma" içinde C dilini GÜÇLÜ yetenek olarak buldu ve adayı sistem
+# programcısı sandı. Bu dosya bilerek NFD yazılmıştır — normalizasyon kaldırılırsa
+# "olmamali" listesi anında kırmızıya döner.
+16_kontrol_havacilik_tr:
+  deneyim: 1.8
+  kidem: mid              # junior tespit edilir, tavan bir kademe yukarı = mid
+  olmali: [MATLAB, Simulink, LQR, PID, "control systems", "flight dynamics", UAV,
+           "autonomous systems", "adaptive control", CAD, LabVIEW]
+  olmamali: [Go, C, R, PyTorch, Kubernetes, Solidity, Unity]
+  alan: [control, automation, aerospace, avionics, autonomous, mechatronic,
+         kontrol, otomasyon, havacılık]
+  negatif: true          # yazılım/SaaS havuzunda kontrol mühendisine iş çıkmamalı

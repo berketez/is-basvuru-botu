@@ -488,6 +488,121 @@ def t26_hybrid_sozcugu_remote_beyanini_ezmez():
                             description="We are a fully remote company.")))
 
 
+# ---------------------------------------------------------------- 27
+# Türkçe PDF'lerde pdftotext harfleri AYRIŞTIRILMIŞ (NFD) veriyor: "Ç" tek karakter
+# değil, "C" + birleştirici çengel. Normalize edilmezse regex tabanı tek başına
+# duran bir harf sanıyor. ÖLÇÜLDÜ: bir kontrol mühendisi CV'sinde "Gömülü/Görü/
+# Gökkubbe" -> Go dili, "Çift/çalışma/Güç" -> C dili GÜÇLÜ yetenek çıktı; aday
+# C/Go sistem programcısı sanıldı ve kısa listeye Ubuntu çekirdek ilanları geldi.
+def t27_nfd_turkce_sahte_yetenek_uretmez():
+    import unicodedata
+    from isbot.cv_import import yetenek_tespit
+    ham = ("Gömülü sistemler için C++ · Görüntü işleme · Gökkubbe Teknoloji\n"
+           "Çift Anadal · çalışmalarım · Güç elektroniği · sensör füzyonu\n" * 3)
+    nfd = unicodedata.normalize("NFD", ham)
+    guclu, zayif = yetenek_tespit(nfd)
+    bulunan = set(guclu) | set(zayif)
+    sina("NFD metinde sahte 'Go' yok", False, "Go" in bulunan)
+    sina("NFD metinde sahte 'C' yok", False, "C" in bulunan)
+    sina("NFD metinde sahte 'R' yok", False, "R" in bulunan)
+    sina("NFD metinde gerçek C++ bulunur", True, "C++" in bulunan)
+
+
+# ---------------------------------------------------------------- 28
+# Kelime sınırı (\b) Türkçe ekini ve İngilizce çoğulunu KESİYORDU. Sözlüğe terim
+# eklenmiş görünüyor ama gerçek metinde hiç tutmuyordu — sessiz kayıp.
+def t28_ek_ve_cogul_toleransi():
+    from isbot.cv_import import _gecis_sayisi
+    sina("'gömülü sistem' <- 'Gömülü sistemler'", 1,
+         _gecis_sayisi("Gömülü sistemler için C++", "gömülü sistem"))
+    sina("'kontrol sistemleri' <- 'sistemlerinde'", 1,
+         _gecis_sayisi("Kontrol sistemlerinde deneyim", "kontrol sistemleri"))
+    sina("'control system' <- 'control systems'", 1,
+         _gecis_sayisi("control systems experience", "control system"))
+    # Kısa terimler GENİŞLETİLMEZ: yoksa java->javascript, react->reactive olur.
+    sina("'java' 'JavaScript'e yayılmaz", 0, _gecis_sayisi("JavaScript ile yazdım", "java"))
+    sina("ilan tarafı: 'Java' 'JavaScript'e yayılmaz", False,
+         _yetenek_ara("JavaScript developer", "Java"))
+    sina("ilan tarafı: 'React' 'reactive'e yayılmaz", False,
+         _yetenek_ara("reactive programming", "React"))
+
+
+# ---------------------------------------------------------------- 29
+# Türkiye tespiti YALNIZ 6 şehir tanıyordu (İstanbul/Ankara/İzmir/Eskişehir + ülke
+# adı). ÖLÇÜLDÜ: savunma sanayii havuzunda Konya, Bursa, Gaziantep ve Kırıkkale
+# ilanları "Türkiye değil" sayılıp konum filtresinde elendi — oysa Türkiye'de
+# savunma sanayii tam olarak o şehirlerde.
+def t29_turkiye_81_il():
+    from isbot.scoring import TR_KALIP, _tr_yer
+    for sehir in ["Konya", "Bursa", "Gaziantep", "Kırıkkale", "Kayseri", "Sanliurfa"]:
+        sina(f"'{sehir}' Türkiye sayılır", True, bool(TR_KALIP.search(sehir)))
+    sina("ASCII yazım da tanınır", " · Kırıkkale", _tr_yer(["Kirikkale, Turkey"]))
+    sina("yabancı şehir Türkiye sayılmaz", False, bool(TR_KALIP.search("Berlin")))
+
+
+# ---------------------------------------------------------------- 30
+# Türkçede "kontrol" hem control-systems hem quality-control demek. ÖLÇÜLDÜ:
+# kariyer.net "kontrol mühendisi" sorgusunun 51 sonucunun TAMAMI kalite kontrol /
+# kontrol odası ilanıydı. Rol kalıbı bunları kontrol mühendisliği sanıyordu.
+def t30_kalite_kontrol_ayrimi():
+    import re
+    import yaml as _y
+    from isbot.yollar import kaynak_dosya
+    from isbot.scoring import _alan_catismasi
+    roller = _y.safe_load(kaynak_dosya("isbot", "data", "roller.yaml").read_text(encoding="utf-8"))
+    ko = roller["kontrol_otomasyon"]["basliklar"][0]
+    sina("'Kalite Kontrol Mühendisi' kontrol ailesine GİRMEZ", False,
+         bool(re.search(ko, "Kalite Kontrol Mühendisi")))
+    sina("'Kontrol Sistemleri Mühendisi' GİRER", True,
+         bool(re.search(ko, "Kontrol Sistemleri Mühendisi")))
+    sina("kalite kontrol ilanı alan çatışması sayılır", "kalite_kontrol",
+         _alan_catismasi("Kalite Kontrol Mühendisi", {"kontrol_otomasyon", "havacilik_savunma"}))
+    # "People Ops" KISALTMASI yakalanmıyordu; bir kontrol mühendisinin kısa
+    # listesinde "People Ops Onboarding Specialist" 23,8 puanla duruyordu.
+    sina("'People Ops' İK sayılır", "insan_kaynaklari",
+         _alan_catismasi("People Ops Onboarding Specialist, EMEA", {"kontrol_otomasyon"}))
+
+
+# ---------------------------------------------------------------- 31
+# Uyum hakemi (gelişmiş arama) OPSİYONELDİR. Model yoksa ya da onnxruntime kurulu
+# değilse motor eskisi gibi çalışmalı — import bile çökmemeli.
+def t31_uyum_modulu_opsiyonel():
+    from isbot import uyum
+    hazir, sebep = uyum.kullanilabilir()
+    sina("kullanilabilir() (bool, str) döner", True,
+         isinstance(hazir, bool) and isinstance(sebep, str))
+    # Profil cümlesi model olmasa da kurulabilmeli (saf metin işi).
+    cumle = uyum.profil_cumlesi({"kimlik": {"deneyim_yil": 2.0},
+                                 "yetenekler": {"guclu": {"control systems": 1.0}},
+                                 "rol_aileleri": {"kontrol_otomasyon": {}}})
+    sina("profil cümlesi Türkçe karşılığı da içerir", True, "kontrol sistemleri" in cumle)
+    sina("profil cümlesi boş değil", True, len(cumle) > 40)
+
+
+# ---------------------------------------------------------------- 32
+# Sözlüğe 20 yazılım-dışı meslek alanı eklendi; rol ailesi olmadan yarım kalıyordu
+# (yetenek tanınıyor, hedef rol yine genel_yazilim çıkıyordu).
+def t32_yazilim_disi_meslekler():
+    import re
+    import yaml as _y
+    from isbot.yollar import kaynak_dosya
+    roller = _y.safe_load(kaynak_dosya("isbot", "data", "roller.yaml").read_text(encoding="utf-8"))
+
+    def aile(baslik):
+        return [ad for ad, t in roller.items() if any(re.search(k, baslik) for k in t["basliklar"])]
+
+    for baslik, beklenen in [("Yoğun Bakım Hemşiresi", "saglik"),
+                             ("Şantiye Şefi", "insaat"),
+                             ("Ön Muhasebe Elemanı", "muhasebe"),
+                             ("Lojistik Uzmanı", "lojistik"),
+                             ("Avukat", "hukuk"),
+                             ("Okul Öncesi Öğretmeni", "egitim")]:
+        sina(f"'{baslik}' -> {beklenen}", True, beklenen in aile(baslik))
+    # Yazılım tarafı bozulmamalı.
+    sina("'Aviyonik Mühendisi' havacılık ailesinde", True,
+         "havacilik_savunma" in aile("Aviyonik Mühendisi"))
+
+
 def main() -> int:
     for fn in [v for k, v in sorted(globals().items()) if k.startswith("t") and callable(v)
                and k[1].isdigit()]:

@@ -1,298 +1,133 @@
-# Genel yetenek sözlüğü — kişiye özel DEĞİL.
-# cv_import bu listeyi CV metninde arar, bulduklarını profile.yaml'a yazar.
-# Biçim:  KanonikAd: [eşanlamlı, eşanlamlı, ...]
-# Yeni alan eklemek isteyen buraya satır ekler; motor kodu değişmez.
-
-diller:
-  Python: [python, py3]
-  JavaScript: [javascript, js, ecmascript]
-  TypeScript: [typescript, ts]
-  Java: [java]
-  C: []
-  C++: ["c++", cpp]
-  "C#": ["c#", csharp, "dotnet", ".net"]
-  Go: [golang]
-  Rust: [rust]
-  Ruby: [ruby, rails]
-  PHP: [php]
-  Swift: [swift]
-  Kotlin: [kotlin]
-  Scala: [scala]
-  R: []
-  MATLAB: [matlab]
-  Fortran: [fortran]
-  Julia: [julia]
-  SQL: [sql, mysql, sqlite, t-sql, plsql]
-  PostgreSQL: [postgresql, postgres]
-  MongoDB: [mongodb, mongo]
-  Redis: [redis, memcached]
-  Bash: [bash, shell, zsh, "shell scripting"]
-
-ml_ai:
-  PyTorch: [pytorch, torch]
-  TensorFlow: [tensorflow, keras]
-  JAX: [jax, flax]
-  MLX: [mlx]
-  scikit-learn: [scikit-learn, sklearn]
-  XGBoost: [xgboost]
-  LightGBM: [lightgbm]
-  CatBoost: [catboost]
-  LLM: [llm, "large language model", gpt, transformer]
-  RAG: [rag, "retrieval augmented", "retrieval-augmented"]
-  "prompt engineering": ["prompt engineering", prompting]
-  "fine-tuning": ["fine-tuning", finetuning, lora, peft, qlora]
-  "vector database": ["vector database", pinecone, weaviate, qdrant, chromadb, faiss]
-  LangChain: [langchain, llamaindex]
-  "computer vision": ["computer vision", opencv, yolo, "image segmentation"]
-  NLP: [nlp, "natural language processing", spacy, "hugging face", huggingface]
-  "reinforcement learning": ["reinforcement learning", rlhf, ppo, sac, "deep rl"]
-  "neural operator": ["neural operator", "fourier neural operator", deeponet, fno]
-  "physics-informed": ["physics-informed", pinn, "physics informed"]
-  MLOps: [mlops, mlflow, "weights & biases", wandb, kubeflow]
-  "diffusion models": ["diffusion model", "stable diffusion"]
-  CUDA: [cuda, cudnn, triton]
-  Ollama: [ollama, "lm studio", llama.cpp, vllm]
-
-veri:
-  NumPy: [numpy]
-  SciPy: [scipy]
-  pandas: [pandas]
-  Spark: [spark, pyspark]
-  Kafka: [kafka]
-  Airflow: [airflow, dagster, prefect]
-  dbt: [dbt]
-  Snowflake: [snowflake, bigquery, redshift]
-  ETL: [etl, elt, "data pipeline"]
-
-web_backend:
-  FastAPI: [fastapi]
-  Flask: [flask]
-  Django: [django]
-  "Node.js": ["node.js", nodejs, express]
-  React: [react, "react.js", nextjs, "next.js"]
-  Vue: [vue, "vue.js", nuxt]
-  REST: ["rest api", restful]
-  GraphQL: [graphql]
-  WebSocket: [websocket, websockets]
-  gRPC: [grpc, protobuf]
-
-altyapi:
-  Docker: [docker, containerization]
-  Kubernetes: [kubernetes, k8s, helm]
-  AWS: [aws, ec2, s3, lambda, sagemaker]
-  GCP: [gcp, "google cloud", "vertex ai"]
-  Azure: [azure, "azure openai", "copilot studio", "ai foundry"]
-  Terraform: [terraform, pulumi]
-  "CI/CD": ["ci/cd", jenkins, "github actions", gitlab ci]
-  Linux: [linux, ubuntu, debian, "unix"]
-  HPC: [hpc, slurm, mpi, "high performance computing", openmp]
-  Git: [git, github, gitlab]
-
-bilimsel:
-  # ANSYS BİLEREK YOK: hem CFD hem FEA için kullanılıyor, tek başına akışkan
-  # dinamiği kanıtı değil. Ayrı kalem olarak "simulation tools" altında.
-  CFD: [cfd, "computational fluid dynamics", openfoam, fluent, "star-ccm"]
-  "Navier-Stokes": ["navier-stokes", "navier stokes"]
-  LES: [les, "large eddy", dns, rans, turbulence]
-  "spectral method": ["spectral method", "pseudo-spectral", pseudospectral, fft]
-  FEA: [fea, "finite element", fem, abaqus, nastran, "ls-dyna"]
-  "simulation tools": [ansys, comsol, "hyperworks", "altair"]
-  "structural mechanics": ["structural mechanics", "solid mechanics", buckling]
-  Cantera: [cantera, "chemical equilibrium", "combustion"]
-  "orbital mechanics": ["orbital mechanics", astrodynamics, "n-body"]
-  "signal processing": ["signal processing", dsp, "fourier analysis"]
-  "numerical methods": ["numerical method", "finite difference", "finite volume"]
-  Simulation: [simulation, "monte carlo"]
-
-guvenlik:
-  "reverse engineering": ["reverse engineering", re, decompilation]
-  Ghidra: [ghidra, pyghidra, ida, "ida pro", radare2, binary ninja]
-  "binary analysis": ["binary analysis", "malware analysis", "static analysis", mach-o, elf]
-  Frida: [frida, dynamic instrumentation]
-  Capstone: [capstone, disassembl]
-  "penetration testing": ["penetration testing", pentest, "red team", burp, metasploit]
-  Cryptography: [cryptography, cryptographic, encryption, tls]
-  YARA: [yara]
-
-gomulu:
-  "embedded systems": ["embedded system", "embedded software", firmware, rtos,
-                       "gömülü sistem", "gömülü yazılım", "gömülü kontrol"]
-  STM32: [stm32, "arm cortex", microcontroller, mcu, "mikrodenetleyici", arduino]
-  PCB: [pcb, altium, kicad, "circuit design"]
-  # "AutoCAD" içindeki "cad" kelime sınırına takılıp eşleşmiyordu; "Fusion360"
-  # (boşluksuz) de kaçıyordu. Yazım varyantları açıkça listelenir.
-  CAD: [cad, autocad, solidworks, "fusion 360", fusion360, catia, freecad, nx, inventor]
-
-arac:
-  LaTeX: [latex, xelatex, pdflatex]
-  Playwright: [playwright, selenium, puppeteer]
-  Jupyter: [jupyter, notebook]
-  Tableau: [tableau, "power bi", powerbi]
-  Excel: [excel, "vba"]
-
-# --- frontend / tasarım (ilk sürümde eksikti: junior web CV'sinde sadece 2 yetenek bulunuyordu) ---
-frontend:
-  HTML: [html, html5]
-  CSS: [css, css3, sass, scss, less, tailwind, "tailwind css"]
-  Bootstrap: [bootstrap]
-  jQuery: [jquery]
-
-# --- oyun motorları ve blockchain: rol ailelerinin tetikleri sözlükte YOKSA aile
-# hiç açılmaz. Ölçüldü: Unity ve Solidity eksikti, oyun ve blockchain CV'leri
-# kendi ailelerini kaybediyordu.
-oyun_motoru:
-  Unity: [unity, unity3d]
-  Unreal: [unreal, "unreal engine", udk]
-  Godot: [godot]
-  "gameplay programming": ["gameplay programming", "game programming", "level design"]
-
-blockchain_tek:
-  Solidity: [solidity]
-  Ethereum: [ethereum, evm, "l2", rollup]
-  "smart contracts": ["smart contract", "smart contracts"]
-  DeFi: [defi, "decentralized finance", web3]
-  Foundry: [foundry, hardhat, truffle]
-  WordPress: [wordpress, woocommerce, elementor]
-  Webpack: [webpack, vite, rollup, babel]
-  "responsive design": ["responsive design", "responsive web", "mobile-first"]
-  Figma: [figma, sketch, "adobe xd", invision]
-  "UI/UX": ["ui/ux", "user interface", "user experience", wireframe]
-  Shopify: [shopify, magento, prestashop]
-  SEO: [seo, "search engine optimization"]
-  Accessibility: [accessibility, wcag, a11y]
-
-# --- güvenlik operasyonu / sertifikalar (pentester CV'si için) ---
-guvenlik_ops:
-  SIEM: [siem, splunk, "elastic siem", qradar, sentinel]
-  "incident response": ["incident response", "incident triage", "threat hunting", soc]
-  Nmap: [nmap]
-  "Burp Suite": ["burp suite", burp]
-  Metasploit: [metasploit]
-  Wireshark: [wireshark, tcpdump]
-  OSCP: [oscp, "offensive security certified"]
-  CEH: [ceh, "certified ethical hacker"]
-  CISSP: [cissp]
-  "vulnerability management": ["vulnerability scanning", "vulnerability management", nessus, qualys]
-  "IDA Pro": ["ida pro", "ida"]
-  "cloud security": ["cloud security", "iam", "zero trust"]
-
-# --- gözlemlenebilirlik / operasyon (SRE CV'si için) ---
-operasyon:
-  Prometheus: [prometheus, grafana, "victoria metrics"]
-  Ansible: [ansible, chef, puppet, saltstack]
-  Jenkins: [jenkins]
-  Observability: [observability, "distributed tracing", opentelemetry, jaeger, datadog]
-  "incident management": ["on-call", "oncall", "incident management", sre, "error budget"]
-  Nginx: [nginx, apache, haproxy, envoy]
-  "load testing": ["load testing", "performance testing", k6, jmeter]
-  Networking: [networking, tcp/ip, dns, vpn, bgp, "network troubleshooting"]
-
-# --- iş / ürün / analitik (teknik olmayan roller de taransın) ---
-urun_analitik:
-  "product management": ["product manager", "product management", roadmap, "user stories"]
-  Agile: [agile, scrum, kanban, jira]
-  "A/B testing": ["a/b testing", "experimentation", "split test"]
-  "business intelligence": ["business intelligence", "bi", looker]
-  "data analysis": ["data analysis", "data analytics", "statistical analysis"]
-  CRM: [crm, salesforce, hubspot]
-
-# --- kontrol & otomasyon -------------------------------------------------------
-# NEDEN EKLENDİ: sözlükte kontrol mühendisliği hiç yoktu. Türk bir kontrol/otomasyon
-# mühendisinin CV'sinde MATLAB dışında TEK bir kalem tanınmıyordu; motor onu
-# "genel yazılımcı" sayıp uzaktan web ilanları öneriyordu.
-#
-# İKİ KURAL:
-#  1) KANONİK AD İNGİLİZCE. Kanonik ad hem uluslararası arama sorgusu olarak
-#     kullanılıyor hem de ilan metninde aranıyor. Türkçe kanonik ("uçuş dinamiği")
-#     yazılırsa Greenhouse/Lever sorgusu anlamsız olur ve İngilizce ilanda hiç
-#     eşleşmez. Türkçe karşılık EŞANLAMLI olarak yazılır — TR panolarında o tutar.
-#  2) EŞANLAMLILAR DÜZ METİN. re.escape edilir, regex DEĞİL. Tireli/boşluklu
-#     varyantlar ayrı ayrı: "closed-loop" VE "closed loop".
-kontrol_otomasyon:
-  "control systems": ["control system", "control systems", "control theory", "control engineering",
-                      "closed-loop", "closed loop", "feedback control",
-                      "kontrol sistem", "kontrol sistemleri", "kontrol teorisi",
-                      "kapalı çevrim", "geri besleme", "kontrol mühendis"]
-  PID: ["pid control", "pid controller", "pid kontrol", "pid denetleyici"]
-  LQR: [lqr, lqg, "linear quadratic"]
-  "adaptive control": ["adaptive control", mrac, "model reference adaptive", "gain scheduling",
-                       "robust control", "optimal control", "sliding mode",
-                       "adaptif kontrol", "model referans adaptif", "gürbüz kontrol",
-                       "optimal kontrol", "kayan kipli"]
-  "state-space": ["state-space", "state space", "kalman", "kalman filter", "observer design",
-                  "durum uzayı", "kalman filtresi", "gözlemci tasar"]
-  Simulink: [simulink, simscape, stateflow, "model-based design", "model based design",
-             "matlab onramp"]
-  LabVIEW: [labview, veristand]
-  PLC: [plc, scada, "ladder logic", "tia portal", codesys, "industrial automation",
-        "endüstriyel otomasyon"]
-  "system identification": ["system identification", "system dynamics", "plant model",
-                            "sistem tanımlama", "sistem dinamiği", "sistem dinamiğini"]
-  "autonomous systems": ["autonomous system", "autonomous systems", "autonomous driving",
-                         "self-driving", "self driving", adas, "autonomous control",
-                         "otonom sistem", "otonom sistemler", "otonom sürüş", "otonom araç",
-                         "otonom kontrol", "otonom iniş"]
-  "sensor fusion": ["sensor fusion", imu, ahrs, "inertial measurement",
-                    "sensör füzyon", "ataletsel ölçüm"]
-  ROS: [ros2, "robot operating system"]
-  Robotics: [robotics, "motion planning", manipulator, kinematics,
-             robotik, robotiğ, "manipülatör", "kinematik", "yörünge planlama"]
-
-# --- havacılık, uzay & savunma -------------------------------------------------
-havacilik_savunma:
-  "flight dynamics": ["flight dynamics", "flight mechanics", "aerodynamics", "6-dof", "6 dof",
-                      "uçuş dinamiği", "uçuş mekaniği", "aerodinamik", "uçak dinamik"]
-  autopilot: [autopilot, "flight control", "guidance navigation", "gnc",
-              otopilot, "uçuş kontrol", "güdüm"]
-  UAV: [uav, drone, "unmanned aerial", quadcopter, multirotor, "fixed wing",
-        "iha", "insansız hava", "döner kanat", "sabit kanat", "kamikaze iha"]
-  avionics: [avionics, "flight computer", "do-178", do178,
-             aviyonik, aviyoniğ, "uçuş bilgisayarı"]
-  propulsion: [propulsion, thruster, "rocket engine", "jet engine", turbojet, turbofan,
-               "itki", "roket motoru"]
-  rocketry: ["sounding rocket", "launch vehicle", ballistic, missile,
-             "roket sistem", "fırlatma", "balistik", "füze"]
-  satellite: [satellite, spacecraft, cubesat, "orbital",
-              uydu, "uzay aracı", "yörünge mekaniği"]
-  aerospace: [aerospace, aeronautical, aeronautics,
-              "havacılık", "hava aracı", "havacılık ve uzay"]
-  "hardware-in-the-loop": ["hardware-in-the-loop", "hardware in the loop",
-                           "software-in-the-loop", "model-in-the-loop", "donanım döngüde"]
-  "defence industry": [defence, "defense industry", "defense systems", military,
-                       "savunma sanayi", "savunma sistemleri", "askeri", "milli teknoloji",
-                       "savunma teknoloji"]
-
-# --- güç & yüksek gerilim elektroniği ------------------------------------------
-guc_elektronik:
-  "power electronics": ["power electronics", inverter, "dc-dc", "dc dc",
-                        "motor driver", "motor drive",
-                        "güç elektroniği", "evirici", "motor sürücü", "güç dönüştürücü"]
-  "high voltage": ["high voltage", "high frequency", plasma, discharge,
-                   "yüksek gerilim", "yüksek frekans", "plazma", "deşarj"]
-  "analog circuits": ["analog circuit", "circuit design", "schematic capture",
-                      "analog devre", "devre tasarım", "şematik"]
-
 # =============================================================================
-# --- YAZILIM DIŞI MESLEK ALANLARI ---
+# YETENEK SÖZLÜĞÜ GENİŞLETME ÖNERİSİ — yazılım DIŞI meslek alanları
 # =============================================================================
-# NEDEN: sözlüğün tamamı yazılım/mühendislik eksenindeydi. Tıp, hukuk, inşaat,
-# muhasebe, lojistik, gıda, eğitim, turizm, tekstil, enerji, tarım, denizcilik,
-# madencilik, satış ve İK alanlarında TEK kalem yoktu; o alanlardan gelen bir CV
-# motorda sessizce çöküyordu (hiç yetenek tanınmıyor, güçlü liste boş kalıyor).
+# DURUM: BİRLEŞTİRİLDİ (14 Eyl 2026) — bu bloklar isbot/data/skills.yaml içine
+# alındı. Dosya ARŞİV olarak duruyor: aşağıdaki gerekçeler, ESCO değerlendirmesi
+# ve 'bilinen çakışmalar' listesi ileride sözlük genişletilirken tekrar gerekli.
+# Birleştirme sonrası yapılan düzeltmeler: ANSYS CFD eşanlamlısı olmaktan çıkarıldı
+# (FEA aracı da), HVAC/CNC/Welding çift kanonikleri tekilleştirildi, teknisyen
+# düzeyi kalemler (hidrolik, pnömatik, önleyici bakım, arıza analizi) eklendi.
 #
-# KAYNAK: ESCO (AB meslek sınıflaması) yalnız KAPSAM HARİTASI olarak kullanıldı,
-# veri kaynağı olarak DEĞİL. İki ölçülen sebep: (1) ESCO'da Türkçe yok — API'ye
-# language=tr verilince hata değil, sessizce boş sonuç dönüyor; (2) ESCO "skill"
-# etiketleri fiil öbeği ("operate welding equipment"), bu motorun aradığı türden
-# anahtar sözcük değil. Kalemler elle küratörlendi.
+# Özgün durum : ÖNERİ / TASLAK. Gözden geçirilip onaylandıktan
+#               sonra blok blok `isbot/data/skills.yaml` içine kopyalanmalıdır.
+# Üretim tarihi: 2026-09-14
+# Üreten      : architect ajanı (elle küratörlük + ESCO kapsam haritası)
 #
-# ÇAKIŞMA DENETİMİ YAPILDI: mevcut kanoniklerle kesişim yok. Yazılım bağlamında
-# yanlış eşleşen terimler bilerek unvanlaştırıldı ("onboarding" -> "Onboarding
-# Specialist") ya da dışarıda bırakıldı (blockchain'deki `foundry` metal dökümüne,
-# Ansible'daki `chef` aşçılığa yazılmadı).
-# Ayrıntılı gerekçe ve bilinen çakışmalar: docs/skills-genisletme-onerisi.yaml
+# -----------------------------------------------------------------------------
+# NEDEN BU DOSYA VAR
+# -----------------------------------------------------------------------------
+# Mevcut `skills.yaml` 176 kalem taşıyor ve tamamı yazılım/mühendislik ekseninde.
+# Tıp, hukuk, inşaat, muhasebe, lojistik, gıda, eğitim, turizm, tekstil, enerji,
+# tarım, denizcilik, madencilik, satış ve insan kaynakları alanlarında TEK BİR
+# kalem bile yok. Bu alanlardan gelen bir CV motorda sessizce çöküyor: hiçbir
+# yetenek tanınmıyor, `guclu` listesi boş kalıyor, `scoring.puanla` "CV'den
+# hiçbir teknik yetenek eşleşmedi" uyarısını basıyor ve kullanıcıya alakasız
+# ilan öneriliyor.
+#
+# -----------------------------------------------------------------------------
+# KAYNAK: ESCO KULLANILDI MI?
+# -----------------------------------------------------------------------------
+# ESCO (AB'nin açık meslek/yetenek sınıflaması) KAPSAM HARİTASI olarak kullanıldı,
+# VERİ KAYNAĞI olarak KULLANILMADI. Ölçülen gerekçeler (2026-09-14):
+#
+#   1) ESCO'da TÜRKÇE YOK. Resmî dil listesi 28 dil: 24 AB dili + İzlandaca,
+#      Norveççe, Arapça, Ukraynaca. Türkçe listede değil. `ec.europa.eu/esco/api`
+#      ucuna `language=tr` verildiğinde API hata DÖNDÜRMÜYOR, sessizce İngilizceye
+#      düşüyor ve `total: 0` veriyor. Bu araç birincil olarak Türk iş panolarını
+#      tarıyor; sözlüğün en değerli yarısı olan Türkçe eşanlamlılar ESCO'dan
+#      hiçbir biçimde gelemez.
+#
+#   2) ESCO "skill" etiketleri FİİL ÖBEĞİ, anahtar sözcük değil. Ölçülen örnekler:
+#        welding   -> "operate welding equipment", "apply thermite welding techniques"
+#        nursing   -> "implement nursing care", "diagnose nursing care"
+#        legal     -> "revise legal documents", "comply with legal regulations"
+#        teaching  -> "adapt teaching to target group"
+#      Motor `re.escape` ile kelime sınırlı TAM METİN araması yapıyor
+#      (`cv_import._gecis_sayisi`, `scoring._yetenek_kalibi`). Bu üç kelimelik
+#      fiil öbekleri ne bir CV'de ne bir ilanda birebir geçer. 13.900 ESCO
+#      yeteneğini içe aktarmak dosyayı ~15 kat şişirip eşleşmeyi artırmaz.
+#
+#   3) ESCO "occupation" etiketleri isim öbeği (welder, nurse, accountant, chef)
+#      ve GERÇEKTEN işe yarar — ama bunlar yetenek değil MESLEK ADI; bu projede
+#      karşılığı `roller.yaml` içindeki `tr_pozisyonlar` alanıdır, `skills.yaml`
+#      değil. Yine de Türkçeye elle çevrilmeleri gerekir.
+#
+#   Lisans engeli YOK: ESCO, 2011/833/EU sayılı Komisyon Kararı uyarınca ticari
+#   dahil her amaçla, kaynak gösterilmesi koşuluyla serbestçe kullanılabilir.
+#   Engel teknik: Türkçe yokluğu + fiil öbeği etiketleme.
+#
+#   Denenen alternatifler:
+#     - Wikidata meslek taksonomisi (Q28640 alt sınıfları): Türkçe etiketli
+#       yalnızca 432 meslek var ve gürültülü ("pin-up kızı", "Çerçi",
+#       "Aquilifer"). Otomatik içe aktarım için kullanılamaz.
+#     - O*NET: kapsamlı ama YALNIZCA İngilizce; Türkçe sorunu aynen sürüyor.
+#
+#   Sonuç: bu bloklar ELLE küratörlendi. ESCO/O*NET yalnızca "hangi sektörü
+#   atladık?" sorusunu yanıtlayan kontrol listesi olarak kullanıldı.
+#
+# -----------------------------------------------------------------------------
+# BİÇİM KURALLARI (mevcut skills.yaml ile birebir aynı)
+# -----------------------------------------------------------------------------
+#   1) KANONİK AD İNGİLİZCE. Kanonik ad hem uluslararası ilan sorgusu olarak
+#      kullanılıyor hem de ilan metninde aranıyor.
+#   2) TÜRKÇE KARŞILIK EŞANLAMLI olarak yazılır. Türk panolarında ilan Türkçedir.
+#   3) EŞANLAMLILAR DÜZ METİNDİR, regex DEĞİL — `re.escape` ediliyor. `[- ]` gibi
+#      karakter sınıfı YAZILMAZ; tireli ve boşluklu varyant AYRI AYRI yazılır.
+#   4) 4 KARAKTERDEN KISA EŞANLAMLI YOK. Sebep kozmetik değil: `scoring.
+#      _esanlamli_harita` `len(e) > 3` süzgeci uyguluyor, yani 3 harfli bir
+#      eşanlamlı ilan tarafında SESSİZCE atılır ama CV tarafında sayılır. Bu
+#      asimetri "CV'de var, ilanda yok" biçiminde sahte eksik yetenek üretir.
+#      Bu yüzden GMP, ADR, CNC, HSE, OEE, SPC, SGK, ÇED gibi 3 harfli kısaltmalar
+#      burada tek başına DEĞİL, hep bir sözcükle birlikte yazıldı
+#      ("adr belgesi", "cnc torna", "hse uzmanı", "çed raporu").
+#   5) KANONİK ADLAR GLOBAL BENZERSİZ olmalı. `cv_import.yetenek_tespit` skoru
+#      düz bir `Counter[kanonik]` içinde tutuyor; aynı ad iki kategoride geçerse
+#      biri diğerini sessizce ezer.
+#
+# -----------------------------------------------------------------------------
+# UYARI — TÜRKÇE EK SORUNU (ölçüldü, mevcut sözlükte de var)
+# -----------------------------------------------------------------------------
+# Eşleştirici `(?<!\w)terim(?!\w)` kalıbını kullanıyor. Türkçe eklemeli bir dil
+# olduğu için EK ALMIŞ BİÇİM EŞLEŞMEZ. Ölçülen:
+#     "hemşire"          "Yoğun bakım hemşiresi"   -> 0 eşleşme
+#     "muhasebe"         "muhasebeci"              -> 0 eşleşme
+#     "kontrol mühendis" "Kontrol Mühendisi"       -> 0 eşleşme  (mevcut sözlük!)
+#     "gömülü sistem"    "Gömülü sistemler"        -> 0 eşleşme  (mevcut sözlük!)
+# Mevcut skills.yaml'daki "gövdeyi yaz, ek kendiliğinden tutar" varsayımı YANLIŞ.
+# Bu dosyada ek almış biçimler AÇIKÇA listelendi ("hemşire", "hemşireler",
+# "hemşiresi", "hemşirelik"). Kalıcı çözüm bu dosyanın işi değildir; motor
+# tarafında eşleştiriciye Türkçe ek toleransı (`(?!\w)` yerine sınırlı bir
+# `\w{0,3}` kuyruğu) eklenmesi ayrı bir karar olarak değerlendirilmelidir.
+#
+# -----------------------------------------------------------------------------
+# BİLİNEN ÇAKIŞMALAR (bilerek kaçınıldı)
+# -----------------------------------------------------------------------------
+#   - "chef" eşanlamlı olarak YAZILMADI: mevcut sözlükte `Ansible: [..., chef, ...]`
+#     var; aşçılığa "chef" eklenirse DevOps CV'si aşçı sayılır.
+#   - "montaj" tek başına YAZILMADI: Türkçede hem "video montajı" hem "montaj
+#     hattı" demek; iki ayrı meslek alanını birbirine karıştırır.
+#   - "logo" tek başına YAZILMADI (muhasebe yazılımı ⟷ marka logosu).
+#   - "opera" tek başına YAZILMADI, yalnız "opera pms".
+#   - "kaynak" tek başına YAZILMADI: Türkçede "welding" ve "resource/source" aynı
+#     sözcük ("insan kaynakları", "veri kaynağı", "kaynakça").
+#   - "composite", "casting", "offshore", "navigation", "galileo" tek başına
+#     yazılmadı: yazılım/havacılık bağlamında sahte eşleşme üretiyorlar.
+#   - "foundry" YAZILMADI: mevcut sözlükte `Foundry: [foundry, hardhat, truffle]`
+#     (Ethereum aracı) olarak duruyor; metal dökümüne eklenirse blockchain CV'si
+#     dökümhaneci sayılır.
+#   - Şu kanonikler ÖLÇÜLDÜĞÜ İÇİN unvanlaştırıldı — çıplak hâlleri 15 yazılım
+#     test CV'sinde ve yazılım bağlamlı deneme metninde sahte eşleşti:
+#       "calibration"  -> "Metrology and Calibration"  (model/sensor calibration)
+#       "mediation"    -> "Mediation and Arbitration"  ("ad mediation", oyun CV'si)
+#       "surveying"    -> "Land Surveying"
+#       "housekeeping" -> "Hotel Housekeeping"         ("database housekeeping")
+#       "onboarding"   -> "Employee Onboarding"        ("user onboarding")
+#   - "beyanname" tek başına YAZILMADI: hem vergi hem GÜMRÜK beyannamesi demek;
+#     ölçüldü, lojistik CV'sinde "Tax Compliance" kalemini tetikliyordu.
 # =============================================================================
 
+
+# --- sağlık / klinik -----------------------------------------------------------
 saglik_klinik:
   Nursing: ["nursing", "nurse", "hemşire", "hemşireler", "hemşiresi", "hemşirelik"]
   "Patient Care": ["patient care", "hasta bakımı", "hasta bakım", "hasta kabul", "hasta takibi"]
@@ -453,15 +288,15 @@ uretim_kalite:
   "Metrology and Calibration": ["kalibrasyon", "ölçüm belirsizliği", "kalibrasyon takibi", "metroloji", "kalibrasyon sertifikası"]
   "Dimensional Inspection": ["dimensional inspection", "boyutsal kontrol", "kumpas", "mikrometre", "koordinat ölçüm", "cmm ölçümü"]
   "Non-Destructive Testing": ["non-destructive testing", "tahribatsız muayene", "ultrasonik muayene", "penetrant muayene", "radyografik muayene"]
-  "CNC Machining": ["cnc torna", "cnc freze", "cnc tezgah", "cnc programlama", "talaşlı imalat", "cnc torna", "cnc freze", "cnc tezgah", "cnc operatörü", "cnc programlama", "talaşlı imalat", "cnc işleme"]
+  "CNC Machining": ["cnc torna", "cnc freze", "cnc tezgah", "cnc operatörü", "cnc programlama", "talaşlı imalat", "cnc işleme"]
   Machining: ["machining", "torna", "freze", "taşlama", "tornacı", "tezgah operatörü", "işleme merkezi"]
-  Welding: ["kaynakçı", "tig kaynak", "mig kaynak", "argon kaynak", "gazaltı kaynak", "welding", "welder", "kaynakçı", "kaynak operatörü", "gazaltı kaynağı", "argon kaynağı", "tig kaynak", "mig kaynak", "punta kaynak"]
+  Welding: ["welding", "welder", "kaynakçı", "kaynak operatörü", "gazaltı kaynağı", "argon kaynağı", "tig kaynak", "mig kaynak", "punta kaynak"]
   "Sheet Metal Fabrication": ["sheet metal", "sac işleme", "abkant büküm", "lazer kesim", "sac metal", "sac büküm"]
   "Metal Casting": ["metal casting", "döküm", "dökümhane", "pres döküm", "kalıp döküm", "döküm hatası"]
   "Injection Molding": ["injection molding", "plastik enjeksiyon", "enjeksiyon makinesi", "ekstrüzyon", "şişirme kalıp"]
   "Mold Design": ["mold design", "kalıp tasarımı", "kalıphane", "kalıp imalatı", "sıcak yolluk", "kalıp bakımı"]
   "Maintenance Engineering": ["maintenance engineering", "bakım onarım", "bakım planlama", "arıza giderme", "önleyici bakım", "mekanik bakım"]
-  "Assembly Line": ["montaj hattı", "üretim hattı", "montaj operatör", "assembly line", "montaj hattı", "montaj operatörü", "bant üretimi", "hat dengeleme", "montaj süreçleri"]
+  "Assembly Line": ["assembly line", "montaj hattı", "montaj operatörü", "bant üretimi", "hat dengeleme", "montaj süreçleri"]
 
 # --- gıda / tarım --------------------------------------------------------------
 gida_tarim:
@@ -683,30 +518,3 @@ madencilik:
   "Quarry Operations": ["quarry", "taş ocağı", "agrega üretimi", "mermer ocağı", "kırmataş"]
   "Mine Safety": ["mine safety", "maden güvenliği", "ocak güvenliği", "tahlisiye", "grizu ölçümü"]
   "Heavy Equipment Operation": ["heavy equipment", "iş makinesi", "iş makinesi operatörü", "ekskavatör", "loder", "dozer"]
-
-# --- teknisyenlik / usta-kalfa meslekleri --------------------------------------
-# ÖLÇÜLDÜ: bir bakım teknisyeni CV'sinde (PLC, SCADA, hidrolik, pnömatik, CNC
-# bakımı, önleyici bakım, arıza analizi) yalnız 2 kalem tanındı. Sözlük mühendis
-# ve uzman düzeyinde kaleme sahipti; teknisyen/operatör/usta düzeyi tamamen boştu.
-# Bu kademe Türkiye'deki iş ilanlarının büyük bölümünü oluşturuyor.
-teknik_meslek:
-  "hydraulics and pneumatics": ["hydraulic", "pneumatic", "hidrolik", "pnömatik",
-                                "hidrolik sistem", "pnömatik sistem"]
-  "preventive maintenance": ["preventive maintenance", "predictive maintenance",
-                             "önleyici bakım", "kestirimci bakım", "periyodik bakım",
-                             "planlı bakım", "arıza bakım"]
-  "fault diagnosis": ["fault analysis", "fault diagnosis", "troubleshooting",
-                      "arıza analiz", "arıza tespit", "arıza giderme", "sorun giderme"]
-  "conventional machining": ["lathe", "milling machine", "torna", "freze", "taşlama",
-                             "tesviye", "matkap tezgah"]
-  "electrical panel": ["electrical panel", "control panel", "switchgear",
-                       "elektrik pano", "pano montaj", "kumanda panosu", "motor sürücü"]
-  "industrial sensors": ["sensor calibration", "field instrumentation", "transmitter",
-                         "sensör kalibrasyon", "enstrüman kalibrasyon", "ölçüm cihaz"]
-  "machine operation": ["machine operator", "production operator", "line operator",
-                        "tezgah operatör", "makine operatör", "üretim operatör",
-                        "pres operatör", "forklift operatör"]
-  "technical drawing": ["technical drawing", "blueprint reading", "teknik resim",
-                        "teknik resim okuma", "imalat resmi", "ölçülendirme"]
-  "plumbing and installation": ["plumbing", "pipefitting", "sıhhi tesisat", "boru montaj",
-                                "mekanik tesisat", "su tesisat"]
