@@ -28,6 +28,7 @@ import time
 import hashlib
 import os
 import pathlib
+import functools
 import urllib.robotparser as rp
 from urllib.parse import urljoin, urlparse
 
@@ -279,6 +280,7 @@ class KariyerNet(TrPano):
             except Exception:
                 pass
         toplam: list[str] = []
+        firmalar: list[str] = []
         try:
             idx = self._sayfa(urljoin(self.KOK, "/sitemaps/"))
             for alt in re.findall(r"<loc>(.*?)</loc>", idx):
@@ -288,12 +290,56 @@ class KariyerNet(TrPano):
                     continue
                 toplam += re.findall(
                     rf"<loc>{re.escape(self.KOK)}(/is-ilanlari/[^<]+)</loc>", x)
+                # FİRMA PROFİLLERİ de aynı gezintide toplanır — ayrı bir sitemap
+                # turu yapmamak için. Bir firmanın profil sayfası o firmanın TÜM
+                # açık ilanlarını verir; pozisyon sorgusuyla bulunamayan ilanlara
+                # ulaşmanın tek yolu budur (ölçüldü: ASELSAN, TUSAŞ, ROKETSAN gibi
+                # kurumların adı kategori yollarında HİÇ geçmiyor).
+                firmalar += re.findall(
+                    rf"<loc>{re.escape(self.KOK)}(/firma-profil/[^<]+)</loc>", x)
         except Exception:
             return []
+        if firmalar:
+            veri_dosya("data", self.FIRMA_ONBELLEK).write_text(
+                _json.dumps(sorted(set(firmalar))), encoding="utf-8")
         toplam = sorted(set(toplam))
         if toplam:
             yol.write_text(_json.dumps(toplam), encoding="utf-8")
         return toplam
+
+    FIRMA_ONBELLEK = "kariyernet-firmalar.json"
+
+    def _firma_yollari(self) -> list[str]:
+        """Sitemap'te ilan edilen firma profili yolları. Boşsa sitemap tazelenir."""
+        from ..yollar import veri_dosya
+        import json as _json
+        import time as _time
+        y = veri_dosya("data", self.FIRMA_ONBELLEK)
+        if y.exists() and (_time.time() - y.stat().st_mtime) < self.HARITA_OMUR_GUN * 86400:
+            try:
+                return _json.loads(y.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+        self._kanonik_yollar()          # sitemap gezintisi firma yollarını da yazar
+        try:
+            return _json.loads(y.read_text(encoding="utf-8"))
+        except Exception:
+            return []
+
+    def firma_urlleri(self, firma_adi: str, ust_sinir: int = 2) -> list[str]:
+        """'ASELSAN' -> firma profil sayfası URL'leri.
+
+        Bir kurumun birden çok tüzel kişiliği olabiliyor (ASELSAN Elektronik,
+        ASELSAN Global, ASELSAN Konya...); ilanlar hepsine dağılıyor. Bu yüzden
+        adı İÇEREN yolların en kısa `ust_sinir` tanesi alınır — en kısa slug
+        genellikle ana şirkettir.
+        """
+        ad = self._dilim(firma_adi).replace("+", "-")
+        if not ad:
+            return []
+        eslesen = [y for y in self._firma_yollari() if ad in y.rsplit("/", 1)[-1]]
+        eslesen.sort(key=len)
+        return [urljoin(self.KOK, y) for y in eslesen[:ust_sinir]]
 
     # Tek başına hiçbir şey ayırt etmeyen sözcükler. Bunlar eşleşme sayılırsa
     # "yapay zeka mühendisi" sorgusu "aerodinamik mühendisi"ne eşleniyor (ölçüldü).
@@ -304,7 +350,12 @@ class KariyerNet(TrPano):
                     # Rol SON EKLERİ de tek başına ayırt etmez: "frontend geliştirici"
                     # sorgusu yalnız "gelistirici" tutarak "c# geliştirici"ye eşleniyordu.
                     "gelistirici", "gelistiricisi", "gelistirme", "tasarimci",
-                    "programcisi", "yazilimcisi", "mimari", "danisman"}
+                    "programcisi", "yazilimcisi", "mimari", "danisman",
+                    # SEKTÖR SONEKLERİ de tek başına ayırt etmez. ÖLÇÜLDÜ:
+                    # "savunma sanayi" sorgusu yalnız "sanayi" ortaklığıyla
+                    # "boru+sanayi" sektör sayfasına eşleniyordu.
+                    "sanayi", "sanayii", "ticaret", "hizmetleri", "hizmet",
+                    "sektoru", "grubu", "kidemli", "genel"}
 
     @classmethod
     def _parcalar(cls, dilim: str) -> set[str]:
@@ -320,6 +371,11 @@ class KariyerNet(TrPano):
         Sorgu, sitemap'teki kanonik yollar arasından EN YAKIN olanlara eşlenir
         (ortak sözcük oranına göre). Uydurma dilim üretilmez.
         """
+        # "firma:ASELSAN" biçimi: pozisyon değil ŞİRKET aranıyor. Firma profili o
+        # şirketin tüm açık ilanlarını verir; pozisyon sorgusuyla bulunamayan
+        # ilanlara ulaşmanın tek yolu budur.
+        if sorgu.lower().startswith("firma:"):
+            return self.firma_urlleri(sorgu.split(":", 1)[1])
         poz, _, sehir = sorgu.partition("@")
         poz_p = self._parcalar(self._dilim(poz))
         sehir_d = self._dilim(sehir) if sehir else ""
@@ -342,12 +398,154 @@ class KariyerNet(TrPano):
                 continue
             # Jaccard benzeri: ortak / (sorgu sözcükleri) — kısa ve birebir dilimler kazanır
             skor = len(ortak) / len(poz_p) - 0.04 * (len(self._parcalar(dilim)) - len(ortak))
+            # Eşit skorlu yollar arasında BÜYÜK İL kazansın; yoksa sıralama
+            # alfabetik kalıyor ve en küçük iller seçiliyor (bkz. IL_ONCELIGI).
+            skor += 0.12 * self._il_agirligi(dilim)
             if sehirli:
                 skor += 0.5
             puanli.append((skor, y))
         puanli.sort(key=lambda x: -x[0])
-        # en iyi 2 yol yeter; daha fazlası gereksiz istek
-        return [urljoin(self.KOK, y) for _, y in puanli[:2]]
+        secilen = self._yol_sec(puanli, sehir_d)
+
+        # SEKTÖR SAYFASINA AYRI KOTA. Sektör yolu ("otomasyon") pozisyon yolundan
+        # ("otomasyon+muhendisi") her zaman düşük skor alır — ortak sözcük oranı
+        # daha küçük — ve normal sıralamada listeye hiç giremiyor. Oysa kapsamı
+        # asıl genişleten o: pozisyon adına bağlı kalmadan tüm sektörü tarıyor.
+        sektorler = set(self._sektor_yollari())
+        # Seçilenler arasında ZATEN sektör varsa ikincisine gerek yok.
+        if not any(y in sektorler for y in secilen):
+            en_iyi = puanli[0][0] if puanli else 0.0
+            # ALAKA EŞİĞİ: eşiksiz bırakılınca tek ortak sözcükle alakasız sektör
+            # geliyordu ("savunma sanayi" -> "boru+sanayi", ortak sözcük: sanayi).
+            for skor, y in puanli:
+                if y in sektorler and y not in secilen and skor >= en_iyi * 0.42:
+                    secilen.append(y)
+                    break
+        return [urljoin(self.KOK, y) for y in secilen]
+
+    # Sorgu başına çekilecek liste sayfası sayısı. ÖLÇÜLDÜ (14 Eyl 2026): sınır 2
+    # iken tüm tarama kariyer.net'ten yalnız 329 ilan getiriyordu ve kısa listenin
+    # %98'i bu panodan geliyordu — yani en değerli kaynak en dar olanıydı.
+    #
+    # NEDEN SAYFALAMA DEĞİL ŞEHİR: kariyer.net kategori sayfaları sayfalanmıyor
+    # (sitemap'in 60.441 yolunda tek bir sayfa parametresi yok); her kategori ilk
+    # ~50 ilanı gösteriyor. Ama sitemap AYNI pozisyonun İL BAZLI sayfalarını ilan
+    # ediyor: "otomasyon mühendisi" için 125, "savunma sanayi" için 74 yol var ve
+    # bunlar FARKLI ilanlar taşıyor. Kapsamı artırmanın robots-izinli yolu bu.
+    YOL_UST_SINIR = 4
+    ISTEK_MALIYETI_NOTU = "her yol 1 istek = ~4 sn; sınır TEMKİNLİ tutuldu — 14 Eyl 2026'da\n    # üst üste gelen testler + tarama panodan 6 saatlik engel yedi."
+
+    # İş hacmine göre il önceliği. NEDEN GEREKLİ: skorlar eşit olduğunda liste
+    # ALFABETİK sıralanıyordu ve seçilen iller "adana, adıyaman, afyon, ağrı,
+    # aksaray" oluyordu — ilan sayısı en düşük iller. Bu sıra, Türkiye'de sanayi
+    # ve teknoloji istihdamının gerçekte yoğunlaştığı illeri öne alır.
+    # Kırıkkale ve Eskişehir listede yüksekte: savunma sanayii oralarda (MKE, TUSAŞ).
+    IL_ONCELIGI = ["istanbul", "ankara", "izmir", "bursa", "kocaeli", "eskisehir",
+                   "kirikkale", "konya", "kayseri", "antalya", "adana", "gaziantep",
+                   "manisa", "tekirdag", "sakarya", "denizli", "mersin", "aydin",
+                   "balikesir", "hatay", "samsun", "trabzon"]
+
+    def _il_agirligi(self, dilim: str) -> float:
+        """Yol dilimindeki ilin öncelik bonusu (0 = listede yok)."""
+        for sira, il in enumerate(self.IL_ONCELIGI):
+            if dilim.startswith(il):
+                return 1.0 - sira / (len(self.IL_ONCELIGI) * 1.5)
+        return 0.0
+
+    # Pozisyon adı bu eklerle biter. Sektör sayfaları bitmez ("otomasyon",
+    # "savunma+sanayi", "bankacilik"). Bu, elle sektör listesi tutmamak için
+    # kullanılan TEK dil kuralıdır — sektörlerin kendisi sitemap'ten türetilir,
+    # yani site yeni bir sektör açarsa kod değişmeden gelir.
+    POZISYON_EKLERI = ("muhendisi", "muhendis", "uzmani", "uzman", "elemani", "sorumlusu",
+                       "muduru", "mudur", "sefi", "sef", "teknisyeni", "teknikeri",
+                       "operatoru", "temsilcisi", "danismani", "yoneticisi", "yonetmeni",
+                       "asistani", "gorevlisi", "ustasi", "isci", "personeli", "amiri",
+                       "lideri", "direktoru", "koordinatoru", "analisti", "yardimcisi",
+                       "ogretmeni", "memuru", "yetkilisi", "sorumlu", "programcisi")
+
+    def _sektor_yollari(self) -> list[str]:
+        """Sitemap'te ilan edilen SEKTÖR sayfaları — türetilir, elle yazılmaz.
+
+        NEDEN: pozisyon sorgusu ("otomasyon mühendisi") yalnız o unvanı getiriyor.
+        Sektör sayfası ("otomasyon", "bankacilik", "savunma+sanayi") o sektördeki
+        TÜM firmaların ilanlarını veriyor — bankalar, sigortacılar, fabrikalar
+        dahil. Türkiye'de binlerce şirket var; elle şirket ya da sektör listesi
+        tutmak ölçeklenmiyor, bu yüzden sitemap'ten çıkarılıyor.
+
+        İKİ KURAL, ikisi de veriden:
+          1) şehirsiz + pozisyon eki taşımıyor + en çok 3 sözcük,
+          2) ALTINDA pozisyon yolları var. Gerçek bir sektörün altında sitemap'te
+             çok sayıda unvan bulunur ("otomasyon" -> "otomasyon+muhendisi",
+             "otomasyon+teknikeri", "elektrik+otomasyon+muhendisi"); bir unvanın
+             altında bulunmaz. Bu ikinci kural olmadan "makine+enspektoru" gibi
+             ek listesine yazılmamış unvanlar sektör sanılıyordu — ve ek listesini
+             büyütmek çözüm değil, her yeni unvan için elle bakım demek.
+        """
+        import functools
+        return self._sektor_hesapla(tuple(self._kanonik_yollar()))
+
+    @functools.lru_cache(maxsize=4)
+    def _sektor_hesapla(self, yollar: tuple) -> list[str]:
+        dilimler = [y.rsplit("/", 1)[-1] for y in yollar]
+        adaylar = []
+        for y, dilim in zip(yollar, dilimler):
+            if "-" in dilim or dilim.endswith(self.POZISYON_EKLERI):
+                continue
+            if len(dilim.split("+")) > 3:
+                continue
+            adaylar.append((y, dilim))
+        # Her aday için: altında kaç pozisyon yolu var?
+        onek = {}
+        for d in dilimler:
+            kok = d.split("-")[-1]                       # şehir önekini at
+            for a in ("+",):
+                pass
+            onek[kok] = onek.get(kok, 0)
+        sayac: dict[str, int] = {}
+        for d in dilimler:
+            kok = d.split("-")[-1]
+            parca = kok.split("+")
+            for i in range(1, len(parca)):
+                sayac[("+".join(parca[:i]))] = sayac.get("+".join(parca[:i]), 0) + 1
+        return [y for y, d in adaylar if sayac.get(d, 0) >= 3]
+
+    def _yol_sec(self, puanli: list[tuple[float, str]], sehir_d: str) -> list[str]:
+        """Ülke geneli + farklı illerden en iyi yollar.
+
+        İki kural:
+          1) ŞEHİRSİZ (ülke geneli) yol varsa MUTLAKA alınır — en geniş havuz odur.
+          2) Aynı ilden ikinci bir yol alınmaz; yoksa liste "istanbul+asya-...",
+             "istanbul+asya-pendik-..." gibi aynı şehrin varyantlarıyla dolup
+             kapsama hiçbir şey katmıyor (ölçüldü: gömülü yazılım sorgusunda ilk
+             4 yolun 3'ü İstanbul Asya'ydı).
+        """
+        if not puanli:
+            return []
+        # ÜLKE GENELİ ÖNCE. İl bonusu eklendikten sonra şehir yolları öne geçiyor ve
+        # şehirsiz (tüm Türkiye) sayfa 7'lik sınıra hiç giremiyordu — oysa en geniş
+        # havuz odur. Sıralamadan bağımsız olarak başa alınır.
+        en_iyi = puanli[0][0]
+        genel = next((y for sk, y in puanli if "-" not in y.rsplit("/", 1)[-1]), None)
+        secilen: list[str] = [genel] if genel else []
+        gorulen_il: set[str] = set()
+        for skor, yol in puanli:
+            if yol == genel:
+                continue
+            # ALAKA EŞİĞİ: en iyi yolun belirgin altındaki yollar sorgunun konusundan
+            # uzaklaşıyor ("gömülü yazılım mühendisi" -> "yazılım mühendisi"). Bunları
+            # çekmek hem gereksiz istek hem alakasız ilan demek.
+            if skor < en_iyi * 0.72:
+                continue
+            dilim = yol.rsplit("/", 1)[-1]
+            il = dilim.split("-")[0] if "-" in dilim else ""
+            if il and il in gorulen_il:
+                continue
+            if il:
+                gorulen_il.add(il)
+            secilen.append(yol)
+            if len(secilen) >= self.YOL_UST_SINIR:
+                break
+        return secilen
 
     def kartlari_ayikla(self, html: str) -> list[Job]:
         ilanlar: list[Job] = []

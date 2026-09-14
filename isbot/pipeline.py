@@ -205,6 +205,10 @@ def tara(
     # gitmeleri sorun değil; her biri kendi sınırını uygular.
     tr_sorgular = profil.get("tr_arama_sorgulari") or []
     sehirler = profil.get("tr_sehirler") or [""]
+    # HEDEF ŞİRKETLER: bazı kurumların (ASELSAN, TUSAŞ, ROKETSAN...) adı pano
+    # kategori yollarında HİÇ geçmiyor ve kendi kariyer siteleri bot korumalı.
+    # Firma profili sayfası o şirketin tüm açık ilanlarını veren tek açık kanal.
+    hedef_sirketler = profil.get("tr_hedef_sirketler") or []
     for kaynak_adi in TR_KAYNAKLARI:
         if kaynak_adi == "elemannet":            # eleman.net sorgu almıyor, tek akış
             isler.append((kaynak_adi, "", ""))
@@ -212,6 +216,8 @@ def tara(
         for sorgu in tr_sorgular:
             for sehir in sehirler:
                 isler.append((kaynak_adi, f"{sorgu}@{sehir}" if sehir else sorgu, ""))
+        for sirket in hedef_sirketler:
+            isler.append((kaynak_adi, f"firma:{sirket}", sirket))
 
     ham: list[Job] = []
 

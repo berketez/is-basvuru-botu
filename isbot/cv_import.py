@@ -249,6 +249,48 @@ def _kidem_ustu_kaliplar(kidem: str) -> list[str]:
     return [yonetim]
 
 
+# Rol ailesine göre önerilen HEDEF ŞİRKETLER. Bu kurumların adı kariyer.net'in
+# kategori yollarında HİÇ geçmiyor ve bir kısmının kendi kariyer sitesi bot
+# korumasının arkasında (ASELSAN'da robots.txt bile alınamıyor). Firma profili
+# sayfası onlara ulaşan tek robots-izinli kanal.
+#
+# Bu bir BAŞLANGIÇ listesidir, kullanıcı profile.yaml'da kendi listesini yazar.
+# Yalnız ilgili aile açıldığında eklenir — bir muhasebeciye savunma sanayii
+# şirketleri önerilmez.
+HEDEF_SIRKETLER = {
+    "havacilik_savunma": ["ASELSAN", "TUSAŞ", "ROKETSAN", "HAVELSAN", "STM",
+                          "BAYKAR", "MKE", "TEI", "FNSS", "OTOKAR"],
+    "kontrol_otomasyon": ["ASELSAN", "ROKETSAN", "Arçelik", "Vestel", "Ford Otosan",
+                          "TOFAŞ", "Siemens", "Schneider Electric"],
+    "makine_tasarim": ["Arçelik", "Ford Otosan", "TOFAŞ", "TEMSA", "BMC", "Otokar"],
+    "gomulu": ["ASELSAN", "Vestel", "Arçelik", "BAYKAR", "HAVELSAN"],
+    "enerji_cevre": ["Enerjisa", "Aksa Enerji", "Zorlu Enerji", "TEİAŞ"],
+    "insaat": ["Limak", "Rönesans", "Nurol", "TAV", "Enka"],
+    "bankacilik": ["Garanti BBVA", "İş Bankası", "Akbank", "Yapı Kredi", "QNB"],
+    "saglik": ["Acıbadem", "Medical Park", "Memorial", "Medicana"],
+}
+
+
+def _hedef_sirketler(roller: dict, ust_sinir: int = 8) -> list[str]:
+    """Etkin rol ailelerinden önerilen hedef şirketler.
+
+    SIRAYLA (round-robin) alınır: tek ailenin listesi kotayı doldurursa ikinci
+    aile hiç temsil edilmiyor. ÖLÇÜLDÜ: kontrol+havacılık profilinde kontrol
+    ailesinin 8 şirketi kotayı bitiriyor ve TUSAŞ, HAVELSAN, BAYKAR listeye hiç
+    girmiyordu — oysa aday tam olarak o kurumların adayı.
+    (Aynı sorun tr_arama_sorgulari'nda da yaşanmıştı, çözüm aynı.)
+    """
+    listeler = [list(HEDEF_SIRKETLER.get(ad, [])) for ad in roller]
+    cikti: list[str] = []
+    for i in range(max((len(x) for x in listeler), default=0)):
+        for lst in listeler:
+            if i < len(lst) and lst[i] not in cikti:
+                cikti.append(lst[i])
+                if len(cikti) >= ust_sinir:
+                    return cikti
+    return cikti
+
+
 def _en_sorgular(roller: dict, ust_sinir: int = 3) -> list[str]:
     """Etkin rol ailelerinden İngilizce pozisyon adları (ağırlığa göre sıralı).
 
@@ -325,6 +367,14 @@ def profil_uret(cv_yolu: str | Path) -> dict:
         # Türk panoları İngilizce sorguyla çalışmaz; pozisyon adları Türkçe olmalı.
         # Rol ailelerinden türetilir (roller.yaml -> tr_pozisyonlar).
         "tr_arama_sorgulari": _tr_sorgular(_roller),
+        # Firma profili taranacak kurumlar. Kendi listeni buraya yazabilirsin;
+        # boş bırakılırsa firma taraması yapılmaz.
+        # BOŞ BIRAKILIR — elle şirket listesi ölçeklenmiyor (Türkiye'de binlerce
+        # banka, sigorta, otomotiv ve fabrika var). Onun yerine tr_arama_sorgulari
+        # içine kariyer.net'in SEKTÖR sayfaları konuldu; onlar o sektördeki tüm
+        # firmaların ilanlarını veriyor. Belirli bir kuruma odaklanmak isteyen
+        # kullanıcı bu listeye kendi şirketlerini yazar (firma profili taranır).
+        "tr_hedef_sirketler": [],
         **SABLON_KUYRUK,
         "yetenekler": {"guclu": guclu, "zayif": zayif},
     }
