@@ -650,6 +650,54 @@ def t33_workable_liste_alanlar():
             depo.close()
 
 
+# ---------------------------------------------------------------- 34
+# Sabit başlık eleme listesi yazılımcı varsayımıyla HERKESE uygulanıyordu: İK adayının
+# "Recruiter", satışçının "Account Executive", pazarlamacının "Content Strategist"
+# ilanları puanlamaya girmeden eleniyordu. Kendi ailesinin kalıbı adaya uygulanmaz;
+# yazılımcı/mühendis için liste değişmemeli.
+def t34_eleme_meslek_muafiyeti():
+    import re
+    from isbot.cv_import import eleme_kaliplari
+
+    # "senior": kıdem kalıbı yalnız distinguished/fellow + yönetim unvanlarını eler, yani
+    # burada ölçülen SABİT listenin muafiyetidir. (mid kıdemde "manager" sözcüğü kıdem
+    # kalıbıyla zaten eleniyor — o ayrı, açık bir konu.)
+    def elenir(baslik, aileler):
+        return any(re.search(k, baslik) for k in eleme_kaliplari(dict.fromkeys(aileler), "senior"))
+
+    muhendis_elenmeli = ["Account Executive, EMEA", "Senior Recruiter", "Customer Success Manager",
+                         "Technical Program Manager", "Developer Advocate", "Support Engineer",
+                         "Solutions Architect", "Business Development Rep", "Content Strategist"]
+    for b in muhendis_elenmeli:
+        sina(f"yazılımcıya '{b}' elenir", True, elenir(b, ["backend", "ml_ai"]))
+    sina("İK adayına 'Senior Recruiter' açık", False, elenir("Senior Recruiter", ["ik"]))
+    sina("İK adayına satış yine elenir", True, elenir("Account Executive", ["ik"]))
+    sina("satışçıya 'Account Executive' açık", False, elenir("Account Executive, EMEA", ["satis"]))
+    sina("satışçıya 'Recruiter' yine elenir", True, elenir("Senior Recruiter", ["satis"]))
+    sina("ürün adayına 'Program Manager' BİLEREK elenir (benchmark)", True,
+         elenir("Technical Program Manager", ["urun"]))
+    sina("ürün adayına 'Product Manager' açık", False, elenir("Senior Product Manager", ["urun"]))
+    sina("pazarlamacıya 'Content Strategist' açık", False,
+         elenir("Content Strategist", ["pazarlama"]))
+    sina("pazarlamacıya destek rolü yine elenir", True, elenir("Support Engineer", ["pazarlama"]))
+
+
+# ---------------------------------------------------------------- 35
+# roller.yaml'da çift tırnaklı kalıplarda tek "\b" yazılmıştı; YAML onu BACKSPACE'e
+# çeviriyor. İK kalıbı "HR Business Partner"ı, İSG kalıbı "HSE Engineer"ı hiç tanımıyordu.
+def t35_rol_kaliplarinda_backspace_yok():
+    import re
+    import yaml as _y
+    from isbot.yollar import kaynak_dosya
+    roller = _y.safe_load(kaynak_dosya("isbot", "data", "roller.yaml").read_text(encoding="utf-8"))
+    bozuk = [ad for ad, t in roller.items() for k in (t.get("basliklar") or []) if "\x08" in k]
+    sina("rol kalıplarında backspace yok", [], bozuk)
+    sina("İK 'HR Business Partner'ı tanır", True,
+         any(re.search(k, "HR Business Partner") for k in roller["ik"]["basliklar"]))
+    sina("İSG 'HSE Engineer'ı tanır", True,
+         any(re.search(k, "HSE Engineer") for k in roller["isg"]["basliklar"]))
+
+
 def main() -> int:
     for fn in [v for k, v in sorted(globals().items()) if k.startswith("t") and callable(v)
                and k[1].isdigit()]:

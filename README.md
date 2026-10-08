@@ -425,6 +425,20 @@ motor komşu alandan sonuç getirir ve bunları **"alan dışı"** diye etiketle
       "skill" etiketleri fiil öbeği ("operate welding equipment"), bu motorun aradığı
       anahtar sözcük değil. Kalemler elle küratörlendi.
 - [x] ~~Gelişmiş arama: yerel uyum modeli~~ (ONNX int8, `.app` içine gömülü)
+- [x] ~~Meslekten bağımsız eleme~~ (v1.5.3) — sabit başlık yasakları adayın kendi meslek
+      ailesine uygulanmıyor (İK'ya "Recruiter", satışa "Account Executive" açık);
+      `roller.yaml`'da İK/İSG kalıplarındaki `\b` YAML'da backspace'e dönüşüyordu.
+- [x] ~~Hazır reranker denemesi~~ — **EKLENMEDİ** (2026-10-08). `mmarco-mMiniLMv2` (118M)
+      ve `modernbert-tr-reranker` (149M) 48 CV'de (16 test + 32 meslek) motor ve e5
+      hakemiyle kıyaslandı: bir grupta +4–5 isabet kazandıran varyant öbüründe 4–7
+      kaybettirdi, 2–4 CV kötüleşti. Darboğaz sıralama değil: 48 CV'nin 39'unda motor
+      15'ten az aday bırakıyor; model listede olmayanı getiremez.
+- [ ] Kıdem kalıbı mid adaylarda "manager" sözcüğünü eliyor — Product/Marketing/Account
+      Manager gibi yönetici OLMAYAN unvanlar da gidiyor. Karma profillerde "Engineering
+      Manager"ı geri getirmeden çözülmeli.
+- [ ] Uyum hakemi yazılım dışı mesleklere uymuyor: profil cümlesi "… deneyimli mühendis"
+      diye başlıyor, "uyumsuz meslekler" cümlesi sabit (İK, satış, kalite kontrol adayına
+      kendi mesleği yüzünden ceza).
 - [ ] **Türkiye kapsamının canlı ölçümü** — il çeşitliliği + sektör sayfaları yazıldı
       ama gerçek tarama ile sınanmadı (pano engeli). 329 → ? ilan ölçülecek.
 - [ ] İş alarmı e-postalarından ilan okuma (LinkedIn kapsamı için tek meşru yol)

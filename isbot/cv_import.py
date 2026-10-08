@@ -199,19 +199,43 @@ def rol_aileleri_turet(yetenekler: set[str]) -> dict:
     return dict(sorted(secilen.items(), key=lambda x: -x[1]["agirlik"]))
 
 
-SABIT_ELEME_LISTESI = [
-    r"(?i)\b(sales|recruiter|account executive|customer success)\b",
-    r"(?i)\b(solutions? (architect|engineer|consultant)|deployment strategist|"
-    r"consulting (architect|engineer)|professional services)\b",
-    r"(?i)\b(technical account|escalations engineer|pre[- ]?sales|business development)\b",
-    r"(?i)\b(partner manager|customer engineer|field engineer|implementation consultant)\b",
-    r"(?i)\b(support (engineer|associate|specialist|analyst|agent|representative|"
-    r"consultant|advisor|coordinator)|technical support|"
-    r"l[123] support|help ?desk|community manager|developer (advocate|relations)|devrel|"
-    r"(product|customer|saas|client) support)\b",
-    r"(?i)\b(strategist|evangelist|program manager)\b",
+# Her kalıp: (başlık eleme kalıbı, bu kalıbın KENDİ MESLEĞİ olduğu rol aileleri).
+# NEDEN MUAFİYET: liste yazılım/mühendislik adayı düşünülerek yazılmıştı ama HERKESE
+# uygulanıyordu. Ölçüldü (2026-10-08, 9.603 ilanlık havuz): İK adayının gerçek İK
+# ilanlarının %30'u ("Recruiter") puanlamaya girmeden eleniyordu; "satis" ailesindeki
+# adayın satış ilanlarının hepsi de öyle. Kalıp, adayın ailelerinden biri muaf
+# listedeyse uygulanmaz.
+# "Program Manager" BİLEREK muaf değil: "urun" ailesinin kalıbında geçiyor, ama muaf
+# tutulunca ürün yöneticisi CV'sinin ilk 5'ine program ilanları girdi ve benchmark'ın
+# elle yazılmış "product" isabeti 4/5'ten 2/5'e düştü. Yakın ama aynı iş değil.
+ELEME_KALIPLARI: list[tuple[str, frozenset[str]]] = [
+    (r"(?i)\b(sales|account executive|business development|pre[- ]?sales|partner manager)\b",
+     frozenset({"satis"})),
+    (r"(?i)\b(customer success)\b", frozenset({"satis"})),
+    (r"(?i)\b(recruiter)\b", frozenset({"ik"})),
+    (r"(?i)\b(solutions? (architect|engineer|consultant)|deployment strategist|"
+     r"consulting (architect|engineer)|professional services)\b", frozenset()),
+    (r"(?i)\b(technical account|escalations engineer|customer engineer|field engineer|"
+     r"implementation consultant)\b", frozenset()),
+    (r"(?i)\b(support (engineer|associate|specialist|analyst|agent|representative|"
+     r"consultant|advisor|coordinator)|technical support|"
+     r"l[123] support|help ?desk|(product|customer|saas|client) support)\b", frozenset()),
+    (r"(?i)\b(community manager|developer (advocate|relations)|devrel)\b",
+     frozenset({"pazarlama"})),
+    (r"(?i)\b(strategist|evangelist)\b", frozenset({"pazarlama"})),
+    (r"(?i)\b(program manager)\b", frozenset()),
 ]
-SABIT_ELEME = "|".join(SABIT_ELEME_LISTESI)
+SABIT_ELEME_LISTESI = [k for k, _ in ELEME_KALIPLARI]
+SABIT_ELEME = "|".join(SABIT_ELEME_LISTESI) + "|" + ",".join(
+    "+".join(sorted(m)) for _, m in ELEME_KALIPLARI)
+
+
+def eleme_kaliplari(roller: dict | None, kidem: str) -> list[str]:
+    """Adaya uygulanacak başlık eleme kalıpları: sabit liste (adayın kendi meslek
+    ailesine ait kalıplar HARİÇ) + kıdem üstü unvanlar."""
+    aileler = set(roller or {})
+    return ([k for k, muaf in ELEME_KALIPLARI if not (muaf & aileler)]
+            + _kidem_ustu_kaliplar(kidem))
 
 
 def motor_surumu() -> str:
@@ -334,6 +358,8 @@ def profil_uret(cv_yolu: str | Path) -> dict:
     dnm = deneyim_tahmin(metin)
     yil, kidem = dnm.profesyonel_yil, dnm.kidem
     tr = bool(re.search(r"(?i)\b(turkey|türkiye|istanbul|ankara|izmir)\b", metin))
+    # Eleme kalıpları adayın meslek ailesine bağlı, o yüzden önce aileler türetilir.
+    _roller = rol_aileleri_turet(set(guclu) | set(zayif))
 
     return {
         "_NOT": "cv-import ile ÜRETİLDİ — TASLAKTIR. Aşağıdaki alanları elle gözden geçir: "
@@ -352,11 +378,11 @@ def profil_uret(cv_yolu: str | Path) -> dict:
             # Junior bir kademe yukarı bakabilir; üst seviyeler kendi seviyesinde kalır.
             "max_kidem": {"junior": "mid", "mid": "mid", "senior": "senior", "staff": "staff"}[kidem],
             "max_istenen_deneyim_yil": int(max(round(yil) + 3, 4)),
-            "yasakli_baslik_kaliplari": SABIT_ELEME_LISTESI + _kidem_ustu_kaliplar(kidem),
+            "yasakli_baslik_kaliplari": eleme_kaliplari(_roller, kidem),
             "zorunlu_konum_kosulu": ["remote_global", "remote_emea"] + (["turkey"] if tr else []),
             "sponsorluk_gerektiren_ele": True,
         },
-        "rol_aileleri": (_roller := rol_aileleri_turet(set(guclu) | set(zayif))),
+        "rol_aileleri": _roller,
         # Şirketler-arası kaynaklar için İngilizce arama sorguları: en güçlü
         # yetenekler + ROL AİLESİNDEN gelen pozisyon adları.
         # NEDEN: eskiden listeye sabit olarak "software engineer" ekleniyordu. Bir
@@ -402,11 +428,6 @@ def profil_tazele(profil: dict) -> tuple[dict, list[str]]:
     tavan = sf.get("max_kidem", "mid")
     kidem = {"mid": "junior", "senior": "mid", "staff": "senior"}.get(tavan, tavan)
 
-    yeni_kaliplar = SABIT_ELEME_LISTESI + _kidem_ustu_kaliplar(kidem)
-    if yeni_kaliplar != sf.get("yasakli_baslik_kaliplari"):
-        sf["yasakli_baslik_kaliplari"] = yeni_kaliplar
-        degisen.append("eleme kalıpları")
-
     if tum:
         yeni_roller = rol_aileleri_turet(tum)
         if set(yeni_roller) != set(profil.get("rol_aileleri") or {}):
@@ -418,6 +439,12 @@ def profil_tazele(profil: dict) -> tuple[dict, list[str]]:
             if yeni_tr != profil.get("tr_arama_sorgulari"):
                 profil["tr_arama_sorgulari"] = yeni_tr
                 degisen.append("Türkçe sorgular")
+
+    # Aileler tazelendikten SONRA: eleme kalıpları adayın ailesine göre muaf tutuluyor.
+    yeni_kaliplar = eleme_kaliplari(profil.get("rol_aileleri"), kidem)
+    if yeni_kaliplar != sf.get("yasakli_baslik_kaliplari"):
+        sf["yasakli_baslik_kaliplari"] = yeni_kaliplar
+        degisen.append("eleme kalıpları")
 
     profil["_motor_surumu"] = guncel
     return profil, degisen

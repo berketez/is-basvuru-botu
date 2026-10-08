@@ -355,7 +355,7 @@ isg:
   agirlik: 1.0
   tr_pozisyonlar: ["iş güvenliği uzmanı"]
   en_pozisyonlar: ["hse specialist", "safety engineer"]
-  basliklar: ["(?i)(\\b(?:\bhse\b|health and safety|safety (engineer|specialist|officer)|ehs\b|occupational)\\w*|\\b(?:iş (güvenliği|sağlığı)|isg uzman|risk değerlendirme|acil durum|çevre güvenlik)\\w*)"]
+  basliklar: ["(?i)(\\b(?:\\bhse\\b|health and safety|safety (engineer|specialist|officer)|ehs\\b|occupational)\\w*|\\b(?:iş (güvenliği|sağlığı)|isg uzman|risk değerlendirme|acil durum|çevre güvenlik)\\w*)"]
 
 egitim:
   tetik_guclu: ["Teaching", "Curriculum Development", "Classroom Management", "Assessment and Evaluation"]
@@ -415,7 +415,7 @@ ik:
   agirlik: 1.0
   tr_pozisyonlar: ["insan kaynakları uzmanı", "işe alım uzmanı", "bordro uzmanı"]
   en_pozisyonlar: ["hr specialist", "talent acquisition specialist"]
-  basliklar: ["(?i)(\\b(?:human resources|\bhr\b (specialist|manager|business partner)|talent acquisition|recruit|people (operations?|ops|partner)|compensation)\\w*|\\b(?:insan kaynak|işe alım|bordro|özlük|yetenek yönetim|eğitim ve gelişim|ik (uzman|müdür|sorumlu))\\w*)"]
+  basliklar: ["(?i)(\\b(?:human resources|\\bhr\\b (specialist|manager|business partner)|talent acquisition|recruit|people (operations?|ops|partner)|compensation)\\w*|\\b(?:insan kaynak|işe alım|bordro|özlük|yetenek yönetim|eğitim ve gelişim|ik (uzman|müdür|sorumlu))\\w*)"]
 
 denizcilik:
   tetik_guclu: ["Maritime Operations", "Deck Officer", "Marine Engineering", "Ship Captain"]
