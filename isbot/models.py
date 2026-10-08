@@ -34,6 +34,21 @@ class Job:
     last_seen: datetime = field(default_factory=_now)
     raw: dict = field(default_factory=dict, repr=False)
 
+    def __post_init__(self) -> None:
+        # ATS'ler alan biçimini habersiz değiştiriyor: Workable v3 `department`'ı
+        # ["T-Tech"] diye LİSTE döndürmeye başladı, liste SQLite'a yazılamadığı için
+        # tek bir ilan BÜTÜN taramayı düşürdü ("Error binding parameter 10").
+        # Metin alanları burada metne indirgenir; kaynak bağlayıcısı unutsa da depo çökmez.
+        for ad in ("company", "title", "url", "description", "department", "employment_type"):
+            v = getattr(self, ad)
+            if isinstance(v, (list, tuple)):
+                setattr(self, ad, ", ".join(str(x) for x in v if x))
+            elif v is None:
+                setattr(self, ad, "")
+            elif not isinstance(v, str):
+                setattr(self, ad, str(v))
+        self.locations = [str(k) for k in (self.locations or []) if k]
+
     @property
     def uid(self) -> str:
         """Kalıcı benzersiz kimlik. Aynı ilan yeniden yayımlanırsa native_id değişir,

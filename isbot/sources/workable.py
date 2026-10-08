@@ -26,11 +26,25 @@ class Workable(Kaynak):
             d = self._post(UC.format(t=board_token), json=govde)
             parca = d.get("results", [])
             for j in parca:
-                yer = j.get("location") or {}
-                konum = ", ".join(x for x in [yer.get("city"), yer.get("region"),
-                                              yer.get("country")] if x)
-                uzak = bool(yer.get("workplace") == "remote" or j.get("remote"))
+                # v3 çok konumlu ilanlar için `locations` listesi veriyor; `location`
+                # yalnız ilkidir. Gizli (hidden) konumlar ilanda gösterilmiyor, alınmaz.
+                yerler = [y for y in (j.get("locations") or [j.get("location") or {}])
+                          if isinstance(y, dict) and not y.get("hidden")]
+                konumlar = []
+                for yer in yerler:
+                    konum = ", ".join(x for x in [yer.get("city"), yer.get("region"),
+                                                  yer.get("country")] if x)
+                    if konum and konum not in konumlar:
+                        konumlar.append(konum)
+                uzak = bool(j.get("workplace") == "remote" or j.get("remote"))
                 kimlik = j.get("shortcode") or j.get("id") or j.get("slug")
+                # Ölçüldü (2026-10-08): `department` artık liste (["T-Tech"]) ve tarih
+                # `published` anahtarında; eski `published_on`/`created_at` gelmiyor,
+                # bu yüzden Workable ilanlarının yaşı hiç okunmuyordu.
+                bolum = j.get("department") or ""
+                if isinstance(bolum, list):
+                    bolum = ", ".join(str(b) for b in bolum if b)
+                tarih = iso_tarih(j.get("published") or j.get("published_on") or j.get("created_at"))
                 ilanlar.append(Job(
                     source=self.ad,
                     company=sirket_adi or board_token,
@@ -38,13 +52,13 @@ class Workable(Kaynak):
                     native_id=str(kimlik),
                     title=(j.get("title") or "").strip(),
                     url=j.get("url") or f"https://apply.workable.com/{board_token}/j/{kimlik}/",
-                    locations=[konum] if konum else [],
+                    locations=konumlar,
                     description=html_temizle(j.get("description")),
-                    department=j.get("department") or "",
+                    department=bolum,
                     employment_type=j.get("type") or "",
                     remote_flag=uzak or None,
-                    posted_at=iso_tarih(j.get("published_on") or j.get("created_at")),
-                    updated_at=iso_tarih(j.get("published_on") or j.get("created_at")),
+                    posted_at=tarih,
+                    updated_at=tarih,
                 ))
             imlec = d.get("nextPage") or d.get("token")
             if not imlec or not parca:

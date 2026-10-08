@@ -603,6 +603,53 @@ def t32_yazilim_disi_meslekler():
          "havacilik_savunma" in aile("Aviyonik Mühendisi"))
 
 
+# ---------------------------------------------------------------- 33
+# Workable v3 `department`'ı LİSTE döndürmeye başladı (["T-Tech"]). Liste SQLite'a
+# yazılamadı ve tek ilan bütün taramayı düşürdü: "Error binding parameter 10:
+# type 'list' is not supported". Ayrıca tarih `published` anahtarına taşınmıştı,
+# Workable ilanlarının yaşı hiç okunmuyordu.
+def t33_workable_liste_alanlar():
+    import tempfile
+    from isbot.sources.workable import Workable
+    from isbot.store import Depo
+
+    # 2026-10-08'de apply.workable.com/api/v3/accounts/ttech/jobs yanıtından.
+    yanit = {"total": 1, "results": [{
+        "shortcode": "75BD306A09", "title": "Microsoft Cloud Project Engineer",
+        "department": ["T-Tech Infrastructure and Projects"], "type": "full",
+        "remote": False, "workplace": "hybrid", "published": "2026-09-29T00:00:00.000Z",
+        "location": {"city": "London", "country": "United Kingdom", "region": "England"},
+        "locations": [{"city": "London", "country": "United Kingdom", "region": "England",
+                       "hidden": False},
+                      {"city": "Cork", "country": "Ireland", "region": None, "hidden": True}],
+    }]}
+    k = Workable()
+    k._post = lambda *a, **kw: yanit
+    j = k.cek("ttech", "Turkcell Teknoloji")[0]
+    sina("Workable department metne indirgenir", "T-Tech Infrastructure and Projects",
+         j.department)
+    sina("Workable tarihi 'published'dan okunur", "2026-09-29",
+         j.posted_at.date().isoformat() if j.posted_at else None)
+    sina("gizli konum alınmaz", ["London, England, United Kingdom"], j.locations)
+
+    # Güvenlik ağı: bağlayıcı unutsa da model listeyi metne çevirir, depo çökmez.
+    ham = ilan(department=["A", "B"], employment_type=["Tam zamanlı"], title=None)
+    sina("model liste department'ı birleştirir", "A, B", ham.department)
+    sina("model None başlığı boş metne çevirir", "", ham.title)
+    with tempfile.TemporaryDirectory() as d:
+        depo = Depo(Path(d) / "t.db")
+        try:
+            run = depo.kosu_baslat()
+            depo.kaydet(j, run)
+            depo.kaydet(ham, run)
+            depo.kaydet(ham, run)            # UPDATE yolu da sınanır
+            sina("liste alanlı ilan SQLite'a yazılır", True, True)
+        except Exception as e:
+            sina("liste alanlı ilan SQLite'a yazılır", True, f"{type(e).__name__}: {e}")
+        finally:
+            depo.close()
+
+
 def main() -> int:
     for fn in [v for k, v in sorted(globals().items()) if k.startswith("t") and callable(v)
                and k[1].isdigit()]:
