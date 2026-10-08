@@ -263,6 +263,12 @@ def eleme_kaliplari(roller: dict | None, kidem: str) -> list[str]:
             + _kidem_ustu_kaliplar(kidem, roller))
 
 
+# Aile türetme KURALI kodda yaşıyor, roller.yaml'da değil; damgaya ayrıca girmeli.
+# Kural değişince bu metni değiştir — yoksa kayıtlı profiller eski ailelerle kalır
+# (v1.5.5'te oldu: kural değişti, damga değişmedi, profiller tazelenmedi).
+AILE_KURALI = "guclu-beceri-veya-unvan-kaniti/2026-10-08"
+
+
 def motor_surumu() -> str:
     """Üretilen filtrelerin sürüm damgası.
 
@@ -275,7 +281,7 @@ def motor_surumu() -> str:
     import hashlib
     govde = (ROLLER.read_text(encoding="utf-8")
              + "|".join(_kidem_ustu_kaliplar("junior") + _kidem_ustu_kaliplar("senior"))
-             + SABIT_ELEME + repr(sorted(BIREYSEL_YONETICI_ONEKLERI.items())))
+             + SABIT_ELEME + repr(sorted(BIREYSEL_YONETICI_ONEKLERI.items())) + AILE_KURALI)
     return hashlib.sha256(govde.encode("utf-8")).hexdigest()[:12]
 
 
