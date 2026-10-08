@@ -52,17 +52,48 @@ TR_KARSILIK = {
     "product management": "ürün yönetimi", "data analysis": "veri analizi",
 }
 
-# Adayın işi OLMAYAN meslekler. Sabit tutulur: bunlar mühendislik/uzmanlık
-# ilanlarıyla aynı sözcük havuzunu paylaşan ama farklı bir işi tarif eden roller.
-# İki dilde yazılır — havuzda hem Türkçe hem İngilizce ilan var.
-UYUMSUZ_CUMLE = (
-    "Quality control and inspection, production line operator, CNC machine operator, "
-    "assembly technician, maintenance and repair technician, warehouse and logistics, "
-    "sales and marketing, human resources and payroll, cleaning and administrative support. "
-    "Kalite kontrol ve muayene, üretim bandı operatörlüğü, CNC tezgah operatörlüğü, "
-    "montaj teknisyenliği, bakım onarım teknisyenliği, depo ve sevkiyat, satış ve "
-    "pazarlama, insan kaynakları ve özlük işleri, temizlik ve idari işler."
-)
+# Adayın işi OLMAYAN meslekler. Mühendislik/uzmanlık ilanlarıyla aynı sözcük havuzunu
+# paylaşan ama farklı bir işi tarif eden roller; iki dilde yazılır (havuzda ikisi de var).
+# Her madde: (EN, TR, bu maddenin KENDİ MESLEĞİ olduğu aileler, teknisyenin işi mi).
+# NEDEN MADDE MADDE: cümle eskiden SABİTTİ ve herkese uygulanıyordu — kalite kontrolcü,
+# satışçı, İK uzmanı ve teknisyen kendi mesleğinin ilanlarında ceza alıyordu. Adayın
+# kendi mesleği cümleden çıkarılır; yazılımcı/mühendis için cümle birebir aynı kalır.
+UYUMSUZ_MADDELER: list[tuple[str, str, frozenset[str], bool]] = [
+    ("Quality control and inspection", "Kalite kontrol ve muayene",
+     frozenset({"uretim_kalite"}), False),
+    ("production line operator", "üretim bandı operatörlüğü", frozenset({"uretim_kalite"}), True),
+    ("CNC machine operator", "CNC tezgah operatörlüğü", frozenset({"uretim_kalite"}), True),
+    ("assembly technician", "montaj teknisyenliği", frozenset({"uretim_kalite"}), True),
+    ("maintenance and repair technician", "bakım onarım teknisyenliği", frozenset(), True),
+    ("warehouse and logistics", "depo ve sevkiyat", frozenset({"lojistik"}), False),
+    ("sales and marketing", "satış ve pazarlama", frozenset({"satis", "pazarlama"}), False),
+    ("human resources and payroll", "insan kaynakları ve özlük işleri", frozenset({"ik"}), False),
+    ("cleaning and administrative support", "temizlik ve idari işler", frozenset(), False),
+]
+
+
+def _bas_harf(s: str) -> str:
+    return ("İ" if s[:1] == "i" else s[:1].upper()) + s[1:]
+
+
+def uyumsuz_cumlesi(profil: dict) -> str:
+    """Adayın işi OLMAYAN meslekleri anlatan cümle — adayın kendi mesleği hariç."""
+    aileler = set(profil.get("rol_aileleri") or {})
+    teknisyen = bool((profil.get("kimlik") or {}).get("teknisyen"))
+    kalan = [(en, tr) for en, tr, muaf, tek_isi in UYUMSUZ_MADDELER
+             if not (muaf & aileler) and not (teknisyen and tek_isi)]
+    return (_bas_harf(", ".join(en for en, _ in kalan)) + ". "
+            + _bas_harf(", ".join(tr for _, tr in kalan)) + ".")
+
+
+# Profil cümlesindeki "mühendis ... Ar-Ge" kalıbı bu aileler için kurulup ölçüldü
+# (alan ölçütü 52 -> 54/60). Başka bir meslekte adayı yanlış tarif ediyordu: hemşireye,
+# avukata, teknisyene de "deneyimli mühendis" deniyordu.
+MUHENDISLIK_AILELERI = frozenset({
+    "kontrol_otomasyon", "havacilik_savunma", "makine_tasarim", "gomulu", "ml_ai",
+    "veri_muh", "veri_bilimi", "platform_sre", "backend", "frontend", "mobil", "oyun",
+    "guvenlik", "qa", "blockchain", "urun", "bilimsel_hpc", "genel_yazilim",
+})
 
 MODEL_DOSYA = "model_int8.onnx"
 TOKENIZER_DOSYA = "tokenizer.json"
@@ -151,7 +182,7 @@ class Hakem:
         np = self._np
         basla = _time.monotonic()
         q_uygun = self._goem([profil_cumlesi(profil)], "query")[0]
-        q_uygunsuz = self._goem([UYUMSUZ_CUMLE], "query")[0]
+        q_uygunsuz = self._goem([uyumsuz_cumlesi(profil)], "query")[0]
 
         hedef = ilanlar[:AZAMI_ILAN]
         basliklar = self._goem([j.title for j in hedef], "passage")
@@ -211,8 +242,19 @@ def profil_cumlesi(profil: dict) -> str:
         tr = TR_KARSILIK.get(k)
         if tr:
             yet.append(tr)
-    alanlar = [_okunur(a) for a in (profil.get("rol_aileleri") or {})]
+    aileler = list(profil.get("rol_aileleri") or {})
+    alanlar = [_okunur(a) for a in aileler]
     yil = kimlik.get("deneyim_yil")
+    if kimlik.get("teknisyen"):
+        bas = f"{yil} yıl deneyimli teknisyen." if yil else "Teknisyen."
+        return (f"{bas} Çalışma alanı: {', '.join(alanlar) or 'teknik servis'}. "
+                f"Uzmanlık: {', '.join(yet) or 'teknik servis'}. "
+                f"Kurulum, bakım, arıza giderme ve saha işi.")
+    # Aileler ağırlığa göre sıralı: ilk aile adayın ana mesleğidir.
+    if aileler and aileler[0] not in MUHENDISLIK_AILELERI:
+        bas = f"{yil} yıl deneyimli profesyonel." if yil else "Profesyonel."
+        return (f"{bas} Meslek alanı: {', '.join(alanlar)}. "
+                f"Uzmanlık: {', '.join(yet) or ', '.join(alanlar)}.")
     bas = f"{yil} yıl deneyimli mühendis." if yil else "Mühendis."
     return (f"{bas} Çalışma alanı: {', '.join(alanlar) or 'mühendislik'}. "
             f"Uzmanlık: {', '.join(yet) or 'mühendislik'}. "
@@ -240,5 +282,26 @@ def _okunur(aile: str) -> str:
         "urun": "ürün yönetimi, product management",
         "bilimsel_hpc": "bilimsel hesaplama ve simülasyon, scientific computing",
         "genel_yazilim": "yazılım mühendisliği, software engineering",
+        # Yazılım dışı meslekler: eskiden anahtar adıyla ("saglik", "ik") gidiyordu.
+        "bankacilik": "bankacılık ve finans, banking and finance",
+        "denizcilik": "denizcilik ve gemi işletmesi, maritime and shipping",
+        "egitim": "eğitim ve öğretmenlik, education and teaching",
+        "enerji_cevre": "enerji ve çevre, energy and environment",
+        "gida_tarim": "gıda ve tarım, food and agriculture",
+        "hukuk": "hukuk ve avukatlık, law and legal services",
+        "ik": "insan kaynakları, human resources",
+        "ilac_biyotek": "ilaç ve biyoteknoloji, pharmaceuticals and biotechnology",
+        "insaat": "inşaat ve yapı, construction and civil engineering",
+        "isg": "iş sağlığı ve güvenliği, occupational health and safety",
+        "kimya": "kimya ve proses, chemistry and process engineering",
+        "lojistik": "lojistik ve tedarik zinciri, logistics and supply chain",
+        "madencilik": "madencilik, mining",
+        "muhasebe": "muhasebe ve finans, accounting and finance",
+        "pazarlama": "pazarlama ve iletişim, marketing and communications",
+        "saglik": "sağlık ve hemşirelik, healthcare and nursing",
+        "satis": "satış, sales",
+        "tekstil": "tekstil ve hazır giyim, textiles and apparel",
+        "turizm": "turizm ve otelcilik, tourism and hospitality",
+        "uretim_kalite": "üretim ve kalite, manufacturing and quality",
     }
     return ADLAR.get(aile, re.sub(r"_", " ", aile))

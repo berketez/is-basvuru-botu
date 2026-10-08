@@ -698,6 +698,71 @@ def t35_rol_kaliplarinda_backspace_yok():
          any(re.search(k, "HSE Engineer") for k in roller["isg"]["basliklar"]))
 
 
+# ---------------------------------------------------------------- 36
+# mid/junior kıdem kalıbı "manager" sözcüğünü tümden eliyordu. Ürün, pazarlama, satış
+# ve İK'da "Product/Marketing/Account/HR Manager" yönetici değil, bireysel unvandır.
+# Adayın ailesine ait bileşikler açılır; "Engineering Manager" herkese kapalı kalır.
+def t36_bireysel_manager_unvanlari():
+    import re
+    from isbot.cv_import import eleme_kaliplari
+
+    def elenir(baslik, aileler, kidem="mid"):
+        return any(re.search(k, baslik) for k in eleme_kaliplari(dict.fromkeys(aileler), kidem))
+
+    sina("mid ürün adayına 'Product Manager' açık", False, elenir("Product Manager", ["urun"]))
+    sina("junior ürün adayına 'Associate Product Manager' açık", False,
+         elenir("Associate Product Manager", ["urun"], "junior"))
+    sina("mid pazarlamacıya 'Brand Manager' açık", False, elenir("Brand Manager", ["pazarlama"]))
+    sina("mid satışçıya 'Account Manager' açık", False, elenir("Account Manager", ["satis"]))
+    sina("mid İK adayına 'HR Manager' açık", False, elenir("HR Manager", ["ik"]))
+    sina("ürün+backend adayına 'Engineering Manager' yine elenir", True,
+         elenir("Engineering Manager", ["urun", "backend"]))
+    sina("'Manager, Product' (ekip yöneticisi) elenir", True, elenir("Manager, Product", ["urun"]))
+    sina("mid yazılımcıya 'Product Manager' eskisi gibi elenir", True,
+         elenir("Product Manager", ["backend"]))
+    sina("mid yazılımcıya 'Engineering Manager' elenir", True,
+         elenir("Engineering Manager", ["backend"]))
+
+
+# ---------------------------------------------------------------- 37
+# Uyum hakemi herkese aynı "uyumsuz meslekler" cümlesini ve "deneyimli mühendis"
+# profil cümlesini veriyordu: teknisyen, kalite kontrolcü, İK uzmanı kendi mesleğinin
+# ilanlarında ceza alıyordu. Mühendis için iki cümle de BİREBİR aynı kalmalı.
+def t37_uyum_meslekten_bagimsiz():
+    from isbot import uyum
+    from isbot.cv_import import teknisyen_mi
+
+    eski = ("Quality control and inspection, production line operator, CNC machine operator, "
+            "assembly technician, maintenance and repair technician, warehouse and logistics, "
+            "sales and marketing, human resources and payroll, cleaning and administrative "
+            "support. Kalite kontrol ve muayene, üretim bandı operatörlüğü, CNC tezgah "
+            "operatörlüğü, montaj teknisyenliği, bakım onarım teknisyenliği, depo ve sevkiyat, "
+            "satış ve pazarlama, insan kaynakları ve özlük işleri, temizlik ve idari işler.")
+    muh = {"kimlik": {"deneyim_yil": 3.0}, "rol_aileleri": {"kontrol_otomasyon": {}},
+           "yetenekler": {"guclu": {"control systems": 1.0}}}
+    sina("mühendisin uyumsuz cümlesi birebir aynı", eski, uyum.uyumsuz_cumlesi(muh))
+    sina("mühendisin profil cümlesi 'mühendis' der", True,
+         uyum.profil_cumlesi(muh).startswith("3.0 yıl deneyimli mühendis."))
+
+    tek = {"kimlik": {"deneyim_yil": 8.0, "teknisyen": True},
+           "rol_aileleri": {"kontrol_otomasyon": {}}}
+    sina("teknisyene bakım onarım cezası yok", False,
+         "bakım onarım" in uyum.uyumsuz_cumlesi(tek))
+    sina("teknisyenin profil cümlesi 'teknisyen' der", True,
+         "deneyimli teknisyen" in uyum.profil_cumlesi(tek))
+    sina("İK adayına İK cezası yok", False,
+         "insan kaynakları" in uyum.uyumsuz_cumlesi({"rol_aileleri": {"ik": {}}}))
+    sina("kalite kontrolcüye kalite cezası yok", False,
+         "Kalite kontrol" in uyum.uyumsuz_cumlesi({"rol_aileleri": {"uretim_kalite": {}}}))
+    sina("hemşireye 'mühendis' denmez", False,
+         "mühendis" in uyum.profil_cumlesi({"rol_aileleri": {"saglik": {}}}))
+
+    sina("başlığı 'Bakım Teknisyeni' olan CV teknisyen", True,
+         teknisyen_mi("Aday — Bakım Teknisyeni\nBursa\nEğitim ..."))
+    sina("başlığı 'Research Engineer' olan CV teknisyen DEĞİL", False,
+         teknisyen_mi("Dr. Ali Vural AI Research Engineer\n... operator theory ... technician"))
+
+
 def main() -> int:
     for fn in [v for k, v in sorted(globals().items()) if k.startswith("t") and callable(v)
                and k[1].isdigit()]:

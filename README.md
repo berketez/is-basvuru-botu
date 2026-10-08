@@ -433,12 +433,18 @@ motor komşu alandan sonuç getirir ve bunları **"alan dışı"** diye etiketle
       hakemiyle kıyaslandı: bir grupta +4–5 isabet kazandıran varyant öbüründe 4–7
       kaybettirdi, 2–4 CV kötüleşti. Darboğaz sıralama değil: 48 CV'nin 39'unda motor
       15'ten az aday bırakıyor; model listede olmayanı getiremez.
-- [ ] Kıdem kalıbı mid adaylarda "manager" sözcüğünü eliyor — Product/Marketing/Account
-      Manager gibi yönetici OLMAYAN unvanlar da gidiyor. Karma profillerde "Engineering
-      Manager"ı geri getirmeden çözülmeli.
-- [ ] Uyum hakemi yazılım dışı mesleklere uymuyor: profil cümlesi "… deneyimli mühendis"
-      diye başlıyor, "uyumsuz meslekler" cümlesi sabit (İK, satış, kalite kontrol adayına
-      kendi mesleği yüzünden ceza).
+- [x] ~~Bireysel "manager" unvanları~~ (v1.5.4) — mid/junior kıdemde "manager" yasağı,
+      adayın ailesindeki bireysel unvanlara (Product/Marketing/Account/HR Manager)
+      uygulanmıyor; "Engineering Manager" ve "Manager, X" herkese kapalı. Gerçek havuzda
+      mid kıdemli pazarlamacının kendi ailesinden yasaklı ilanı 174 → 17, satışçınınki
+      186 → 33. (Test setindeki meslek CV'lerinin hepsi 7+ yıl, yani senior; bu düzeltme
+      kısa liste ölçümünde görünmez, birim testleri ve havuz sayımıyla doğrulandı.)
+- [x] ~~Uyum hakemi meslekten bağımsız~~ (v1.5.4) — "uyumsuz meslekler" cümlesinden
+      adayın kendi mesleği çıkarılıyor (İK, satış, kalite kontrol, teknisyen); profil
+      cümlesi yalnız yazılım/mühendislik ailelerinde "mühendis … Ar-Ge" diyor, teknisyene
+      "teknisyen", diğerlerine meslekten bağımsız cümle. Teknisyen, CV başlığından
+      ayırt ediliyor (kontrol mühendisiyle aynı aileye düşüyor). Mühendis için iki cümle
+      birebir aynı; 48 CV'de sıralamaya etkisi nötr (tek CV'de ilk5 +1, ilk10 −1).
 - [ ] **Türkiye kapsamının canlı ölçümü** — il çeşitliliği + sektör sayfaları yazıldı
       ama gerçek tarama ile sınanmadı (pano engeli). 329 → ? ilan ölçülecek.
 - [ ] İş alarmı e-postalarından ilan okuma (LinkedIn kapsamı için tek meşru yol)

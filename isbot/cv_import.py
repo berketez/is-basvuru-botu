@@ -235,7 +235,7 @@ def eleme_kaliplari(roller: dict | None, kidem: str) -> list[str]:
     ailesine ait kalıplar HARİÇ) + kıdem üstü unvanlar."""
     aileler = set(roller or {})
     return ([k for k, muaf in ELEME_KALIPLARI if not (muaf & aileler)]
-            + _kidem_ustu_kaliplar(kidem))
+            + _kidem_ustu_kaliplar(kidem, roller))
 
 
 def motor_surumu() -> str:
@@ -250,11 +250,33 @@ def motor_surumu() -> str:
     import hashlib
     govde = (ROLLER.read_text(encoding="utf-8")
              + "|".join(_kidem_ustu_kaliplar("junior") + _kidem_ustu_kaliplar("senior"))
-             + SABIT_ELEME)
+             + SABIT_ELEME + repr(sorted(BIREYSEL_YONETICI_ONEKLERI.items())))
     return hashlib.sha256(govde.encode("utf-8")).hexdigest()[:12]
 
 
-def _kidem_ustu_kaliplar(kidem: str) -> list[str]:
+# Yönetici OLMAYAN "manager" unvanları. Mühendislikte "manager" ekip yöneticisidir
+# ("Engineering Manager"), ama bu ailelerde bireysel katkı unvanıdır ve roller.yaml'daki
+# başlık kalıplarında zaten geçer ("account manager", "marketing manager", "product
+# manager", "hr manager"). Ölçüldü (2026-10-08): mid kıdemli ürün/pazarlama/satış/İK
+# adayına "manager" yasağı kendi mesleğinin ilanlarını da eliyordu. Adayın ailesi
+# buradaysa yasak bu öneklerle başlayan "... manager" unvanlarına uygulanmaz.
+BIREYSEL_YONETICI_ONEKLERI: dict[str, tuple[str, ...]] = {
+    "urun": ("product", "project"),
+    "pazarlama": ("marketing", "brand", "content", "social media", "communications"),
+    "satis": ("sales", "account", "retail", "store", "territory"),
+    "ik": ("hr", "human resources", "people", "recruiting", "talent acquisition",
+           "compensation"),
+}
+
+
+def _manager_kalibi(roller: dict | None) -> str:
+    """"manager" yasağı; adayın ailesine ait bireysel unvan önekleri hariç.
+    Geri bakış sabit genişlik ister, o yüzden önek başına ayrı (?<!...) yazılır."""
+    onekler = sorted({o for a in (roller or {}) for o in BIREYSEL_YONETICI_ONEKLERI.get(a, ())})
+    return "(?i)" + "".join(f"(?<!{re.escape(o)} )" for o in onekler) + r"\bmanager\b"
+
+
+def _kidem_ustu_kaliplar(kidem: str, roller: dict | None = None) -> list[str]:
     """Adayın kıdeminin ÜSTÜNDEKİ unvanları eleyen kalıplar.
 
     Başlık bazlı eleme, ilan metnindeki "X yıl deneyim" şartından daha güvenilirdir
@@ -265,9 +287,11 @@ def _kidem_ustu_kaliplar(kidem: str) -> list[str]:
     # ama Python ikinci tanımı kullandığı için COO/CIO başlıkları hiç elenmiyordu.
     yonetim = r"(?i)\b(head of|director|vp of|vice president|chief|c[teofi]o)\b"
     if kidem == "junior":
-        return [r"(?i)\b(staff|principal|distinguished|fellow|lead|manager)\b", yonetim]
+        return [r"(?i)\b(staff|principal|distinguished|fellow|lead)\b",
+                _manager_kalibi(roller), yonetim]
     if kidem == "mid":
-        return [r"(?i)\b(staff|principal|distinguished|fellow|manager)\b", yonetim]
+        return [r"(?i)\b(staff|principal|distinguished|fellow)\b",
+                _manager_kalibi(roller), yonetim]
     if kidem == "senior":
         return [r"(?i)\b(distinguished|fellow)\b", yonetim]
     return [yonetim]
@@ -350,6 +374,26 @@ def _tr_sorgular(roller: dict, ust_sinir: int = 6) -> list[str]:
     return cikti[:ust_sinir]
 
 
+_TEKNISYEN = re.compile(r"(?i)\b(teknisyen|tekniker|technician|elektrikçi|electrician|"
+                        r"operatör|operator|usta)\w*")
+_MUHENDIS = re.compile(r"(?i)\b(mühendis|engineer|mimar|architect)\w*")
+
+
+def teknisyen_mi(metin: str) -> bool:
+    """CV'nin sahibi teknisyen mi? Yalnız CV BAŞLIĞINA (ad + unvan satırı) bakılır.
+
+    NEDEN: teknisyen ile kontrol mühendisi aynı rol ailesine (kontrol_otomasyon) düşüyor,
+    aile ikisini ayıramıyor. Uyum hakemi ise "bakım onarım teknisyenliği"ni adayın işi
+    OLMAYAN meslek sayıyordu — teknisyen kendi mesleğinin ilanlarında ceza alıyordu.
+    Metnin tamamına bakılmaz: mühendis CV'lerinde de "operator", "technician" geçiyor
+    (ölçüldü: bir AI araştırma mühendisi CV'sinde 3 kez). Başlıkta teknisyen sözcüğü
+    olup mühendis sözcüğü OLMAYAN CV teknisyen sayılır; 48 test CV'sinde tam olarak
+    iki bakım teknisyeni CV'sini seçiyor.
+    """
+    bas = metin_normalize(metin)[:250]
+    return bool(_TEKNISYEN.search(bas)) and not _MUHENDIS.search(bas)
+
+
 def profil_uret(cv_yolu: str | Path) -> dict:
     metin = metin_cikar(cv_yolu)
     if len(metin) < 200:
@@ -358,6 +402,7 @@ def profil_uret(cv_yolu: str | Path) -> dict:
     dnm = deneyim_tahmin(metin)
     yil, kidem = dnm.profesyonel_yil, dnm.kidem
     tr = bool(re.search(r"(?i)\b(turkey|türkiye|istanbul|ankara|izmir)\b", metin))
+    teknisyen = teknisyen_mi(metin)
     # Eleme kalıpları adayın meslek ailesine bağlı, o yüzden önce aileler türetilir.
     _roller = rol_aileleri_turet(set(guclu) | set(zayif))
 
@@ -373,6 +418,7 @@ def profil_uret(cv_yolu: str | Path) -> dict:
             "deneyim_yil": yil,
             "_deneyim_toplam_gonullu_dahil": dnm.toplam_yil,
             "_deneyim_kaynagi": dnm.kaynak,
+            "teknisyen": teknisyen,
         },
         "sert_filtreler": {
             # Junior bir kademe yukarı bakabilir; üst seviyeler kendi seviyesinde kalır.
