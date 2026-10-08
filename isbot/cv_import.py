@@ -19,7 +19,7 @@ from pathlib import Path
 
 import yaml
 
-from .experience import metin_normalize
+from .experience import _deneyim_bolumu, metin_normalize
 from .experience import tahmin as deneyim_tahmin
 
 from .yollar import kaynak_dosya
@@ -150,7 +150,16 @@ SABLON_KUYRUK = {
 }
 
 
-def rol_aileleri_turet(yetenekler: set[str]) -> dict:
+def unvan_aileleri(metin: str) -> list[str]:
+    """Başlık kalıbı CV'nin DENEYİM bölümünde geçen aileler (kişinin taşıdığı unvanlar)."""
+    dene = _deneyim_bolumu(metin_normalize(metin))
+    tanimlar = yaml.safe_load(ROLLER.read_text(encoding="utf-8"))
+    return [ad for ad, t in tanimlar.items()
+            if any(re.search(k, dene) for k in t.get("basliklar") or [])]
+
+
+def rol_aileleri_turet(yetenekler: set[str], guclu_yetenekler: set[str] | None = None,
+                       unvan_kanitli: set[str] | None = None) -> dict:
     """CV'de tespit edilen yeteneklerden rol ailelerini çıkarır.
 
     NEDEN: Eskiden bu liste SABİTTİ (llm/ml/yazılım/veri). Sonuç: iOS geliştiricisi,
@@ -160,6 +169,18 @@ def rol_aileleri_turet(yetenekler: set[str]) -> dict:
 
     Ağırlık, tetiklenen yetenek sayısıyla hafifçe ölçeklenir: 5 mobil yeteneği olan
     biri, 1 tanesi olandan daha güçlü bir mobil adayıdır.
+
+    guclu_yetenekler verilirse bir aile, tetikleyicilerinden en az biri GÜÇLÜ
+    yetenekse ya da adayın deneyiminde o ailenin UNVANI geçiyorsa (unvan_kanitli) açılır. NEDEN: zayıf yetenek = CV'de bir kez geçen, Beceriler bölümünde
+    olmayan sözcük; çoğu zaman başka anlamda geçer. Ölçüldü (2026-10-08, gerçek bir
+    Türkçe CV): "ağ, depolama ve kullanıcı yönetimi" -> Warehouse Management ->
+    lojistik; "Platt kalibrasyonu" + "otomatik kalite kontrolü" -> üretim/kalite;
+    "kompozitler için lamine teorisi" -> kimya. Üç aile de aday için alakasızdı.
+    Unvan kanıtı şart çünkü yalnız beceri gücüne bakmak fazla kabaydı: deneyiminde
+    "Üretim Mühendisi" yazan yeni mezunun üretim/kalite ailesi de iki zayıf beceriyle
+    açılıyordu (CNC, montaj hattı) ve o aile onun gerçek alanıydı.
+    Güçlü kanıtı hiç olmayan CV'de (Beceriler bölümü yok, kısa metin) eski davranışa
+    dönülür — onu "genel yazılım"a düşürmek, örneğin bir hemşireyi yazılımcı yapardı.
     """
     tanimlar = yaml.safe_load(ROLLER.read_text(encoding="utf-8"))
     secilen = {}
@@ -177,7 +198,11 @@ def rol_aileleri_turet(yetenekler: set[str]) -> dict:
             "_tetik_sayisi": len(tetikler),
             "basliklar": t["basliklar"],
             "_tetikleyen": tetikler[:6],
+            "_guclu_kanit": bool(set(tetikler) & (guclu_yetenekler or set()))
+                            or ad in (unvan_kanitli or set()),
         }
+    if guclu_yetenekler is not None and any(d["_guclu_kanit"] for d in secilen.values()):
+        secilen = {ad: d for ad, d in secilen.items() if d["_guclu_kanit"]}
     # AĞIRLIK = alanın CV'deki MERKEZİLİĞİ.
     # Eşit ağırlık vermek yanlıştı: 7 tetikle açılan ml_ai ile 2 tetikle açılan
     # platform_sre aynı ağırlığı alıyordu ve bir Staff ML mühendisinin ilk
@@ -187,7 +212,7 @@ def rol_aileleri_turet(yetenekler: set[str]) -> dict:
         taban = 0.55 if d["_guclu_var"] else 0.40
         merkezilik = d["_tetik_sayisi"] / en_cok
         d["agirlik"] = round(d["_ham_agirlik"] * min(1.0, taban + 0.45 * merkezilik), 2)
-        for k in ("_ham_agirlik", "_guclu_var", "_tetik_sayisi"):
+        for k in ("_ham_agirlik", "_guclu_var", "_tetik_sayisi", "_guclu_kanit"):
             d.pop(k)
 
     if not secilen:            # hiçbir aile tutmadıysa geniş bir yazılım ailesi ver
@@ -404,7 +429,8 @@ def profil_uret(cv_yolu: str | Path) -> dict:
     tr = bool(re.search(r"(?i)\b(turkey|türkiye|istanbul|ankara|izmir)\b", metin))
     teknisyen = teknisyen_mi(metin)
     # Eleme kalıpları adayın meslek ailesine bağlı, o yüzden önce aileler türetilir.
-    _roller = rol_aileleri_turet(set(guclu) | set(zayif))
+    _unvanlar = unvan_aileleri(metin)
+    _roller = rol_aileleri_turet(set(guclu) | set(zayif), set(guclu), set(_unvanlar))
 
     return {
         "_NOT": "cv-import ile ÜRETİLDİ — TASLAKTIR. Aşağıdaki alanları elle gözden geçir: "
@@ -429,6 +455,8 @@ def profil_uret(cv_yolu: str | Path) -> dict:
             "sponsorluk_gerektiren_ele": True,
         },
         "rol_aileleri": _roller,
+        # CV olmadan yapılan profil tazelemesi de aynı kararı versin diye saklanır.
+        "_unvan_aileleri": _unvanlar,
         # Şirketler-arası kaynaklar için İngilizce arama sorguları: en güçlü
         # yetenekler + ROL AİLESİNDEN gelen pozisyon adları.
         # NEDEN: eskiden listeye sabit olarak "software engineer" ekleniyordu. Bir
@@ -475,7 +503,8 @@ def profil_tazele(profil: dict) -> tuple[dict, list[str]]:
     kidem = {"mid": "junior", "senior": "mid", "staff": "senior"}.get(tavan, tavan)
 
     if tum:
-        yeni_roller = rol_aileleri_turet(tum)
+        yeni_roller = rol_aileleri_turet(tum, set(yet.get("guclu") or {}),
+                                         set(profil.get("_unvan_aileleri") or []))
         if set(yeni_roller) != set(profil.get("rol_aileleri") or {}):
             profil["rol_aileleri"] = yeni_roller
             degisen.append("rol aileleri")

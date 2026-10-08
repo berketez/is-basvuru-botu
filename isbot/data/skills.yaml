@@ -419,7 +419,8 @@ bankacilik_sigorta:
 lojistik_tedarik:
   "Supply Chain Management": ["supply chain", "tedarik zinciri", "tedarik zinciri yönetimi", "arz planlama", "tedarik süreçleri"]
   Procurement: ["procurement", "purchasing", "satın alma", "satınalma", "tedarikçi yönetimi", "satın alma uzmanı", "tedarikçi değerlendirme"]
-  "Warehouse Management": ["warehouse management", "depo yönetimi", "depo sorumlusu", "depolama", "raf yönetimi", "depo operasyonu"]
+  # "depolama" BİLEREK yok: bilişimde veri depolama demek ("ağ, depolama ve kullanıcı yönetimi").
+  "Warehouse Management": ["warehouse management", "depo yönetimi", "depo sorumlusu", "raf yönetimi", "depo operasyonu"]
   "Inventory Management": ["inventory management", "stok yönetimi", "stok kontrol", "stok takibi", "envanter sayımı", "sayım işlemleri"]
   "Customs Clearance": ["customs clearance", "gümrükleme", "gümrük işlemleri", "gümrük müşaviri", "beyanname tescili", "gümrük mevzuatı"]
   "Foreign Trade": ["foreign trade", "dış ticaret", "ihracat", "ithalat", "akreditif", "dış ticaret uzmanı", "ihracat operasyon"]

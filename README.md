@@ -445,6 +445,18 @@ motor komşu alandan sonuç getirir ve bunları **"alan dışı"** diye etiketle
       "teknisyen", diğerlerine meslekten bağımsız cümle. Teknisyen, CV başlığından
       ayırt ediliyor (kontrol mühendisiyle aynı aileye düşüyor). Mühendis için iki cümle
       birebir aynı; 48 CV'de sıralamaya etkisi nötr (tek CV'de ilk5 +1, ilk10 −1).
+- [x] ~~Zayıf beceri aile açamaz~~ (v1.5.5) — CV'de bir kez geçen, Beceriler bölümünde
+      olmayan sözcük artık tek başına meslek ailesi açmıyor; aile ya güçlü bir beceriyle
+      ya da deneyimde o ailenin unvanı geçiyorsa açılıyor. Gerçek bir Türkçe CV'de
+      "ağ, depolama ve kullanıcı yönetimi" lojistik, "Platt kalibrasyonu" üretim/kalite,
+      "kompozitler" kimya ailesi açıyordu. Ay yazılmamış dönem ("Yaz 2025") 3 yerine 2 ay.
+- [ ] **Türkiye meslek kapsamı** — `python scripts/tr_kapsam.py`. kariyer.net'te en az 3
+      ilde açılmış pozisyonların yalnız ~%34'ü (ilan yaygınlığıyla ağırlıklı ~%46) bir
+      rol ailesine giriyor. Boşluk mavi yaka ve hizmet tarafında: üretim operatörü,
+      mekanik/elektrik bakım teknisyeni, CNC operatörü, kaynak ustası, depo/forklift,
+      şoför, güvenlik görevlisi, müşteri hizmetleri, grafik tasarım, gayrimenkul, tıbbi
+      tanıtım. Var olan ailelerde de delik var ("satış elemanı", "depo elemanı", "kalite
+      mühendisi"). Yeni aile + kalıp + CV'den tanıyacak beceri birlikte eklenmeli.
 - [ ] **Türkiye kapsamının canlı ölçümü** — il çeşitliliği + sektör sayfaları yazıldı
       ama gerçek tarama ile sınanmadı (pano engeli). 329 → ? ilan ölçülecek.
 - [ ] İş alarmı e-postalarından ilan okuma (LinkedIn kapsamı için tek meşru yol)

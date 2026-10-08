@@ -763,6 +763,59 @@ def t37_uyum_meslekten_bagimsiz():
          teknisyen_mi("Dr. Ali Vural AI Research Engineer\n... operator theory ... technician"))
 
 
+# ---------------------------------------------------------------- 38
+# Tek geçişli (zayıf) beceri bütün bir meslek ailesini açıyordu. Gerçek bir Türkçe
+# CV'de "ağ, depolama ve kullanıcı yönetimi" -> lojistik, "Platt kalibrasyonu" +
+# "otomatik kalite kontrolü" -> üretim/kalite, "kompozitler" -> kimya çıktı.
+# Zayıf kanıtlı aile ancak deneyimde o ailenin UNVANI geçiyorsa kalır.
+def t38_zayif_beceri_aile_acamaz():
+    from isbot.cv_import import rol_aileleri_turet, unvan_aileleri
+
+    yet = {"PyTorch", "LLM", "reinforcement learning", "Quality Control",
+           "Metrology and Calibration", "Composite Materials"}
+    guclu = {"PyTorch", "LLM", "reinforcement learning"}
+    aileler = rol_aileleri_turet(yet, guclu, set())
+    sina("güçlü kanıtlı aile kalır", True, "ml_ai" in aileler)
+    sina("zayıf kanıtlı üretim/kalite düşer", False, "uretim_kalite" in aileler)
+    sina("zayıf kanıtlı kimya düşer", False, "kimya" in aileler)
+    sina("deneyimde unvanı geçen zayıf aile kalır", True,
+         "uretim_kalite" in rol_aileleri_turet(yet, guclu, {"uretim_kalite"}))
+    sina("güçlü kanıt hiç yoksa eski davranış (genel yazılıma düşmez)", True,
+         "uretim_kalite" in rol_aileleri_turet({"Quality Control", "Metrology and Calibration"},
+                                               set(), set()))
+    sina("'Üretim Mühendisi' unvanı üretim/kalite kanıtıdır", True,
+         "uretim_kalite" in unvan_aileleri("Deneyim\nÜretim Mühendisi   2024 – 2025\nABC A.Ş."))
+
+    from isbot.cv_import import yetenek_tespit
+    g, z = yetenek_tespit("Linux sunucusu kurdum; ağ, depolama ve kullanıcı yönetimi dâhil. " * 3)
+    sina("'depolama' depo yönetimi sayılmaz", False, "Warehouse Management" in {**g, **z})
+
+
+# ---------------------------------------------------------------- 39
+# "Yaz 2025" gibi ay yazılmamış dönem 3 ay sayılıyordu ve mevsim yok sayılıp hep
+# Haziran–Eylül'e konuyordu: iki yaz stajlı CV 5 aylık deneyimi 0,7 yıl gösteriyordu.
+def t39_mevsim_suresi():
+    from isbot.experience import _araliklari_topla
+    for satir in ("Stajyer   Yaz 2025", "Intern   Summer 2025"):
+        (bas, son), = _araliklari_topla(satir)[0]
+        sina(f"'{satir.split()[-2]}' 2 ay sayılır", 2, round((son - bas) * 12))
+    (bas, _), = _araliklari_topla("Intern   Winter 2024")[0]
+    sina("'Winter' kışa yerleşir (Ocak)", 1, round((bas - 2024) * 12) + 1)
+
+
+# ---------------------------------------------------------------- 40
+# Paneldeki rol adı sözlüğünde 20 yazılım dışı aile yoktu; kullanıcı "uretim kalite",
+# "lojistik" gibi ham anahtarlar görüyordu. Her aile panelde okunur ada sahip olmalı.
+def t40_panelde_her_ailenin_adi_var():
+    import re
+    import yaml as _y
+    from isbot.yollar import kaynak_dosya
+    roller = _y.safe_load(kaynak_dosya("isbot", "data", "roller.yaml").read_text(encoding="utf-8"))
+    html = kaynak_dosya("isbot", "web", "index.html").read_text(encoding="utf-8")
+    blok = html[html.index("const ROL_AD"):html.index("const rolAdi")]
+    sina("panelde adı eksik aile yok", [], sorted(set(roller) - set(re.findall(r"(\w+):\s*\"", blok))))
+
+
 def main() -> int:
     for fn in [v for k, v in sorted(globals().items()) if k.startswith("t") and callable(v)
                and k[1].isdigit()]:

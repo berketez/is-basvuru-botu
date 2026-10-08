@@ -194,9 +194,15 @@ def _araliklari_topla(blok: str) -> tuple[list, list]:
                     hedef.append((_ondalik(y, a1), _ondalik(y, a2 + 1)))
                     bulundu = True
         if not bulundu:
-            for m in TEK_DONEM.finditer(satir):     # "Summer 2025" ≈ 3 ay
-                y = int(m.group(2))
-                hedef.append((_ondalik(y, 6), _ondalik(y, 9)))
+            # "Summer 2025" / "Yaz 2025": ay yazılmamış, süre bilinmiyor. Eskiden 3 ay
+            # sayılıyordu ve mevsim yok sayılıp hep Haziran–Eylül'e konuyordu. Türkiye'de
+            # staj 20-40 iş günü (~1-1,5 ay), yurt dışında 10-12 hafta; ikisinin ortası
+            # olan 2 ay sayılır. Ölçüldü (2026-10-08): iki "Yaz" stajlı bir CV 5 aylık
+            # deneyimi 8 ay (0,7 yıl) gösteriyordu.
+            for m in TEK_DONEM.finditer(satir):
+                # _ay() ilk 3-4 harfe bakar; "winter"/"spring" orada tutmuyor, tam adla aranır.
+                y, bas_ay = int(m.group(2)), AY.get(m.group(1).lower(), 6)
+                hedef.append((_ondalik(y, bas_ay), _ondalik(y, bas_ay + 2)))
     return prof, gon
 
 
