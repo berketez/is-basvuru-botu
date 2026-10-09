@@ -88,7 +88,23 @@ def profil_oku():
         # döndürülür ki CV yüklenince kutular hazır işaretli gelsin.
         return jsonify({"var": False, "onceki_konum": (p.get("sert_filtreler") or {})
                         .get("zorunlu_konum_kosulu", [])})
-    return jsonify({
+    return jsonify(_profil_ozeti(p))
+
+
+def _roller_ozeti(p: dict) -> dict:
+    """Arayüzün rol çiplerini çizdiği alanlar (aranan + kullanıcının kapattığı aileler)."""
+    return {
+        "rol_aileleri": [{"ad": ad, "agirlik": d.get("agirlik", 0),
+                          "tetikleyen": d.get("_tetikleyen", [])}
+                         for ad, d in (p.get("rol_aileleri") or {}).items()],
+        "haric_aileler": list(p.get("_haric_aileler") or []),
+        "tr_sorgular": p.get("tr_arama_sorgulari", []),
+        "sorgular": p.get("arama_sorgulari", []),
+    }
+
+
+def _profil_ozeti(p: dict) -> dict:
+    return {
         "var": True,
         "deneyim_yil": (p.get("kimlik") or {}).get("deneyim_yil"),
         "deneyim_kaynagi": (p.get("kimlik") or {}).get("_deneyim_kaynagi"),
@@ -96,13 +112,9 @@ def profil_oku():
         "max_kidem": (p.get("sert_filtreler") or {}).get("max_kidem"),
         "konum_kosulu": (p.get("sert_filtreler") or {}).get("zorunlu_konum_kosulu", []),
         "guclu_yetenek": list((p.get("yetenekler") or {}).get("guclu") or {}),
-        "sorgular": p.get("arama_sorgulari", []),
-        "rol_aileleri": [{"ad": ad, "agirlik": d.get("agirlik", 0),
-                          "tetikleyen": d.get("_tetikleyen", [])}
-                         for ad, d in (p.get("rol_aileleri") or {}).items()],
-        "tr_sorgular": p.get("tr_arama_sorgulari", []),
+        **_roller_ozeti(p),
         "not": p.get("_NOT"),
-    })
+    }
 
 
 @app.post("/api/cv")
@@ -119,8 +131,17 @@ def cv_yukle():
     gecici = veri_dosya("out", f"cv_gecici{uzanti}")
     gecici.parent.mkdir(parents=True, exist_ok=True)
     f.save(gecici)
+    # Kullanıcının kapattığı aileler yeni CV'de de kapalı kalır: profil sıfırdan
+    # yazılıyor, liste taşınmazsa "backend istemiyorum" kararı her yüklemede silinir.
+    haric: list[str] = []
+    if VARSAYILAN_PROFIL.exists():
+        try:
+            onceki = yaml.safe_load(VARSAYILAN_PROFIL.read_text(encoding="utf-8")) or {}
+            haric = list(onceki.get("_haric_aileler") or [])
+        except Exception:
+            haric = []
     try:
-        p = profil_uret(gecici)
+        p = profil_uret(gecici, haric=haric)
         profil_yaz(p, VARSAYILAN_PROFIL)
     except Exception as e:
         return jsonify({"hata": f"{type(e).__name__}: {e}"}), 400
@@ -141,12 +162,36 @@ def cv_yukle():
         # kontrol mühendisi CV'si "C/Go programcısı" olarak çıkarıldı; panel yalnız
         # "1 güçlü yetenek" yazdığı için hata taramadan SONRA anlaşıldı. Hedef roller
         # baştan gösterilirse kullanıcı "ben bu değilim" diyebilir.
-        "rol_aileleri": [{"ad": ad, "agirlik": d.get("agirlik", 0),
-                          "tetikleyen": d.get("_tetikleyen", [])}
-                         for ad, d in (p.get("rol_aileleri") or {}).items()],
-        "tr_sorgular": p.get("tr_arama_sorgulari", []),
-        "sorgular": p.get("arama_sorgulari", []),
+        **_roller_ozeti(p),
     })
+
+
+@app.post("/api/profil/aile")
+def aile_degistir():
+    """Kullanıcı bir rol ailesini kapatır ya da geri açar: {"ad": "backend", "haric": true}.
+
+    NEDEN: CV kişinin istemediğini söylemez. FastAPI/Flask kanıtı olan aday backend
+    işi istemeyebilir; motor bunu CV'den bilemez. Karar profilde saklanır, CV yeniden
+    yüklenince ve motor güncellenince de korunur.
+    """
+    from .cv_import import ROLLER
+    veri = request.get_json(silent=True) or {}
+    ad, haric = veri.get("ad"), bool(veri.get("haric", True))
+    if not isinstance(ad, str) or ad not in (yaml.safe_load(ROLLER.read_text(encoding="utf-8")) or {}):
+        return jsonify({"hata": "tanınmayan rol ailesi"}), 400
+    if not VARSAYILAN_PROFIL.exists():
+        return jsonify({"hata": "önce CV yükle"}), 400
+    p = yaml.safe_load(VARSAYILAN_PROFIL.read_text(encoding="utf-8")) or {}
+    kume = set(p.get("_haric_aileler") or [])
+    (kume.add if haric else kume.discard)(ad)
+    p["_haric_aileler"] = sorted(kume)
+    p, _ = profil_tazele(p, zorla=True)
+    # Son aile kapatılamaz: motor boş listeyi "genel yazılım"a çevirir, yani hemşire
+    # son ailesini kapatınca yazılım ilanı arar.
+    if haric and not (set(p.get("rol_aileleri") or {}) - {"genel_yazilim"}):
+        return jsonify({"hata": "en az bir rol açık kalmalı"}), 400
+    profil_yaz(p, VARSAYILAN_PROFIL)
+    return jsonify({"tamam": True, **_roller_ozeti(p)})
 
 
 @app.get("/api/ulkeler")

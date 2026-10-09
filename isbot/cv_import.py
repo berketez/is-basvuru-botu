@@ -159,7 +159,8 @@ def unvan_aileleri(metin: str) -> list[str]:
 
 
 def rol_aileleri_turet(yetenekler: set[str], guclu_yetenekler: set[str] | None = None,
-                       unvan_kanitli: set[str] | None = None, teknisyen: bool = False) -> dict:
+                       unvan_kanitli: set[str] | None = None, teknisyen: bool = False,
+                       haric: set[str] | None = None) -> dict:
     """CV'de tespit edilen yeteneklerden rol ailelerini çıkarır.
 
     NEDEN: Eskiden bu liste SABİTTİ (llm/ml/yazılım/veri). Sonuç: iOS geliştiricisi,
@@ -185,10 +186,17 @@ def rol_aileleri_turet(yetenekler: set[str], guclu_yetenekler: set[str] | None =
     `seviye: teknisyen` taşıyan aile yalnız teknisyen=True iken açılır (bkz. teknisyen_mi).
     NEDEN: bakım becerisi (önleyici bakım, hidrolik, pano) mühendis CV'sinde de geçer;
     aile açılırsa sorguları önceliklendiği için mühendise teknisyen ilanı aranır.
+
+    haric: kullanıcının panelde KAPATTIĞI aileler; hiç türetilmez. NEDEN: CV kişinin
+    istemediğini söylemez. Gerçek bir CV'de FastAPI/Flask kanıtı backend'i %62 ağırlıkla
+    açıyordu, aday backend işi aramıyordu. Aile türetmeden çıkınca sorgular, eleme
+    muafiyetleri ve öteki ailelerin ağırlıkları da onsuz hesaplanır.
     """
     tanimlar = yaml.safe_load(ROLLER.read_text(encoding="utf-8"))
     secilen = {}
     for ad, t in tanimlar.items():
+        if ad in (haric or ()):
+            continue
         # TANIMLAYICI tetik: biri bile varsa aile açılır.
         guclu = [x for x in (t.get("tetik_guclu") or []) if x in yetenekler]
         # DESTEKLEYİCİ tetik: tek başına yetmez (bkz. roller.yaml'daki Swift örneği).
@@ -273,7 +281,8 @@ def eleme_kaliplari(roller: dict | None, kidem: str) -> list[str]:
 # Aile türetme KURALI kodda yaşıyor, roller.yaml'da değil; damgaya ayrıca girmeli.
 # Kural değişince bu metni değiştir — yoksa kayıtlı profiller eski ailelerle kalır
 # (v1.5.5'te oldu: kural değişti, damga değişmedi, profiller tazelenmedi).
-AILE_KURALI = "guclu-beceri-veya-unvan-kaniti/2026-10-08+seviye-teknisyen/2026-10-09"
+AILE_KURALI = ("guclu-beceri-veya-unvan-kaniti/2026-10-08+seviye-teknisyen/2026-10-09"
+               "+haric-aile/2026-10-09")
 
 
 def motor_surumu() -> str:
@@ -456,7 +465,12 @@ def teknisyen_mi(metin: str) -> bool:
     return bool(_TEKNISYEN.search(bas)) and not _MUHENDIS.search(bas)
 
 
-def profil_uret(cv_yolu: str | Path) -> dict:
+def _arama_sorgulari(guclu, roller: dict) -> list[str]:
+    """Şirketler-arası (İngilizce) kaynakların sorguları: en güçlü 5 yetenek + aile pozisyonları."""
+    return list(dict.fromkeys([a.lower() for a in list(guclu)[:5]] + _en_sorgular(roller)))[:8]
+
+
+def profil_uret(cv_yolu: str | Path, haric: set[str] | list[str] | None = None) -> dict:
     metin = metin_cikar(cv_yolu)
     if len(metin) < 200:
         raise RuntimeError("CV'den anlamlı metin çıkmadı (taranmış PDF olabilir — OCR gerekir)")
@@ -467,7 +481,9 @@ def profil_uret(cv_yolu: str | Path) -> dict:
     teknisyen = teknisyen_mi(metin)
     # Eleme kalıpları adayın meslek ailesine bağlı, o yüzden önce aileler türetilir.
     _unvanlar = unvan_aileleri(metin)
-    _roller = rol_aileleri_turet(set(guclu) | set(zayif), set(guclu), set(_unvanlar), teknisyen)
+    _haric = sorted(set(haric or ()))
+    _roller = rol_aileleri_turet(set(guclu) | set(zayif), set(guclu), set(_unvanlar), teknisyen,
+                                 set(_haric))
 
     return {
         "_NOT": "cv-import ile ÜRETİLDİ — TASLAKTIR. Aşağıdaki alanları elle gözden geçir: "
@@ -492,6 +508,8 @@ def profil_uret(cv_yolu: str | Path) -> dict:
             "sponsorluk_gerektiren_ele": True,
         },
         "rol_aileleri": _roller,
+        # Kullanıcının panelde kapattığı aileler (kullanıcı kararı; CV'den gelmez).
+        "_haric_aileler": _haric,
         # CV olmadan yapılan profil tazelemesi de aynı kararı versin diye saklanır.
         "_unvan_aileleri": _unvanlar,
         # Şirketler-arası kaynaklar için İngilizce arama sorguları: en güçlü
@@ -499,8 +517,7 @@ def profil_uret(cv_yolu: str | Path) -> dict:
         # NEDEN: eskiden listeye sabit olarak "software engineer" ekleniyordu. Bir
         # kontrol/havacılık mühendisi adayında bu, havuzu yazılım ilanlarıyla
         # dolduran tek en büyük kalemdi — aday yazılımcı olmadığı hâlde.
-        "arama_sorgulari": list(dict.fromkeys(
-            [a.lower() for a in list(guclu)[:5]] + _en_sorgular(_roller)))[:8],
+        "arama_sorgulari": _arama_sorgulari(guclu, _roller),
         # Türk panoları İngilizce sorguyla çalışmaz; pozisyon adları Türkçe olmalı.
         # Rol ailelerinden türetilir (roller.yaml -> tr_pozisyonlar).
         "tr_arama_sorgulari": _tr_sorgular(_roller),
@@ -517,17 +534,19 @@ def profil_uret(cv_yolu: str | Path) -> dict:
     }
 
 
-def profil_tazele(profil: dict) -> tuple[dict, list[str]]:
+def profil_tazele(profil: dict, zorla: bool = False) -> tuple[dict, list[str]]:
     """Motor güncellendiyse profilin ÜRETİLEN kısımlarını yeniler.
 
     CV'ye gerek yok: yetenekler ve kıdem zaten profilde saklı. Kullanıcının ELLE
     verdiği kararlar (çalışma izni, konum koşulu, şehirler, arama sorguları)
     KORUNUR — yalnız motordan gelen türetmeler tazelenir.
 
+    zorla: motor aynı olsa da yeniden türet (kullanıcı panelde bir aileyi kapatınca).
+
     Dönüş: (profil, değişenlerin listesi)
     """
     guncel = motor_surumu()
-    if profil.get("_motor_surumu") == guncel:
+    if profil.get("_motor_surumu") == guncel and not zorla:
         return profil, []
 
     degisen: list[str] = []
@@ -542,10 +561,17 @@ def profil_tazele(profil: dict) -> tuple[dict, list[str]]:
     if tum:
         yeni_roller = rol_aileleri_turet(tum, set(yet.get("guclu") or {}),
                                          set(profil.get("_unvan_aileleri") or []),
-                                         bool((profil.get("kimlik") or {}).get("teknisyen")))
+                                         bool((profil.get("kimlik") or {}).get("teknisyen")),
+                                         set(profil.get("_haric_aileler") or []))
         if set(yeni_roller) != set(profil.get("rol_aileleri") or {}):
             profil["rol_aileleri"] = yeni_roller
             degisen.append("rol aileleri")
+        # İngilizce sorgular da ailelerden gelir; eskiden tazelenmiyordu, kapatılan
+        # ailenin pozisyonu ("backend engineer") sorguda kalıyordu.
+        yeni_en = _arama_sorgulari(yet.get("guclu") or {}, profil["rol_aileleri"])
+        if yeni_en != profil.get("arama_sorgulari"):
+            profil["arama_sorgulari"] = yeni_en
+            degisen.append("İngilizce sorgular")
         # Türkçe sorguları kullanıcı elle değiştirdiyse dokunma
         if not profil.get("_tr_sorgu_elle"):
             yeni_tr = _tr_sorgular(profil["rol_aileleri"])

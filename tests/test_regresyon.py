@@ -967,6 +967,50 @@ def t44_musteri_hizmetleri():
          "musteri_hizmetleri" in rol_aileleri_turet(tek | {"Call Centre"}, tek | {"Call Centre"}, set()))
 
 
+# ---------------------------------------------------------------- 45
+# CV kişinin İSTEMEDİĞİNİ söylemez: FastAPI/Flask kanıtı olan aday backend ailesini %62
+# ağırlıkla alıyordu ama backend işi aramıyordu. Panelde aile kapatılır; karar profilde
+# saklanır, CV yeniden yüklenince ve motor güncellenince de korunur.
+def t45_rol_ailesi_kapatma():
+    import tempfile
+    import isbot.server as sunucu
+    from isbot.cv_import import profil_tazele, profil_uret, yaz
+
+    cv = Path(__file__).resolve().parent.parent / "test-cvs" / "14_blockchain_solidity.txt"
+    p = profil_uret(cv)
+    sina("örnek CV'de backend açık (sınamanın ön koşulu)", True, "backend" in p["rol_aileleri"])
+    p["_haric_aileler"] = ["backend"]
+    p, _ = profil_tazele(p, zorla=True)
+    sina("kapatılan aile türetilmez", False, "backend" in p["rol_aileleri"])
+    sina("kapatılan ailenin İngilizce sorgusu düşer", False, "backend engineer" in p["arama_sorgulari"])
+    sina("CV yeniden üretilince karar korunur", False,
+         "backend" in profil_uret(cv, haric={"backend"})["rol_aileleri"])
+
+    eski_yol = sunucu.VARSAYILAN_PROFIL
+    with tempfile.TemporaryDirectory() as d:
+        sunucu.VARSAYILAN_PROFIL = Path(d) / "profile.local.yaml"
+        try:
+            yaz(profil_uret(cv), sunucu.VARSAYILAN_PROFIL)
+            with sunucu.app.test_client() as ist:
+                r = ist.post("/api/profil/aile", json={"ad": "backend", "haric": True}).get_json()
+                sina("uç aileyi kapatır", (False, ["backend"]),
+                     ("backend" in [x["ad"] for x in r["rol_aileleri"]], r["haric_aileler"]))
+                with open(cv, "rb") as f:
+                    r = ist.post("/api/cv", data={"cv": (f, "cv.txt")},
+                                 content_type="multipart/form-data").get_json()
+                sina("yeni CV yüklemesi kapatılan aileyi taşır", (False, ["backend"]),
+                     ("backend" in [x["ad"] for x in r["rol_aileleri"]], r["haric_aileler"]))
+                r = ist.post("/api/profil/aile", json={"ad": "blockchain", "haric": True})
+                sina("son açık aile kapatılamaz", 400, r.status_code)
+                r = ist.post("/api/profil/aile", json={"ad": "backend", "haric": False}).get_json()
+                sina("geri açılır", (True, []),
+                     ("backend" in [x["ad"] for x in r["rol_aileleri"]], r["haric_aileler"]))
+                sina("tanınmayan aile reddedilir", 400,
+                     ist.post("/api/profil/aile", json={"ad": "yok_boyle"}).status_code)
+        finally:
+            sunucu.VARSAYILAN_PROFIL = eski_yol
+
+
 def main() -> int:
     for fn in [v for k, v in sorted(globals().items()) if k.startswith("t") and callable(v)
                and k[1].isdigit()]:

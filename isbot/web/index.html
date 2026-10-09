@@ -133,6 +133,14 @@ button.dev{font-size:16px;padding:13px 40px;border-radius:9px}
 .rol{display:inline-block;font-size:12px;padding:2.5px 9px;border-radius:20px;
   background:#4c9aff1f;border:1px solid #4c9aff44;color:var(--me);margin:0 5px 5px 0}
 .rol i{font-style:normal;color:var(--me2);font-size:11px;margin-left:5px}
+/* Rol çipini kapatma: CV kişinin İSTEMEDİĞİNİ söylemez (FastAPI kanıtı olan aday backend
+   aramıyor olabilir). Kapatılan aile üstü çizili kalır, tek tıkla geri açılır. */
+.rol button{background:none;border:none;color:var(--me2);padding:0 0 0 6px;font-size:13px;
+  line-height:1;cursor:pointer}
+.rol button:hover{color:var(--kir);background:none}
+.rol.kapali{background:none;border-style:dashed;color:var(--me2);text-decoration:line-through}
+.rol.kapali button{text-decoration:none}
+.rol.kapali button:hover{color:var(--vu)}
 .yanlis{margin-top:14px;padding-top:13px;border-top:1px solid var(--ke);
   color:var(--me2);font-size:12.5px}
 /* --- arama modu seçici ---
@@ -398,11 +406,46 @@ function modlariCiz() {
     : "Yalnız motor · en hızlı sonuç";
 }
 
+/* Rol çipleri: açık aileler (× ile kapatılır) + kullanıcının kapattıkları (↺ ile açılır).
+   Son açık aile kapatılamaz; sunucu da reddeder. */
+function rolCipleri(d) {
+  const roller = (d.rol_aileleri || []);
+  const kapat = roller.length > 1;
+  const acik = roller.map(r => `<span class="rol">${kacar(rolAdi(r.ad))}<i>${Math.round(r.agirlik * 100)}%</i>` +
+    (kapat ? `<button data-aile-kapat="${kacar(r.ad)}" title="Bu rolü arama">×</button>` : "") + `</span>`).join("");
+  const kapali = (d.haric_aileler || []).map(a => `<span class="rol kapali">${kacar(rolAdi(a))}` +
+    `<button data-aile-ac="${kacar(a)}" title="Yeniden ara">↺</button></span>`).join("");
+  return acik + kapali;
+}
+
+async function aileDegistir(ad, haric) {
+  let d;
+  try {
+    d = await (await fetch("/api/profil/aile", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ad, haric })
+    })).json();
+  } catch (e) { uyari("bağlantı hatası: " + e.message, true); return; }
+  if (d.hata) { uyari(d.hata, true); return; }
+  SON_PROFIL = Object.assign(SON_PROFIL || {}, {
+    rol_aileleri: d.rol_aileleri, haric_aileler: d.haric_aileler,
+    tr_sorgular: d.tr_sorgular, sorgular: d.sorgular });
+  profilYaz(SON_PROFIL);
+  if (VERI && VERI.ilanlar && VERI.ilanlar.length)
+    uyari("Roller değişti. Ekrandaki sonuçlar eski rollerle bulundu; yenileri için yeniden tara.");
+  else { uyari(""); hazirEkran(SON_PROFIL); }
+}
+document.addEventListener("click", e => {
+  const k = e.target.closest("[data-aile-kapat]"), a = e.target.closest("[data-aile-ac]");
+  if (k) aileDegistir(k.dataset.aileKapat, true);
+  else if (a) aileDegistir(a.dataset.aileAc, false);
+});
+
 /* CV yüklendikten sonra orta alan. Ana eylem burada. */
 function hazirEkran(d) {
   const roller = (d.rol_aileleri || []);
   const rolHtml = roller.length
-    ? roller.map(r => `<span class="rol">${kacar(rolAdi(r.ad))}<i>${Math.round(r.agirlik * 100)}%</i></span>`).join("")
+    ? rolCipleri(d)
     : `<span style="color:var(--sa)">belirlenemedi — aşağıya bak</span>`;
   const yet = (d.guclu_yetenek || []);
   const genel = roller.length === 1 && roller[0].ad === "genel_yazilim";
@@ -443,7 +486,8 @@ function profilYaz(d) {
   $("#profilOzet").innerHTML =
     `<b>${d.deneyim_yil} yıl</b> deneyim · kıdem tavanı <b>${kacar(d.max_kidem)}</b><br>` +
     `${d.guclu_yetenek.length} güçlü yetenek<br>` +
-    `<span style="opacity:.7">${kacar(d.guclu_yetenek.slice(0, 9).join(", "))}…</span>`;
+    `<span style="opacity:.7">${kacar(d.guclu_yetenek.slice(0, 9).join(", "))}…</span>` +
+    ((d.rol_aileleri || []).length ? `<div style="margin-top:8px">${rolCipleri(d)}</div>` : "");
   $("#ustBilgi").textContent = d.deneyim_yil + " yıl deneyim · " + d.guclu_yetenek.length + " yetenek";
 }
 
@@ -806,7 +850,7 @@ let SON_PROFIL = null;
       izle();
     }
     SON_PROFIL = p;
-    profilYaz({ deneyim_yil: p.deneyim_yil, max_kidem: p.max_kidem, guclu_yetenek: p.guclu_yetenek });
+    profilYaz(p);
     $("#btnTara").disabled = false;
     $("#konumBlok").style.display = "block";
     await ulkeleriYukle();
