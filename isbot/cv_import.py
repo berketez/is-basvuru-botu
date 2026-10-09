@@ -159,7 +159,7 @@ def unvan_aileleri(metin: str) -> list[str]:
 
 
 def rol_aileleri_turet(yetenekler: set[str], guclu_yetenekler: set[str] | None = None,
-                       unvan_kanitli: set[str] | None = None) -> dict:
+                       unvan_kanitli: set[str] | None = None, teknisyen: bool = False) -> dict:
     """CV'de tespit edilen yeteneklerden rol ailelerini çıkarır.
 
     NEDEN: Eskiden bu liste SABİTTİ (llm/ml/yazılım/veri). Sonuç: iOS geliştiricisi,
@@ -181,6 +181,10 @@ def rol_aileleri_turet(yetenekler: set[str], guclu_yetenekler: set[str] | None =
     açılıyordu (CNC, montaj hattı) ve o aile onun gerçek alanıydı.
     Güçlü kanıtı hiç olmayan CV'de (Beceriler bölümü yok, kısa metin) eski davranışa
     dönülür — onu "genel yazılım"a düşürmek, örneğin bir hemşireyi yazılımcı yapardı.
+
+    `seviye: teknisyen` taşıyan aile yalnız teknisyen=True iken açılır (bkz. teknisyen_mi).
+    NEDEN: bakım becerisi (önleyici bakım, hidrolik, pano) mühendis CV'sinde de geçer;
+    aile açılırsa sorguları önceliklendiği için mühendise teknisyen ilanı aranır.
     """
     tanimlar = yaml.safe_load(ROLLER.read_text(encoding="utf-8"))
     secilen = {}
@@ -191,6 +195,8 @@ def rol_aileleri_turet(yetenekler: set[str], guclu_yetenekler: set[str] | None =
         destek = [x for x in (t.get("tetik") or []) if x in yetenekler]
         tetikler = guclu + destek
         if not guclu and len(destek) < t.get("tetik_min", 2):
+            continue
+        if t.get("seviye") == "teknisyen" and not teknisyen:
             continue
         secilen[ad] = {
             "_ham_agirlik": t.get("agirlik", 1.0),
@@ -266,7 +272,7 @@ def eleme_kaliplari(roller: dict | None, kidem: str) -> list[str]:
 # Aile türetme KURALI kodda yaşıyor, roller.yaml'da değil; damgaya ayrıca girmeli.
 # Kural değişince bu metni değiştir — yoksa kayıtlı profiller eski ailelerle kalır
 # (v1.5.5'te oldu: kural değişti, damga değişmedi, profiller tazelenmedi).
-AILE_KURALI = "guclu-beceri-veya-unvan-kaniti/2026-10-08"
+AILE_KURALI = "guclu-beceri-veya-unvan-kaniti/2026-10-08+seviye-teknisyen/2026-10-09"
 
 
 def motor_surumu() -> str:
@@ -379,7 +385,10 @@ def _en_sorgular(roller: dict, ust_sinir: int = 3) -> list[str]:
     """
     tanimlar = yaml.safe_load(ROLLER.read_text(encoding="utf-8"))
     cikti: list[str] = []
-    for ad in roller:                                   # roller zaten ağırlığa göre sıralı
+    # Seviye ailesi açıksa (aday teknisyen) yalnız onun pozisyonları: kalan kota öteki
+    # aileden doluyordu ve klima teknisyenine "civil engineer" aranıyordu (2026-10-09).
+    seviyeli = [ad for ad in roller if (tanimlar.get(ad, {}) or {}).get("seviye")]
+    for ad in seviyeli or roller:                       # roller zaten ağırlığa göre sıralı
         for poz in (tanimlar.get(ad, {}) or {}).get("en_pozisyonlar", []):
             if poz not in cikti:
                 cikti.append(poz)
@@ -396,6 +405,17 @@ def _tr_sorgular(roller: dict, ust_sinir: int = 6) -> list[str]:
     # yapay zeka olan birinde "yapay zeka mühendisi" listeye hiç girmiyordu.
     listeler = [list((tanimlar.get(ad, {}) or {}).get("tr_pozisyonlar", [])) for ad in roller]
     cikti: list[str] = []
+    # SEVİYE AİLESİ ÖNCE: teknisyenin öteki aileleri (kontrol/otomasyon, üretim/kalite)
+    # mühendis/müdür pozisyonu taşıyor. Ölçüldü (2026-10-09): bakım teknisyeni CV'sinin
+    # 6 sorgusunun 6'sı "otomasyon mühendisi", "üretim müdürü" gibiydi. Seviye ailesi
+    # yalnız teknisyende açıldığı için bu kural başka kimsenin sorgusunu değiştirmez.
+    for ad in roller:
+        if (tanimlar.get(ad, {}) or {}).get("seviye"):
+            for poz in tanimlar[ad].get("tr_pozisyonlar", []):
+                if poz not in cikti:
+                    cikti.append(poz)
+                    if len(cikti) >= ust_sinir:
+                        return cikti
     for i in range(max((len(x) for x in listeler), default=0)):
         for lst in listeler:
             if i < len(lst) and lst[i] not in cikti:
@@ -436,7 +456,7 @@ def profil_uret(cv_yolu: str | Path) -> dict:
     teknisyen = teknisyen_mi(metin)
     # Eleme kalıpları adayın meslek ailesine bağlı, o yüzden önce aileler türetilir.
     _unvanlar = unvan_aileleri(metin)
-    _roller = rol_aileleri_turet(set(guclu) | set(zayif), set(guclu), set(_unvanlar))
+    _roller = rol_aileleri_turet(set(guclu) | set(zayif), set(guclu), set(_unvanlar), teknisyen)
 
     return {
         "_NOT": "cv-import ile ÜRETİLDİ — TASLAKTIR. Aşağıdaki alanları elle gözden geçir: "
@@ -510,7 +530,8 @@ def profil_tazele(profil: dict) -> tuple[dict, list[str]]:
 
     if tum:
         yeni_roller = rol_aileleri_turet(tum, set(yet.get("guclu") or {}),
-                                         set(profil.get("_unvan_aileleri") or []))
+                                         set(profil.get("_unvan_aileleri") or []),
+                                         bool((profil.get("kimlik") or {}).get("teknisyen")))
         if set(yeni_roller) != set(profil.get("rol_aileleri") or {}):
             profil["rol_aileleri"] = yeni_roller
             degisen.append("rol aileleri")

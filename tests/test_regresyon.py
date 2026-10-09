@@ -847,6 +847,53 @@ def t41_turkce_unvan_kapsami():
          "guvenlik" in aile("Güvenlik Görevlisi"))
 
 
+# ---------------------------------------------------------------- 42
+# Teknisyen CV'si kontrol/otomasyon ve üretim/kalite ailelerine düşüyordu; 6 Türkçe
+# sorgusunun 6'sı mühendis/müdür pozisyonuydu ("otomasyon mühendisi", "üretim müdürü"),
+# "Elektrik Bakım Teknisyeni" başlığı hiçbir aileye girmiyordu. bakim_teknik ailesi
+# YALNIZ teknisyende açılır ve açıldığında sorgular ondan dolar.
+def t42_teknisyen_ailesi():
+    import re
+    import yaml as _y
+    from isbot.cv_import import _en_sorgular, _tr_sorgular, profil_tazele, rol_aileleri_turet
+    from isbot.yollar import kaynak_dosya
+    roller = _y.safe_load(kaynak_dosya("isbot", "data", "roller.yaml").read_text(encoding="utf-8"))
+
+    def aile(baslik):
+        return [ad for ad, t in roller.items() if any(re.search(k, baslik) for k in t["basliklar"])]
+
+    yet = {"preventive maintenance", "hydraulics and pneumatics", "electrical panel", "PLC",
+           "Lean Manufacturing", "Kaizen"}
+    sina("bakım becerili mühendise teknisyen ailesi açılmaz", False,
+         "bakim_teknik" in rol_aileleri_turet(yet, yet, set(), teknisyen=False))
+    teknik = rol_aileleri_turet(yet, yet, set(), teknisyen=True)
+    sina("teknisyene açılır", True, "bakim_teknik" in teknik)
+
+    # Sıra bilerek ters: üretim/kalite önde olsa da sorgular teknisyen ailesinden dolar.
+    sira = {"uretim_kalite": teknik["uretim_kalite"], "bakim_teknik": teknik["bakim_teknik"]}
+    sina("Türkçe sorguların hepsi teknisyen pozisyonu", roller["bakim_teknik"]["tr_pozisyonlar"][:6],
+         _tr_sorgular(sira))
+    sina("İngilizce sorgularda mühendis pozisyonu yok", roller["bakim_teknik"]["en_pozisyonlar"],
+         _en_sorgular(sira))
+    sina("teknisyen olmayanın sorgusu değişmez", "üretim müdürü",
+         _tr_sorgular({"uretim_kalite": teknik["uretim_kalite"]})[0])
+
+    # CV'siz tazeleme de aynı kararı vermeli (kimlik.teknisyen profilde saklı).
+    profil = {"_motor_surumu": "eski", "kimlik": {"teknisyen": True},
+              "yetenekler": {"guclu": {k: 0.8 for k in yet}, "zayif": {}},
+              "rol_aileleri": {"kontrol_otomasyon": {}}, "sert_filtreler": {"max_kidem": "mid"}}
+    sina("tazelemede teknisyen ailesi korunur", True,
+         "bakim_teknik" in profil_tazele(profil)[0]["rol_aileleri"])
+
+    for baslik, beklenen in [("Elektrik Bakım Teknisyeni", True), ("Saha Teknisyeni", True),
+                             ("Fiberoptik Teknisyeni", True), ("Teknik Servis Elemanı", True),
+                             ("Maintenance Technician", True), ("Servis Elemanı", False),
+                             ("Kalite Kontrol Teknisyeni", False), ("Anestezi Teknikeri", False),
+                             ("Bakım Mühendisi", False)]:
+        sina(f"'{baslik}' teknisyen ailesi: {beklenen}", beklenen, "bakim_teknik" in aile(baslik))
+    sina("'Teknik Servis Elemanı' garson sayılmaz", False, "turizm" in aile("Teknik Servis Elemanı"))
+
+
 def main() -> int:
     for fn in [v for k, v in sorted(globals().items()) if k.startswith("t") and callable(v)
                and k[1].isdigit()]:

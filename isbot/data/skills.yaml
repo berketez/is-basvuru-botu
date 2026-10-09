@@ -711,3 +711,9 @@ teknik_meslek:
                         "teknik resim okuma", "imalat resmi", "ölçülendirme"]
   "plumbing and installation": ["plumbing", "pipefitting", "sıhhi tesisat", "boru montaj",
                                 "mekanik tesisat", "su tesisat"]
+  # Saha teknisyenliğinin iki büyük kolu (kariyer.net: fiberoptik teknisyeni 48 il,
+  # zayıf akım teknisyeni 33 il). Sözlükte hiç yoktu; saha teknisyeni CV'si boş kalıyordu.
+  "fiber optic installation": ["fiber optic", "fibre optic", "fiber splicing", "otdr",
+                               "fiber optik", "fiberoptik", "fiber ek", "fiber kaynak", "fiber sonlandırma"]
+  "low voltage systems": ["low voltage systems", "structured cabling", "zayıf akım",
+                          "yapısal kablolama", "data kablolama"]

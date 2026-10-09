@@ -391,7 +391,7 @@ turizm:
   agirlik: 1.0
   tr_pozisyonlar: ["resepsiyonist", "aşçı", "restoran müdürü"]
   en_pozisyonlar: ["front office agent", "hospitality manager"]
-  basliklar: ["(?i)(\\b(?:hospitality|front office|hotel|chef|sous chef|housekeeping|restaurant manager|concierge|barista)\\w*|\\b(?:resepsiyon|ön büro|aşçı|şef garson|garson|otel|turizm|kat hizmet|misafir ilişkiler|animasyon|barmen|servis elemanı|kabin memur|mutfak (eleman|görevli|personel|şef|sorumlu)|demi şef|bulaşıkhane)\\w*)"]
+  basliklar: ["(?i)(\\b(?:hospitality|front office|hotel|chef|sous chef|housekeeping|restaurant manager|concierge|barista)\\w*|\\b(?:resepsiyon|ön büro|aşçı|şef garson|garson|otel|turizm|kat hizmet|misafir ilişkiler|animasyon|barmen|(?<!teknik )servis elemanı|kabin memur|mutfak (eleman|görevli|personel|şef|sorumlu)|demi şef|bulaşıkhane)\\w*)"]
 
 satis:
   tetik_guclu: ["Retail Store Management", "Sales Representative", "Field Sales", "Key Account Management", "Business to Business Sales"]
@@ -477,3 +477,34 @@ madencilik:
   tr_pozisyonlar: ["maden mühendisi", "jeoloji mühendisi"]
   en_pozisyonlar: ["mining engineer", "geologist"]
   basliklar: ["(?i)(\\b(?:mining engineer|geolog|geophys|drilling|mineral processing|quarry|excavation)\\w*|\\b(?:maden (mühendis|ocağı)|jeolo|jeofizik|sondaj|cevher|yeraltı|patlatma|zenginleştirme)\\w*)"]
+
+# --- bakım / teknik servis (teknisyen, tekniker, usta) ---------------------------
+# NEDEN EKLENDİ: teknisyen CV'leri kontrol_otomasyon ve uretim_kalite ailelerine
+# düşüyordu; o ailelerin kalıpları "Elektrik Bakım Teknisyeni"ni tanımıyor, Türkçe
+# sorguları da mühendis/müdür pozisyonu. Ölçüldü (2026-10-09): bakım teknisyeni CV'sinin
+# 6 Türkçe sorgusunun 6'sı "otomasyon mühendisi", "üretim müdürü" gibi adlardı; bot
+# teknisyene teknisyen ilanı HİÇ aramıyordu. kariyer.net'te saha/servis/elektrik/bakım
+# teknisyeni pozisyonları en az 3 ilde açılmış ~1.300 sayfa tutuyor.
+#
+# seviye: teknisyen -> aile YALNIZ CV sahibi teknisyense açılır (cv_import.teknisyen_mi,
+# CV başlığına bakar). Bakım becerisi yazan mühendise teknisyen ilanı gitmesin diye.
+# Açıldığında Türkçe sorgular önce bu ailenin pozisyonlarıyla dolar (_tr_sorgular).
+#
+# Kalıp, başka ailenin teknikerini BİLEREK almaz: kalite kontrol (uretim_kalite),
+# anestezi/röntgen (saglik), gıda, harita, inşaat teknikeri kendi ailelerinde.
+# "servis elemanı" yalnız "teknik servis" ile: tek başına restoran garsonudur (turizm).
+bakim_teknik:
+  seviye: teknisyen
+  tetik_guclu: ["preventive maintenance", "hydraulics and pneumatics", "electrical panel",
+                "Electrical Maintenance", "fiber optic installation", "low voltage systems"]
+  tetik: ["fault diagnosis", "industrial sensors", "Maintenance Engineering", "PLC", "HVAC",
+          "plumbing and installation", "conventional machining", "Welding", "power electronics",
+          "Electrical Installation", "Natural Gas Systems"]
+  tetik_min: 2
+  agirlik: 1.0
+  # Hepsi site haritasında kanonik yol (2026-10-09). Sıra: fabrika bakımı önce, sonra
+  # servis/saha; sorgu kotası 6.
+  tr_pozisyonlar: ["mekanik bakım teknisyeni", "elektrik bakım teknisyeni", "elektrik teknisyeni",
+                   "servis teknisyeni", "saha teknisyeni", "bakım teknisyeni", "elektrik ustası"]
+  en_pozisyonlar: ["maintenance technician", "field service technician"]
+  basliklar: ["(?i)(\\b(?:maintenance (technician|mechanic|electrician|fitter)|(field )?service technician|field technician|electrician|hvac technician|repair technician|(electrical|mechanical|electronics) technician)\\w*|\\b(?:(elektrik( elektronik)?|mekanik|makine|elektronik|otomasyon|fiber ?optik|zayıf akım|iklimlendirme( soğutma)?|soğutma|klima|kombi|doğalgaz|asansör|pano( montaj)?|oto (elektrik|mekanik)|kaporta|gsm|tesisat|biyomedikal|araç muayene|saha|servis|teknik servis) (teknisyen|tekniker|usta)|((elektrik|mekanik|makine|asansör) )?bakım( onarım)? (teknisyen|tekniker|usta|eleman|personel|operatör|sorumlu)|teknik servis (eleman|personel|uzman)|elektrikçi)\\w*)"]

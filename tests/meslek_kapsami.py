@@ -3,7 +3,7 @@
 
 NEDEN AYRI DOSYA: benchmark (tests/benchmark.py) 16 yazılım/mühendislik CV'siyle
 ALAKA ölçüyor ve ilan havuzu gerektiriyor. Bu test ise yalnız AYRIŞTIRMAYI ölçer,
-ağ istemez, saniyeler sürer: 32 sentetik CV (16 Türkçe + 16 İngilizce; mühendislik, teknisyenlik,
+ağ istemez, saniyeler sürer: 34 sentetik CV (17 Türkçe + 17 İngilizce; mühendislik, teknisyenlik,
 mimarlık, muhasebe, sağlık, hukuk, denizcilik, madencilik, tekstil, turizm,
 bankacılık, İK, İSG, çevre, gıda, lojistik, eğitim, pazarlama) doğru rol ailesine gidiyor mu?
 
@@ -32,7 +32,7 @@ BEKLENEN = [
     ("tr_insaat_muh",   "insaat",            5, 9.0),
     ("tr_muhasebe",     "muhasebe",          5, 9.9),
     ("tr_hemsire",      "saglik",            5, 8.1),
-    ("tr_teknisyen",    "kontrol_otomasyon", 5, 8.0),
+    ("tr_teknisyen",    "bakim_teknik",      5, 8.0),
     ("tr_lojistik",     "lojistik",          5, 7.9),
     ("tr_mimar",        "insaat",            3, 8.0),
     ("tr_ogretmen",     "egitim",            4, 9.8),
@@ -40,7 +40,7 @@ BEKLENEN = [
     ("en_civil",        "insaat",            5, 10.0),
     ("en_accountant",   "muhasebe",          5, 10.9),
     ("en_nurse",        "saglik",            4, 9.1),
-    ("en_technician",   "kontrol_otomasyon", 4, 9.0),
+    ("en_technician",   "bakim_teknik",      4, 9.0),
     ("en_supply_chain", "lojistik",          5, 8.9),
     ("en_chemical",     "kimya",             4, 9.0),
     ("en_marketing",    "pazarlama",         5, 9.0),
@@ -61,6 +61,9 @@ BEKLENEN = [
     ("en_hr",           "ik",                5, 9.0),
     ("en_environmental","enerji_cevre",      4, 10.9),
     ("en_food",         "gida_tarim",        5, 10.0),
+    # --- üçüncü grup: teknik servis (fabrika bakımı dışındaki teknisyen kolları) ---
+    ("tr_servis_teknisyeni", "bakim_teknik",  6, 10.2),
+    ("en_field_technician",  "bakim_teknik",  4, 11.2),
 ]
 
 # Hiçbir CV'de çıkmaması gereken yetenekler. "C"/"Go"/"R" Unicode NFD hatasının

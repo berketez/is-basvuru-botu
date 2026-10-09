@@ -64,7 +64,8 @@ UYUMSUZ_MADDELER: list[tuple[str, str, frozenset[str], bool]] = [
     ("production line operator", "üretim bandı operatörlüğü", frozenset({"uretim_kalite"}), True),
     ("CNC machine operator", "CNC tezgah operatörlüğü", frozenset({"uretim_kalite"}), True),
     ("assembly technician", "montaj teknisyenliği", frozenset({"uretim_kalite"}), True),
-    ("maintenance and repair technician", "bakım onarım teknisyenliği", frozenset(), True),
+    ("maintenance and repair technician", "bakım onarım teknisyenliği", frozenset({"bakim_teknik"}),
+     True),
     ("warehouse and logistics", "depo ve sevkiyat", frozenset({"lojistik"}), False),
     ("sales and marketing", "satış ve pazarlama", frozenset({"satis", "pazarlama"}), False),
     ("human resources and payroll", "insan kaynakları ve özlük işleri", frozenset({"ik"}), False),
@@ -283,6 +284,7 @@ def _okunur(aile: str) -> str:
         "bilimsel_hpc": "bilimsel hesaplama ve simülasyon, scientific computing",
         "genel_yazilim": "yazılım mühendisliği, software engineering",
         # Yazılım dışı meslekler: eskiden anahtar adıyla ("saglik", "ik") gidiyordu.
+        "bakim_teknik": "bakım, onarım ve teknik servis, maintenance and technical service",
         "bankacilik": "bankacılık ve finans, banking and finance",
         "denizcilik": "denizcilik ve gemi işletmesi, maritime and shipping",
         "egitim": "eğitim ve öğretmenlik, education and teaching",
