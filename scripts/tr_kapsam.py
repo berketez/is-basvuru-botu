@@ -12,6 +12,7 @@ açılmış pozisyonlar sayılır (tek ilçeli tuhaf yollar elenir).
 
 Ölçüldü (2026-10-08, v1.5.5): 2.858 pozisyonun %34'ü (il sayısıyla ağırlıklı %46)
 bir aileye giriyor. Boşluk ağırlıkla mavi yaka ve hizmet tarafında.
+v1.5.7 (2026-10-09, var olan ailelere Türkçe unvanlar): %40 (ağırlıklı %58).
 
     python scripts/tr_kapsam.py [--ilk 70]
 """

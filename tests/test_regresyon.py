@@ -816,6 +816,37 @@ def t40_panelde_her_ailenin_adi_var():
     sina("panelde adı eksik aile yok", [], sorted(set(roller) - set(re.findall(r"(\w+):\s*\"", blok))))
 
 
+# ---------------------------------------------------------------- 41
+# kariyer.net'in en yaygın pozisyonlarının çoğu hiçbir aileye girmiyordu: "Mağaza Satış
+# Elemanı" (193 il), "Depo Elemanı" (184), "Kalite Mühendisi", "Teknik Ofis Mühendisi"...
+# Aile vardı, Türkçe unvanı yoktu. Olumsuzlar, genişletilen kalıpların komşu mesleği
+# yutmadığını kilitler.
+def t41_turkce_unvan_kapsami():
+    import re
+    import yaml as _y
+    from isbot.yollar import kaynak_dosya
+    roller = _y.safe_load(kaynak_dosya("isbot", "data", "roller.yaml").read_text(encoding="utf-8"))
+
+    def aile(baslik):
+        return [ad for ad, t in roller.items() if any(re.search(k, baslik) for k in t["basliklar"])]
+
+    for baslik, beklenen in [("MAĞAZA SATIŞ ELEMANI", "satis"), ("Tıbbi Mümessil", "satis"),
+                             ("Depo Elemanı", "lojistik"), ("Dış Ticaret Uzmanı", "lojistik"),
+                             ("Kalite Mühendisi", "uretim_kalite"),
+                             ("Üretim Planlama Mühendisi", "uretim_kalite"),
+                             ("Teknik Ofis Mühendisi", "insaat"), ("Grafik Tasarımcı", "pazarlama"),
+                             ("Bilgi İşlem Uzmanı", "platform_sre"), ("Hasta Bakıcı", "saglik"),
+                             ("Kabin Memuru", "turizm"), ("Gişe Yetkilisi", "bankacilik"),
+                             ("Okul Müdür Yardımcısı", "egitim"), ("Proje Müdürü", "urun")]:
+        sina(f"'{baslik}' -> {beklenen}", True, beklenen in aile(baslik))
+    sina("'Güvenlik Vardiya Amiri' üretime girmez", False,
+         "uretim_kalite" in aile("Güvenlik Vardiya Amiri"))
+    sina("'Müşteri İletişim Uzmanı' pazarlamaya girmez", False,
+         "pazarlama" in aile("Müşteri İletişim Uzmanı"))
+    sina("'Güvenlik Görevlisi' siber güvenliğe girmez", False,
+         "guvenlik" in aile("Güvenlik Görevlisi"))
+
+
 def main() -> int:
     for fn in [v for k, v in sorted(globals().items()) if k.startswith("t") and callable(v)
                and k[1].isdigit()]:

@@ -57,7 +57,7 @@ platform_sre:
   agirlik: 1.0
   tr_pozisyonlar: ["sistem mühendisi", "altyapı mühendisi", "sistem yöneticisi"]
   en_pozisyonlar: ["site reliability engineer", "platform engineer"]
-  basliklar: ['(?i)(?:\b(sre|site reliability|platform engineer|infrastructure|devops|cloud engineer|reliability)\b)|\b(?:sistem yönetic|altyapı mühendis|ağ uzman|ağ mühendis|sunucu uzman)\w*']
+  basliklar: ['(?i)(?:\b(sre|site reliability|platform engineer|infrastructure|devops|cloud engineer|reliability)\b)|\b(?:sistem yönetic|altyapı mühendis|ağ uzman|ağ mühendis|sunucu uzman|bilgi işlem|bilgi teknolojileri|it (uzman|destek|sorumlu))\w*']
 
 veri_muh:
   tetik_guclu: ["Airflow", "dbt", "Snowflake"]
@@ -139,9 +139,9 @@ urun:
   tetik: ["Agile", "A/B testing", "CRM", "business intelligence"]
   tetik_min: 2
   agirlik: 1.0
-  tr_pozisyonlar: ["ürün yöneticisi", "proje yöneticisi", "iş analisti"]
+  tr_pozisyonlar: ["ürün yöneticisi", "proje yöneticisi", "iş analisti", "proje müdürü"]
   en_pozisyonlar: ["product manager", "product owner"]
-  basliklar: ['(?i)(?:\b(product (manager|owner|lead)|program manager|product analyst)\b)|\b(?:ürün yönetic|ürün sahib|proje yönetic|iş analist)\w*']
+  basliklar: ['(?i)(?:\b(product (manager|owner|lead)|program manager|product analyst)\b)|\b(?:ürün yönetic|ürün sahib|proje yönetic|proje müdür|iş analist)\w*']
 
 makine_tasarim:
   tetik_guclu: ["CAD"]
@@ -150,7 +150,7 @@ makine_tasarim:
   agirlik: 1.0
   tr_pozisyonlar: ["makine mühendisi", "tasarım mühendisi", "üretim mühendisi"]
   en_pozisyonlar: ["mechanical engineer", "design engineer"]
-  basliklar: ['(?i)(?:\b(mechanical|manufacturing|design engineer|cad|process engineer|industrial engineer)\b)|\b(?:makine mühendis|tasarım mühendis|üretim mühendis|imalat mühendis|kalıp tasarım|mekanik tasarım)\w*']
+  basliklar: ['(?i)(?:\b(mechanical|manufacturing|design engineer|cad|process engineer|industrial engineer)\b)|\b(?:makine mühendis|tasarım mühendis|üretim mühendis|imalat mühendis|kalıp tasarım|mekanik tasarım|teknik ressam)\w*']
 
 # --- kontrol / otomasyon / mekatronik ------------------------------------------
 # NEDEN EKLENDİ: 16 ailenin tamamı yazılım-veri eksenindeydi. Kontrol mühendisi
@@ -217,6 +217,15 @@ havacilik_savunma:
 #
 # basliklar hem Türkçe hem İngilizce daldan oluşur; Türkçe dal ek toleranslıdır
 # (\w*), çünkü Türkçe eklemeli bir dil: "mühendis" -> "mühendisi".
+#
+# basliklar ile tr_pozisyonlar BİLEREK farklı genişlikte. basliklar ailenin TÜM
+# seviyelerini tanır (satış elemanı da satış müdürü de satis'tir); kariyer.net'te
+# en az 3 ilde açılmış pozisyonların kaçının bir aileye girdiği scripts/tr_kapsam.py
+# ile ölçülür (v1.5.7'de %33 -> %40). tr_pozisyonlar ise TARAMA sorgusudur ve
+# yalnız ailenin ana seviyesini içerir. Ölçüldü (2026-10-09): "garson", "kabin
+# memuru" turizm sorgularına eklenince 11 yıllık otel müdürü CV'si onlarla aranıyor,
+# lojistik uzmanı "depo elemanı" ile aranıyordu. Alt seviye unvanlar bu yüzden
+# yalnız basliklar'da durur.
 # =============================================================================
 
 saglik:
@@ -229,7 +238,7 @@ saglik:
   agirlik: 1.0
   tr_pozisyonlar: ["hemşire", "sağlık memur", "fizyoterapist", "laborant", "acil tıp teknisyeni"]
   en_pozisyonlar: ["registered nurse", "clinical specialist"]
-  basliklar: ["(?i)(\\b(?:nurse|nursing|clinical|physician|paramedic|radiolog|physiotherap|pharmacist|dental|patient care)\\w*|\\b(?:hemşire|sağlık memur|fizyoterapist|laborant|hasta bakım|klinik|poliklinik|ameliyathane|yoğun bakım|diyetisyen|eczacı|diş hekim|paramedik|tıbbi sekreter)\\w*)"]
+  basliklar: ["(?i)(\\b(?:nurse|nursing|clinical|physician|paramedic|radiolog|physiotherap|pharmacist|dental|patient care)\\w*|\\b(?:hemşire|sağlık memur|fizyoterapist|laborant|hasta bakım|hasta bakıc|hasta kabul|klinik|poliklinik|ameliyathane|yoğun bakım|diyetisyen|eczacı|diş hekim|paramedik|tıbbi sekreter|sağlık (personel|teknisyen|tekniker)|anestezi tekniker|röntgen tekniker)\\w*)"]
 
 ilac_biyotek:
   tetik_guclu: ["Good Manufacturing Practice", "Clinical Research", "Pharmacovigilance", "Regulatory Affairs"]
@@ -263,9 +272,10 @@ insaat:
   tetik: ["Cost Estimation", "Construction Planning", "Building Information Modeling", "Geotechnical Engineering", "Land Surveying", "Building Inspection", "Mechanical Installation", "Electrical Installation", "HVAC", "Infrastructure Works", "Architectural Design", "Interior Design", "Scaffolding", "Precast Concrete", "Formwork"]
   tetik_min: 2
   agirlik: 1.0
-  tr_pozisyonlar: ["inşaat mühendisi", "şantiye şefi", "mimar", "statik proje mühendisi"]
+  tr_pozisyonlar: ["inşaat mühendisi", "şantiye şefi", "mimar", "statik proje mühendisi",
+                   "teknik ofis mühendisi"]
   en_pozisyonlar: ["civil engineer", "site manager"]
-  basliklar: ["(?i)(\\b(?:civil engineer|structural engineer|site (manager|engineer)|architect|quantity surveyor|construction)\\w*|\\b(?:inşaat mühendis|şantiye|mimar|statik|hakediş|metraj|yapı denetim|altyapı|betonarme)\\w*)"]
+  basliklar: ["(?i)(\\b(?:civil engineer|structural engineer|site (manager|engineer)|architect|quantity surveyor|construction)\\w*|\\b(?:inşaat (mühendis|teknik)|şantiye|mimar|statik|hakediş|metraj|yapı denetim|altyapı|betonarme|saha mühendis|teknik ofis|harita (mühendis|teknik)|değerleme uzman)\\w*)"]
 
 muhasebe:
   tetik_guclu: ["Bookkeeping", "Payroll", "Social Security Filings", "Tax Compliance", "Electronic Invoicing"]
@@ -289,7 +299,7 @@ bankacilik:
   agirlik: 1.0
   tr_pozisyonlar: ["kredi uzmanı", "sigorta uzmanı", "müşteri temsilcisi"]
   en_pozisyonlar: ["credit analyst", "relationship manager"]
-  basliklar: ["(?i)(\\b(?:banking|credit analyst|underwrit|actuar|treasury|wealth management|relationship manager)\\w*|\\b(?:banka|kredi uzman|kredi analiz|sigorta|hazine|portföy yönetic|bireysel müşteri|kurumsal müşteri)\\w*)"]
+  basliklar: ["(?i)(\\b(?:banking|credit analyst|underwrit|actuar|treasury|wealth management|relationship manager)\\w*|\\b(?:banka|kredi uzman|kredi analiz|sigorta|hazine|portföy yönetic|bireysel müşteri|kurumsal müşteri|gişe|finansal danışman|şube (müdür|operasyon))\\w*)"]
 
 lojistik:
   tetik_guclu: ["Supply Chain Management", "Procurement", "Warehouse Management", "Inventory Management", "Customs Clearance"]
@@ -299,9 +309,10 @@ lojistik:
   tetik: ["Foreign Trade", "Incoterms", "Freight Forwarding", "Road Transport", "Container Shipping", "Air Freight", "Fleet Management", "Distribution Planning", "Warehouse Management System", "Forklift Operation", "Dangerous Goods Transport", "Demand Planning", "Production Planning", "SAP Logistics Modules", "Bonded Warehouse"]
   tetik_min: 2
   agirlik: 1.0
-  tr_pozisyonlar: ["lojistik uzmanı", "satın alma uzmanı", "depo sorumlus", "ihracat uzmanı", "tedarik zinciri uzmanı"]
+  tr_pozisyonlar: ["lojistik uzmanı", "satın alma uzmanı", "depo sorumlus", "ihracat uzmanı", "tedarik zinciri uzmanı",
+                   "dış ticaret uzmanı"]
   en_pozisyonlar: ["supply chain specialist", "procurement specialist"]
-  basliklar: ["(?i)(\\b(?:supply chain|procurement|logistics|warehouse (manager|supervisor)|customs|import|export|purchasing)\\w*|\\b(?:lojistik|satın alma|tedarik zincir|depo sorumlu|ihracat|ithalat|gümrük|sevkiyat|nakliye|planlama uzman)\\w*)"]
+  basliklar: ["(?i)(\\b(?:supply chain|procurement|logistics|warehouse (manager|supervisor)|customs|import|export|purchasing)\\w*|\\b(?:lojistik|satın alma|tedarik zincir|depo (sorumlu|eleman|görevli|operatör|personel|şef|müdür)|ihracat|ithalat|dış ticaret|gümrük|sevkiyat|nakliye|planlama uzman)\\w*)"]
 
 uretim_kalite:
   tetik_guclu: ["Lean Manufacturing", "Kaizen", "Six Sigma", "Total Productive Maintenance", "Equipment Effectiveness"]
@@ -311,9 +322,10 @@ uretim_kalite:
   tetik: ["Quality Management System", "Quality Control", "Problem Solving Methods", "FMEA", "Statistical Process Control", "Metrology and Calibration", "Dimensional Inspection", "Non-Destructive Testing", "CNC Machining", "Machining", "Welding", "Sheet Metal Fabrication", "Metal Casting", "Injection Molding", "Mold Design", "Maintenance Engineering", "Assembly Line"]
   tetik_min: 2
   agirlik: 1.0
-  tr_pozisyonlar: ["üretim müdürü", "endüstri mühendisi", "bakım mühendisi", "kalite kontrol mühendisi"]
+  tr_pozisyonlar: ["üretim müdürü", "endüstri mühendisi", "bakım mühendisi", "kalite kontrol mühendisi",
+                   "kalite mühendisi", "üretim planlama mühendisi"]
   en_pozisyonlar: ["manufacturing engineer", "quality engineer"]
-  basliklar: ["(?i)(\\b(?:manufacturing|production (engineer|manager|supervisor)|industrial engineer|quality (engineer|control|assurance)|lean|six sigma|maintenance engineer)\\w*|\\b(?:üretim (mühendis|müdür|şef|sorumlu)|endüstri mühendis|bakım (mühendis|şef)|kalite (kontrol|güvence|sistem)|yalın|proses geliştirme)\\w*)"]
+  basliklar: ["(?i)(\\b(?:manufacturing|production (engineer|manager|supervisor)|industrial engineer|quality (engineer|control|assurance)|lean|six sigma|maintenance engineer)\\w*|\\b(?:üretim (mühendis|müdür|şef|sorumlu|planlama)|planlama mühendis|endüstri mühendis|bakım (mühendis|şef)|kalite (mühendis|müdür|uzman|sorumlu|şef|yönetic|kontrol|güvence|sistem)|(?<!güvenlik )vardiya (amir|şef)|yalın|proses geliştirme)\\w*)"]
 
 gida_tarim:
   tetik_guclu: ["Food Engineering", "HACCP", "Food Safety Management", "Hygiene and Sanitation"]
@@ -325,7 +337,7 @@ gida_tarim:
   agirlik: 1.0
   tr_pozisyonlar: ["gıda mühendisi", "ziraat mühendisi", "kalite güvence uzmanı"]
   en_pozisyonlar: ["food engineer", "agricultural engineer"]
-  basliklar: ["(?i)(\\b(?:food (engineer|scientist|technolog)|agricultur|veterinar|haccp|food safety)\\w*|\\b(?:gıda mühendis|ziraat mühendis|veteriner|su ürünleri|hijyen|haccp|tarım)\\w*)"]
+  basliklar: ["(?i)(\\b(?:food (engineer|scientist|technolog)|agricultur|veterinar|haccp|food safety)\\w*|\\b(?:gıda (mühendis|teknik)|ziraat mühendis|veteriner|su ürünleri|hijyen|haccp|tarım)\\w*)"]
 
 enerji_cevre:
   # DİKKAT: aile otomatik üretilirken "kategorinin ilk 5 kalemi tanımlayıcıdır"
@@ -367,7 +379,7 @@ egitim:
   agirlik: 1.0
   tr_pozisyonlar: ["öğretmen", "eğitim uzmanı", "okul öncesi öğretmeni", "ingilizce öğretmeni"]
   en_pozisyonlar: ["instructional designer", "corporate trainer"]
-  basliklar: ["(?i)(\\b(?:teacher|instructor|trainer|curriculum|education (specialist|coordinator)|academic|lecturer|tutor)\\w*|\\b(?:öğretmen|eğitmen|eğitim (uzman|sorumlu|müdür)|akademisyen|rehber öğretmen|müfredat|okul öncesi)\\w*)"]
+  basliklar: ["(?i)(\\b(?:teacher|instructor|trainer|curriculum|education (specialist|coordinator)|academic|lecturer|tutor)\\w*|\\b(?:öğretmen|eğitmen|eğitim (uzman|sorumlu|müdür|danışman|koordinatör)|akademisyen|rehber öğretmen|müfredat|okul öncesi|okul (müdür|yönetic)|öğretim (üye|görevli))\\w*)"]
 
 turizm:
   tetik_guclu: ["Front Office", "Hotel Housekeeping", "Food and Beverage Service", "Culinary Arts", "Kitchen Management"]
@@ -379,7 +391,7 @@ turizm:
   agirlik: 1.0
   tr_pozisyonlar: ["resepsiyonist", "aşçı", "restoran müdürü"]
   en_pozisyonlar: ["front office agent", "hospitality manager"]
-  basliklar: ["(?i)(\\b(?:hospitality|front office|hotel|chef|sous chef|housekeeping|restaurant manager|concierge|barista)\\w*|\\b(?:resepsiyon|ön büro|aşçı|şef garson|otel|turizm|kat hizmet|misafir ilişkiler|animasyon|barmen|servis elemanı)\\w*)"]
+  basliklar: ["(?i)(\\b(?:hospitality|front office|hotel|chef|sous chef|housekeeping|restaurant manager|concierge|barista)\\w*|\\b(?:resepsiyon|ön büro|aşçı|şef garson|garson|otel|turizm|kat hizmet|misafir ilişkiler|animasyon|barmen|servis elemanı|kabin memur|mutfak (eleman|görevli|personel|şef|sorumlu)|demi şef|bulaşıkhane)\\w*)"]
 
 satis:
   tetik_guclu: ["Retail Store Management", "Sales Representative", "Field Sales", "Key Account Management", "Business to Business Sales"]
@@ -389,9 +401,10 @@ satis:
   tetik: ["Sales Target Management", "Tender Management", "Merchandising", "Visual Merchandising", "Cashier Operations", "Customer Service", "Call Centre", "After Sales Service", "Dealer Network Management", "Loss Prevention", "E-commerce Operations"]
   tetik_min: 2
   agirlik: 1.0
-  tr_pozisyonlar: ["satış temsilcisi", "satış müdürü", "mağaza müdürü", "müşteri temsilcisi"]
+  tr_pozisyonlar: ["satış temsilcisi", "satış müdürü", "mağaza müdürü", "müşteri temsilcisi",
+                   "satış elemanı", "mağaza satış elemanı"]
   en_pozisyonlar: ["sales representative", "account manager"]
-  basliklar: ["(?i)(\\b(?:sales (representative|manager|executive|associate)|account (manager|executive)|retail (manager|associate)|store manager|business development)\\w*|\\b(?:satış (temsilci|uzman|müdür|danışman|sorumlu)|mağaza (müdür|sorumlu|yönetic)|müşteri temsilci|kasiyer|bölge müdür|saha satış)\\w*)"]
+  basliklar: ["(?i)(\\b(?:sales (representative|manager|executive|associate)|account (manager|executive)|retail (manager|associate)|store manager|business development)\\w*|\\b(?:satış (temsilci|uzman|müdür|danışman|sorumlu|eleman|personel|yönetic|mühendis|asistan|destek|sonrası|şef|operasyon)|mağaza (müdür|sorumlu|yönetic|satış|eleman|personel)|aktif satış|bölge satış|müşteri temsilci|müşteri danışman|kasiyer|bölge müdür|saha satış|reyon|market (görevli|eleman|personel)|şarküteri|tıbbi (satış|tanıtım)|mümessil|ürün tanıtım|tanıtım (eleman|personel)|e.?ticaret (uzman|sorumlu|yönetic))\\w*)"]
 
 pazarlama:
   tetik_guclu: ["Digital Marketing", "Social Media Management", "Content Marketing", "Search Engine Marketing"]
@@ -403,7 +416,7 @@ pazarlama:
   agirlik: 1.0
   tr_pozisyonlar: ["dijital pazarlama uzmanı", "pazarlama uzmanı", "sosyal medya uzmanı"]
   en_pozisyonlar: ["marketing specialist", "digital marketing manager"]
-  basliklar: ["(?i)(\\b(?:marketing (specialist|manager|executive)|digital marketing|brand manager|social media|content (marketing|strategist)|communications|public relations|seo specialist)\\w*|\\b(?:pazarlama|dijital pazarlama|sosyal medya|marka (yönetic|uzman)|reklam|halkla ilişkiler|içerik (uzman|editör)|kampanya)\\w*)"]
+  basliklar: ["(?i)(\\b(?:marketing (specialist|manager|executive)|digital marketing|brand manager|social media|content (marketing|strategist)|communications|public relations|seo specialist)\\w*|\\b(?:pazarlama|dijital pazarlama|sosyal medya|marka (yönetic|uzman)|reklam|halkla ilişkiler|içerik (uzman|editör)|kampanya|grafik tasarım|(?<!müşteri )iletişim (uzman|sorumlu|müdür)|video (edit|kurgu))\\w*)"]
 
 ik:
   tetik_guclu: ["Human Resources", "Talent Acquisition", "Technical Recruitment", "Employee Relations"]
