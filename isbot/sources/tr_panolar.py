@@ -51,6 +51,7 @@ def tr_tarih(ham: str | None):
 TARAYICI_UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
                "(KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36")
 ISTEK_ARASI = 4.0          # saniye — robots.txt'de Crawl-delay yok, kendi sınırımızı koyuyoruz
+                           # (pano sınıfı kendi istek_arasi'nı koyabilir; bkz. KariyerNet)
 DETAY_UST_SINIR = 40       # koşum başına en fazla kaç detay sayfası
 ENGEL_SOGUMA_SAAT = 6      # 403/429 sonrası panoya kaç saat dokunulmayacağı
 
@@ -86,6 +87,7 @@ class TrPano(Kaynak):
     """Türk panoları için ortak taban: robots.txt + hız sınırı + iki aşama."""
     ad = "tr-pano"
     KOK = ""
+    istek_arasi = ISTEK_ARASI
 
     def __init__(self) -> None:
         super().__init__()
@@ -163,8 +165,8 @@ class TrPano(Kaynak):
             raise KaynakHatasi(f"robots.txt izin vermiyor: {url}")
         son = max(self._son_istek, self._damga_oku("son"))
         gecen = time.time() - son
-        if gecen < ISTEK_ARASI:
-            time.sleep(ISTEK_ARASI - gecen)
+        if gecen < self.istek_arasi:
+            time.sleep(self.istek_arasi - gecen)
         r = self.s.get(url, timeout=30, allow_redirects=True)
         self._son_istek = time.time()
         self._damga_yaz("son", self._son_istek)
@@ -239,6 +241,11 @@ class KariyerNet(TrPano):
     """
     ad = "kariyernet"
     KOK = "https://www.kariyer.net"
+    # 8 sn: ölçüldü (2026-10-09), 4 sn arayla ~45 istekten (~3 dk) sonra 403 verdi ve
+    # pano 6 saat kapandı. Normal bir tarama 60 isteğe çıkabiliyor (6 sorgu x 5 sayfa +
+    # 30 detay). Engelin hıza mı sayıya mı bağlı olduğu bilinmiyor; Berke'nin kararıyla
+    # önce yavaşlatıldı. Tarama süresi bu panoda ~8 dakikaya çıkabilir.
+    istek_arasi = 8.0
     KART = re.compile(r'<a[^>]+href="(/is-ilani/[^"]+)"[^>]*>(.*?)</a>', re.S)
 
     # ÖNEMLİ BULGU: "/is-ilanlari/bilgi-teknolojileri" kategori filtresi DEĞİL —

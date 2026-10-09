@@ -390,11 +390,11 @@ function modlariCiz() {
   if (!UYUM_HAZIR) {            // model yok: seçenek gösterme, sessizce hızlı mod
     k.innerHTML = "";
     const ip = $("#modIpucu");
-    if (ip) ip.textContent = "Şirketlerin açık ilan uçları taranır · yaklaşık 2-3 dakika";
+    if (ip) ip.textContent = "Şirketlerin açık ilan uçları ve Türk panoları taranır · 10 dakikayı bulabilir";
     return;
   }
   const secenekler = [
-    ["hizli", "Hızlı arama", "Sözlük ve kural motoru. Yetenek, rol ve konum eşleşmesine bakar.", "yaklaşık 2-3 dakika"],
+    ["hizli", "Hızlı arama", "Sözlük ve kural motoru. Yetenek, rol ve konum eşleşmesine bakar.", "10 dakikayı bulabilir · Türk panoları yavaş taranır"],
     ["gelismis", "Gelişmiş arama", "Motora ek olarak yerel bir model, ilanın gerçekten senin işin olup olmadığını denetler.", "biraz daha uzun · internet gerekmez"],
   ];
   k.innerHTML = secenekler.map(([id, ad, aciklama, sure]) =>
@@ -815,7 +815,8 @@ function hosgeldin() {
         <span>Bu CV'den anlaşılamaz: Türkiye, uzaktan kapsamları ve çalışma iznin olan
         ülkeler — İsviçre, Kanada, Hollanda… listeden arayıp eklersin</span></div></div>
       <div class="adim"><span class="no">3</span><div>Sağ üstteki <b>Tara</b> düğmesine bas
-        <span>Şirketlerin açık ilan uçları taranır, yaklaşık 2-3 dakika sürer</span></div></div>
+        <span>Şirketlerin açık ilan uçları ve Türk panoları taranır; kariyer.net'i yormamak için
+        yavaş ilerler, 10 dakikayı bulabilir</span></div></div>
     </div></div>`;
   $("#ozet").style.display = "none";
   birak.classList.add("buyuk");

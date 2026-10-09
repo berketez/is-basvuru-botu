@@ -1099,6 +1099,19 @@ def t50_tr_pozisyonlar_kanonik():
     sina("her Türkçe sorgu kanonik yol", [], eksik)
 
 
+# ---------------------------------------------------------------- 51
+# kariyer.net 4 sn arayla ~45 istekten sonra 403 verip 6 saat kapandı (2026-10-09). Hız
+# sınırı panoya özel: kariyer.net 8 sn, eleman.net 4 sn. Bekleme süresi sabitten değil
+# sınıftan okunmalı, yoksa panoya özel değer hiç uygulanmaz.
+def t51_kariyernet_yavas():
+    import inspect
+    from isbot.sources.tr_panolar import ElemanNet, KariyerNet, TrPano
+    sina("kariyer.net en az 8 sn arayla", True, KariyerNet.istek_arasi >= 8.0)
+    sina("eleman.net 4 sn", 4.0, ElemanNet.istek_arasi)
+    sina("bekleme sınıfın değerini kullanır", True,
+         "self.istek_arasi" in inspect.getsource(TrPano._sayfa))
+
+
 def main() -> int:
     for fn in [v for k, v in sorted(globals().items()) if k.startswith("t") and callable(v)
                and k[1].isdigit()]:
