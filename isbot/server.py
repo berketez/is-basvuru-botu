@@ -20,6 +20,7 @@ from pathlib import Path
 import yaml
 from flask import Flask, jsonify, request, send_from_directory
 
+from . import __version__
 from .cv_import import profil_tazele, profil_uret, yaz as profil_yaz
 from .yollar import ilk_kurulum, kaynak_dosya, oz_denetim, veri_dosya, veri_kok
 
@@ -74,7 +75,7 @@ def saglik():
     """Paket bütünlüğü. Eksik veri dosyası sessizce arızaya yol açmasın."""
     # "uygulama" alanı künyedir: ikinci çift tıklamada bu portta koşanın biz mi
     # yoksa alakasız başka bir program mı olduğu buradan anlaşılır.
-    return jsonify({"uygulama": "isbasvurubotu",
+    return jsonify({"uygulama": "isbasvurubotu", "surum": __version__,
                     "saglikli": not _EKSIK, "eksik_dosyalar": _EKSIK})
 
 

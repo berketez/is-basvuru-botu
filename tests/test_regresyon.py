@@ -948,8 +948,11 @@ def t44_musteri_hizmetleri():
     def aile(baslik):
         return [ad for ad, t in roller.items() if any(re.search(k, baslik) for k in t["basliklar"])]
 
+    # Son üçü canlı kariyer.net ölçümünde kaçanlardan (2026-10-09): çıplak unvan,
+    # Türkçe karaktersiz yazım, iletişim merkezi.
     for baslik in ("Müşteri Hizmetleri Temsilcisi", "Çağrı Merkezi Elemanı",
-                   "Customer Support Specialist", "Canlı Destek Temsilcisi"):
+                   "Customer Support Specialist", "Canlı Destek Temsilcisi", "Müşteri Temsilcisi",
+                   "Almanca Bilen Çagri Merkezi Müsteri Temsilcisi", "İletişim Merkezi Müşteri Temsilcisi"):
         sina(f"'{baslik}' -> musteri_hizmetleri", True, "musteri_hizmetleri" in aile(baslik))
     sina("'Servis Danışmanı' satış sonrası (satis)", True, "satis" in aile("Servis Danışmanı"))
 
@@ -1058,6 +1061,42 @@ def t48_kidem_araligi():
     sina("'Mid/Senior' -> mid", "mid", k("Mid/Senior Backend Engineer"))
     sina("'Senior Staff Engineer' aralık değil -> staff", "staff", k("Senior Staff Engineer"))
     sina("'Senior - Platform Team' aralık değil -> senior", "senior", k("Senior - Platform Team"))
+
+
+# ---------------------------------------------------------------- 49
+# Panel sürüm göstermiyordu; kullanıcı hangi sürümde olduğunu bilemiyordu. Sürüm tek
+# kaynakta (isbot/__init__.py); paket (Info.plist), /api/saglik ve panel oradan okur.
+def t49_surum_tek_kaynak():
+    from isbot import __version__
+    from isbot.server import app as web
+    from isbot.yollar import kaynak_dosya
+    with web.test_client() as istemci:
+        sina("/api/saglik sürümü taşır", __version__, istemci.get("/api/saglik").get_json().get("surum"))
+    spec = (Path(__file__).resolve().parent.parent / "isbot-panel.spec").read_text(encoding="utf-8")
+    sina("spec sürümü elle yazmaz", True, '"CFBundleShortVersionString": SURUM' in spec)
+    sina("panel başlığında sürüm alanı var", True,
+         'id="surum"' in kaynak_dosya("isbot", "web", "index.html").read_text(encoding="utf-8"))
+
+
+# ---------------------------------------------------------------- 50
+# Kesik sorgu adı yanlış sayfaya gidiyordu (canlı ölçüm, 2026-10-09): "sağlık memur" genel
+# "memur" ilanlarına, "depo sorumlus" depo amiri/elemanına eşleniyordu. Her ad site
+# haritasında kanonik yol olmalı; bilinçli istisnalar aşağıda ve doğru eşlendikleri ölçüldü.
+def t50_tr_pozisyonlar_kanonik():
+    import collections, json
+    import yaml as _y
+    from isbot.yollar import kaynak_dosya
+    harita = Path(__file__).resolve().parent.parent / "data" / "kariyernet-sitemap.json"
+    if not harita.exists():
+        return                                   # önbellek yoksa (temiz klon) atlanır
+    tr = str.maketrans({"ç": "c", "ğ": "g", "ı": "i", "ö": "o", "ş": "s", "ü": "u"})
+    dilim = collections.Counter(y.rsplit("/", 1)[-1].split("-")[-1]
+                                for y in json.loads(harita.read_text(encoding="utf-8")))
+    istisna = {"mobil uygulama geliştirici", "siber güvenlik uzmanı", "arge mühendisi"}
+    roller = _y.safe_load(kaynak_dosya("isbot", "data", "roller.yaml").read_text(encoding="utf-8"))
+    eksik = [poz for t in roller.values() for poz in t.get("tr_pozisyonlar", [])
+             if poz not in istisna and not dilim[poz.lower().translate(tr).replace(" ", "+")]]
+    sina("her Türkçe sorgu kanonik yol", [], eksik)
 
 
 def main() -> int:

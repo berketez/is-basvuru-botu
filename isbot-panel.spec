@@ -8,6 +8,10 @@ import sys
 # isbot/data/roller.yaml pakete HİÇ girmedi; paketlenmiş uygulamada rol aileleri ve
 # profil tazeleme sessizce çalışmadı. Dizinin tamamı toplanıyor.
 from pathlib import Path as _P
+import re as _re
+
+# Sürüm TEK YERDE: isbot/__init__.py. Burada elle yazılınca panel ile paket ayrışıyordu.
+SURUM = _re.search(r'__version__\s*=\s*"([^"]+)"', _P("isbot/__init__.py").read_text()).group(1)
 
 VERI = [("isbot/web/index.html", "isbot/web"),
         ("config/companies.yaml", "config")]
@@ -67,6 +71,6 @@ if sys.platform == "darwin":
     app = BUNDLE(coll, name="IsBasvuruBotu.app", icon=IKON,
                  bundle_identifier="dev.berketez.isbasvurubotu",
                  info_plist={"CFBundleDisplayName": "İş Başvuru Botu",
-                             "CFBundleShortVersionString": "1.5.12",
+                             "CFBundleShortVersionString": SURUM,
                              "LSBackgroundOnly": False,
                              "NSHighResolutionCapable": True})

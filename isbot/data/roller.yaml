@@ -55,7 +55,7 @@ platform_sre:
   tetik: ["Ansible", "Prometheus", "incident management", "Jenkins", "Observability"]
   tetik_min: 2
   agirlik: 1.0
-  tr_pozisyonlar: ["sistem mühendisi", "altyapı mühendisi", "sistem yöneticisi"]
+  tr_pozisyonlar: ["sistem mühendisi", "altyapı mühendisi", "sistem ve network yöneticisi"]
   en_pozisyonlar: ["site reliability engineer", "platform engineer"]
   basliklar: ['(?i)(?:\b(sre|site reliability|platform engineer|infrastructure|devops|cloud engineer|reliability)\b)|\b(?:sistem yönetic|altyapı mühendis|ağ uzman|ağ mühendis|sunucu uzman|bilgi işlem|bilgi teknolojileri|it (uzman|destek|sorumlu))\w*']
 
@@ -139,7 +139,7 @@ urun:
   tetik: ["Agile", "A/B testing", "CRM", "business intelligence"]
   tetik_min: 2
   agirlik: 1.0
-  tr_pozisyonlar: ["ürün yöneticisi", "proje yöneticisi", "iş analisti", "proje müdürü"]
+  tr_pozisyonlar: ["ürün yöneticisi yönetmeni", "proje yöneticisi yönetmeni", "iş analisti", "proje müdürü"]
   en_pozisyonlar: ["product manager", "product owner"]
   basliklar: ['(?i)(?:\b(product (manager|owner|lead)|program manager|product analyst)\b)|\b(?:ürün yönetic|ürün sahib|proje yönetic|proje müdür|iş analist)\w*']
 
@@ -210,6 +210,10 @@ havacilik_savunma:
 # yarım kalıyordu: yetenekler tanınıyor, hedef rol yine `genel_yazilim`
 # çıkıyordu. Bu aileler o boşluğu kapatır.
 #
+# Ölçüldü (2026-10-09, canlı): KESİK ad yanlış sayfaya gider. "sağlık memur" genel "memur"
+# ilanlarına (222 ilanın %11'i sağlık), "depo sorumlus" depo amiri/elemanına, "sistem
+# yöneticisi" kalite sistem yöneticisine, "proje yöneticisi" asistan proje yöneticisine
+# eşleniyordu. Kanonik adlar kariyer.net'in "X / Yönetmeni" yazımına göre düzeltildi.
 # tr_pozisyonlar UYDURULMADI: her biri kariyer.net'in kendi sitemap'inde
 # kanonik yol olarak DOĞRULANDI (data/kariyernet-sitemap.json). Karşılığı
 # olmayan ad site tarafından sessizce genel listeye düşürülüyor ve alakasız
@@ -236,7 +240,7 @@ saglik:
   tetik: ["Anesthesia", "Radiology", "Medical Laboratory", "Physiotherapy", "Dietetics", "Pharmacy", "Dentistry", "Veterinary Medicine", "Midwifery", "Medical Secretary", "First Aid", "Sterilization", "Biomedical Equipment", "Psychology", "Elderly Care", "Public Health"]
   tetik_min: 2
   agirlik: 1.0
-  tr_pozisyonlar: ["hemşire", "sağlık memur", "fizyoterapist", "laborant", "acil tıp teknisyeni"]
+  tr_pozisyonlar: ["hemşire", "sağlık memuru", "fizyoterapist", "laborant", "acil tıp teknisyeni"]
   en_pozisyonlar: ["registered nurse", "clinical specialist"]
   basliklar: ["(?i)(\\b(?:nurse|nursing|clinical|physician|paramedic|radiolog|physiotherap|pharmacist|dental|patient care)\\w*|\\b(?:hemşire|sağlık memur|fizyoterapist|laborant|hasta bakım|hasta bakıc|hasta kabul|klinik|poliklinik|ameliyathane|yoğun bakım|diyetisyen|eczacı|diş hekim|paramedik|tıbbi sekreter|sağlık (personel|teknisyen|tekniker)|anestezi tekniker|röntgen tekniker)\\w*)"]
 
@@ -309,7 +313,7 @@ lojistik:
   tetik: ["Foreign Trade", "Incoterms", "Freight Forwarding", "Road Transport", "Container Shipping", "Air Freight", "Fleet Management", "Distribution Planning", "Warehouse Management System", "Forklift Operation", "Dangerous Goods Transport", "Demand Planning", "Production Planning", "SAP Logistics Modules", "Bonded Warehouse"]
   tetik_min: 2
   agirlik: 1.0
-  tr_pozisyonlar: ["lojistik uzmanı", "satın alma uzmanı", "depo sorumlus", "ihracat uzmanı", "tedarik zinciri uzmanı",
+  tr_pozisyonlar: ["lojistik uzmanı", "satın alma uzmanı", "depo sorumlusu", "ihracat uzmanı", "tedarik zinciri uzmanı",
                    "dış ticaret uzmanı"]
   en_pozisyonlar: ["supply chain specialist", "procurement specialist"]
   basliklar: ["(?i)(\\b(?:supply chain|procurement|logistics|warehouse (manager|supervisor)|customs|import|export|purchasing)\\w*|\\b(?:lojistik|satın alma|tedarik zincir|depo (sorumlu|eleman|görevli|operatör|personel|şef|müdür)|ihracat|ithalat|dış ticaret|gümrük|sevkiyat|nakliye|planlama uzman)\\w*)"]
@@ -546,6 +550,9 @@ uretim_operator:
 # listesinde HERKES için yasaktı; bu aileye muafiyet verildi (cv_import.ELEME_KALIPLARI).
 # "customer success" BİLEREK yok: ölçüldü, çağrı merkezi CV'sinin ilk 15'ine 8 "Customer
 # Success Manager/Leader/Architect" giriyordu. O iş SaaS hesap yönetimi, satis'e yakın.
+# Almanca/Felemenkçe başlık sözcükleri (Kundenservice…) da BİLEREK yok: Almanca YAZILMIŞ ilanı
+# dil filtresi yakalamıyor, Almanca bilmeyen adaya geliyordu. "Almanca bilen müşteri
+# temsilcisi" Türkçe yazıldığı için çıplak unvanla yakalanır, dil şartını filtre ayıklar.
 musteri_hizmetleri:
   tetik_guclu: ["Call Centre", "complaint handling"]
   tetik: ["Customer Service", "CRM", "After Sales Service", "Cashier Operations",
@@ -557,4 +564,4 @@ musteri_hizmetleri:
   tr_pozisyonlar: ["çağrı merkezi müşteri temsilcisi", "müşteri hizmetleri temsilcisi",
                    "çağrı merkezi elemanı", "müşteri hizmetleri yetkilisi", "müşteri hizmetleri uzmanı"]
   en_pozisyonlar: ["customer service representative", "customer support specialist"]
-  basliklar: ["(?i)(\\b(?:customer (service|support|care|experience|relations)|call cent(er|re)|contact cent(er|re)|support (agent|specialist|representative|associate|advisor)|help ?desk|live chat)\\w*|\\b(?:müşteri (hizmet|ilişki|deneyim|destek|şikayet|iletişim)|çağrı merkez|canlı destek)\\w*)"]
+  basliklar: ["(?i)(\\b(?:customer (service|support|care|experience|relations)|call cent(er|re)|contact cent(er|re)|support (agent|specialist|representative|associate|advisor)|help ?desk|live chat)\\w*|\\b(?:m[üu][şs]teri (hizmet|ilişki|iliski|deneyim|destek|şikayet|sikayet|iletişim|iletisim|temsilci)|[çc]a[ğg]r[ıi] merkez|[iİ]leti[şs]im merkez|canlı destek)\\w*)"]
