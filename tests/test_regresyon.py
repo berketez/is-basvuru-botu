@@ -894,6 +894,46 @@ def t42_teknisyen_ailesi():
     sina("'Teknik Servis Elemanı' garson sayılmaz", False, "turizm" in aile("Teknik Servis Elemanı"))
 
 
+# ---------------------------------------------------------------- 43
+# Üretim elemanı/operatörü, CNC, kaynak, paketleme kariyer.net'in en yaygın mavi yaka
+# pozisyonlarıydı ve hiçbir aileye girmiyordu. "Üretim Elemanı" başlıklı CV teknisyen
+# tespitine de takılmıyordu; "CNC Machinist" başlıklı CV ise iki satır aşağıdaki
+# "Precision Engineering Ltd" yüzünden mühendis sayılıyordu.
+def t43_uretim_operatoru():
+    import re
+    import yaml as _y
+    from isbot import uyum
+    from isbot.cv_import import teknisyen_mi
+    from isbot.yollar import kaynak_dosya
+    roller = _y.safe_load(kaynak_dosya("isbot", "data", "roller.yaml").read_text(encoding="utf-8"))
+
+    def aile(baslik):
+        return [ad for ad, t in roller.items() if any(re.search(k, baslik) for k in t["basliklar"])]
+
+    for baslik in ("Üretim Elemanı", "Ambalaj Makinesi Operatörü", "CNC Operatörü", "Kaynakçı",
+                   "Paketleme Elemanı", "Montaj Elemanı", "CNC Machinist"):
+        sina(f"'{baslik}' -> uretim_operator", True, "uretim_operator" in aile(baslik))
+    for baslik in ("Forklift Operatörü", "Kalite Kontrol Operatörü", "Üretim Mühendisi"):
+        sina(f"'{baslik}' operatör ailesine girmez", False, "uretim_operator" in aile(baslik))
+    sina("'İlaçlama Operatörü' ilaç ailesine girmez", False,
+         "ilac_biyotek" in aile("İlaçlama Operatörü"))
+
+    sina("'Üretim Elemanı' başlıklı CV uygulayıcı", True,
+         teknisyen_mi("Aday — Üretim Elemanı\nKocaeli\nEğitim"))
+    sina("işyeri adındaki 'Engineering' mühendis yapmaz", True,
+         teknisyen_mi("Ali Kaya - CNC Machinist\nLeeds\n\nEducation\nCollege\n\n"
+                      "Experience\nPrecision Engineering Ltd"))
+    sina("'Muhasebe Elemanı' uygulayıcı değil", False,
+         teknisyen_mi("Ayşe Yılmaz\nMuhasebe Elemanı\nAnkara"))
+
+    op = {"kimlik": {"deneyim_yil": 5.0, "teknisyen": True},
+          "rol_aileleri": {"uretim_operator": {}, "bakim_teknik": {}}}
+    sina("operatörün profil cümlesi üretim işini anlatır", True,
+         "Üretim hattı, tezgah" in uyum.profil_cumlesi(op))
+    sina("operatöre CNC operatörlüğü cezası yok", False,
+         "CNC" in uyum.uyumsuz_cumlesi({"rol_aileleri": {"uretim_operator": {}}}))
+
+
 def main() -> int:
     for fn in [v for k, v in sorted(globals().items()) if k.startswith("t") and callable(v)
                and k[1].isdigit()]:

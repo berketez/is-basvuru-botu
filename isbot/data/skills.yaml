@@ -717,3 +717,7 @@ teknik_meslek:
                                "fiber optik", "fiberoptik", "fiber ek", "fiber kaynak", "fiber sonlandırma"]
   "low voltage systems": ["low voltage systems", "structured cabling", "zayıf akım",
                           "yapısal kablolama", "data kablolama"]
+  # Paketleme/dolum hattı (kariyer.net: ambalaj makinesi operatörü 80 il, paketleme
+  # elemanı 75). Çıplak "packaging"/"ambalaj" BİLEREK yok: ambalaj tasarımı pazarlamadır.
+  "packaging operations": ["packaging line", "packing line", "paketleme", "ambalajlama",
+                           "ambalaj makinesi", "dolum makinesi", "dolum hattı"]

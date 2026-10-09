@@ -388,7 +388,7 @@ def _en_sorgular(roller: dict, ust_sinir: int = 3) -> list[str]:
     # Seviye ailesi açıksa (aday teknisyen) yalnız onun pozisyonları: kalan kota öteki
     # aileden doluyordu ve klima teknisyenine "civil engineer" aranıyordu (2026-10-09).
     seviyeli = [ad for ad in roller if (tanimlar.get(ad, {}) or {}).get("seviye")]
-    for ad in seviyeli or roller:                       # roller zaten ağırlığa göre sıralı
+    for ad in seviyeli[:1] or roller:                   # roller zaten ağırlığa göre sıralı
         for poz in (tanimlar.get(ad, {}) or {}).get("en_pozisyonlar", []):
             if poz not in cikti:
                 cikti.append(poz)
@@ -426,7 +426,8 @@ def _tr_sorgular(roller: dict, ust_sinir: int = 6) -> list[str]:
 
 
 _TEKNISYEN = re.compile(r"(?i)\b(teknisyen|tekniker|technician|elektrikçi|electrician|"
-                        r"operatör|operator|usta)\w*")
+                        r"operatör|operator|usta|kaynakçı|welder|machinist|assembler|işçi|"
+                        r"(üretim|montaj|paketleme) eleman|production worker)\w*")
 _MUHENDIS = re.compile(r"(?i)\b(mühendis|engineer|mimar|architect)\w*")
 
 
@@ -440,8 +441,17 @@ def teknisyen_mi(metin: str) -> bool:
     (ölçüldü: bir AI araştırma mühendisi CV'sinde 3 kez). Başlıkta teknisyen sözcüğü
     olup mühendis sözcüğü OLMAYAN CV teknisyen sayılır; 48 test CV'sinde tam olarak
     iki bakım teknisyeni CV'sini seçiyor.
+
+    "Teknisyen" burada UYGULAYICI SEVİYE demek: operatör, usta, kaynakçı, üretim/montaj
+    elemanı ve işçi de sayılır (uretim_operator ailesi bu kapıdan açılır). Çıplak "eleman"
+    BİLEREK yok: muhasebe/satış/İK elemanı beyaz yakadır, uyum hakemi onlara teknisyen
+    demesin.
+
+    Pencere ilk 3 DOLU SATIR (ad, unvan, iletişim). Eskiden ilk 250 karakterdi ve okul ya
+    da işyeri adına taşıyordu: "CNC Machinist / Welder" başlıklı CV, iki satır aşağıdaki
+    "Precision Engineering Ltd" yüzünden mühendis sayılıyordu (2026-10-09).
     """
-    bas = metin_normalize(metin)[:250]
+    bas = "\n".join([s for s in metin_normalize(metin).splitlines() if s.strip()][:3])[:250]
     return bool(_TEKNISYEN.search(bas)) and not _MUHENDIS.search(bas)
 
 

@@ -3,7 +3,7 @@
 
 NEDEN AYRI DOSYA: benchmark (tests/benchmark.py) 16 yazılım/mühendislik CV'siyle
 ALAKA ölçüyor ve ilan havuzu gerektiriyor. Bu test ise yalnız AYRIŞTIRMAYI ölçer,
-ağ istemez, saniyeler sürer: 34 sentetik CV (17 Türkçe + 17 İngilizce; mühendislik, teknisyenlik,
+ağ istemez, saniyeler sürer: 36 sentetik CV (18 Türkçe + 18 İngilizce; mühendislik, teknisyenlik,
 mimarlık, muhasebe, sağlık, hukuk, denizcilik, madencilik, tekstil, turizm,
 bankacılık, İK, İSG, çevre, gıda, lojistik, eğitim, pazarlama) doğru rol ailesine gidiyor mu?
 
@@ -64,6 +64,9 @@ BEKLENEN = [
     # --- üçüncü grup: teknik servis (fabrika bakımı dışındaki teknisyen kolları) ---
     ("tr_servis_teknisyeni", "bakim_teknik",  6, 10.2),
     ("en_field_technician",  "bakim_teknik",  4, 11.2),
+    # --- dördüncü grup: üretim operatörlüğü (operatör, tezgah, kaynak, paketleme) ---
+    ("tr_uretim_elemani",    "uretim_operator", 5, 11.7),
+    ("en_cnc_machinist",     "uretim_operator", 5, 12.1),
 ]
 
 # Hiçbir CV'de çıkmaması gereken yetenekler. "C"/"Go"/"R" Unicode NFD hatasının

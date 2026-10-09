@@ -61,9 +61,12 @@ TR_KARSILIK = {
 UYUMSUZ_MADDELER: list[tuple[str, str, frozenset[str], bool]] = [
     ("Quality control and inspection", "Kalite kontrol ve muayene",
      frozenset({"uretim_kalite"}), False),
-    ("production line operator", "üretim bandı operatörlüğü", frozenset({"uretim_kalite"}), True),
-    ("CNC machine operator", "CNC tezgah operatörlüğü", frozenset({"uretim_kalite"}), True),
-    ("assembly technician", "montaj teknisyenliği", frozenset({"uretim_kalite"}), True),
+    ("production line operator", "üretim bandı operatörlüğü",
+     frozenset({"uretim_kalite", "uretim_operator"}), True),
+    ("CNC machine operator", "CNC tezgah operatörlüğü",
+     frozenset({"uretim_kalite", "uretim_operator"}), True),
+    ("assembly technician", "montaj teknisyenliği",
+     frozenset({"uretim_kalite", "uretim_operator"}), True),
     ("maintenance and repair technician", "bakım onarım teknisyenliği", frozenset({"bakim_teknik"}),
      True),
     ("warehouse and logistics", "depo ve sevkiyat", frozenset({"lojistik"}), False),
@@ -95,6 +98,13 @@ MUHENDISLIK_AILELERI = frozenset({
     "veri_muh", "veri_bilimi", "platform_sre", "backend", "frontend", "mobil", "oyun",
     "guvenlik", "qa", "blockchain", "urun", "bilimsel_hpc", "genel_yazilim",
 })
+
+# Uygulayıcı seviyedeki adayın (kimlik.teknisyen) işini anlatan son cümle, ana ailesine
+# göre. Operatöre "kurulum, bakım, arıza giderme ve saha işi" demek onu bakımcı yapıyordu.
+UYGULAYICI_ISI = {
+    "bakim_teknik": "Kurulum, bakım, arıza giderme ve saha işi.",
+    "uretim_operator": "Üretim hattı, tezgah, kaynak, montaj ve paketleme işi.",
+}
 
 MODEL_DOSYA = "model_int8.onnx"
 TOKENIZER_DOSYA = "tokenizer.json"
@@ -250,7 +260,7 @@ def profil_cumlesi(profil: dict) -> str:
         bas = f"{yil} yıl deneyimli teknisyen." if yil else "Teknisyen."
         return (f"{bas} Çalışma alanı: {', '.join(alanlar) or 'teknik servis'}. "
                 f"Uzmanlık: {', '.join(yet) or 'teknik servis'}. "
-                f"Kurulum, bakım, arıza giderme ve saha işi.")
+                f"{UYGULAYICI_ISI.get(aileler[0] if aileler else '', UYGULAYICI_ISI['bakim_teknik'])}")
     # Aileler ağırlığa göre sıralı: ilk aile adayın ana mesleğidir.
     if aileler and aileler[0] not in MUHENDISLIK_AILELERI:
         bas = f"{yil} yıl deneyimli profesyonel." if yil else "Profesyonel."
@@ -285,6 +295,7 @@ def _okunur(aile: str) -> str:
         "genel_yazilim": "yazılım mühendisliği, software engineering",
         # Yazılım dışı meslekler: eskiden anahtar adıyla ("saglik", "ik") gidiyordu.
         "bakim_teknik": "bakım, onarım ve teknik servis, maintenance and technical service",
+        "uretim_operator": "üretim operatörlüğü, tezgah ve kaynak, production operator and machining",
         "bankacilik": "bankacılık ve finans, banking and finance",
         "denizcilik": "denizcilik ve gemi işletmesi, maritime and shipping",
         "egitim": "eğitim ve öğretmenlik, education and teaching",

@@ -250,7 +250,7 @@ ilac_biyotek:
   agirlik: 1.0
   tr_pozisyonlar: ["ruhsatlandırma uzmanı", "kalite güvence uzmanı"]
   en_pozisyonlar: ["regulatory affairs specialist", "clinical research associate"]
-  basliklar: ["(?i)(\\b(?:regulatory affairs|pharmacovigilance|clinical research|gmp|validation|biotech)\\w*|\\b(?:ruhsatlandırma|farmakovijilans|klinik araştırma|validasyon|biyoteknolo|ilaç)\\w*)"]
+  basliklar: ["(?i)(\\b(?:regulatory affairs|pharmacovigilance|clinical research|gmp|validation|biotech)\\w*|\\b(?:ruhsatlandırma|farmakovijilans|klinik araştırma|validasyon|biyoteknolo|ilaç(?!lama))\\w*)"]
 
 hukuk:
   tetik_guclu: ["Attorney", "Contract Law", "Litigation", "Corporate Law"]
@@ -325,7 +325,7 @@ uretim_kalite:
   tr_pozisyonlar: ["üretim müdürü", "endüstri mühendisi", "bakım mühendisi", "kalite kontrol mühendisi",
                    "kalite mühendisi", "üretim planlama mühendisi"]
   en_pozisyonlar: ["manufacturing engineer", "quality engineer"]
-  basliklar: ["(?i)(\\b(?:manufacturing|production (engineer|manager|supervisor)|industrial engineer|quality (engineer|control|assurance)|lean|six sigma|maintenance engineer)\\w*|\\b(?:üretim (mühendis|müdür|şef|sorumlu|planlama)|planlama mühendis|endüstri mühendis|bakım (mühendis|şef)|kalite (mühendis|müdür|uzman|sorumlu|şef|yönetic|kontrol|güvence|sistem)|(?<!güvenlik )vardiya (amir|şef)|yalın|proses geliştirme)\\w*)"]
+  basliklar: ["(?i)(\\b(?:manufacturing|production (engineer|manager|supervisor)|industrial engineer|quality (engineer|control|assurance)|lean|six sigma|maintenance engineer)\\w*|\\b(?:üretim (mühendis|müdür|şef|sorumlu|planlama|uzman|yönetic)|planlama mühendis|endüstri mühendis|bakım (mühendis|şef)|kalite (mühendis|müdür|uzman|sorumlu|şef|yönetic|kontrol|güvence|sistem)|(?<!güvenlik )vardiya (amir|şef)|yalın|proses geliştirme)\\w*)"]
 
 gida_tarim:
   tetik_guclu: ["Food Engineering", "HACCP", "Food Safety Management", "Hygiene and Sanitation"]
@@ -508,3 +508,28 @@ bakim_teknik:
                    "servis teknisyeni", "saha teknisyeni", "bakım teknisyeni", "elektrik ustası"]
   en_pozisyonlar: ["maintenance technician", "field service technician"]
   basliklar: ["(?i)(\\b(?:maintenance (technician|mechanic|electrician|fitter)|(field )?service technician|field technician|electrician|hvac technician|repair technician|(electrical|mechanical|electronics) technician)\\w*|\\b(?:(elektrik( elektronik)?|mekanik|makine|elektronik|otomasyon|fiber ?optik|zayıf akım|iklimlendirme( soğutma)?|soğutma|klima|kombi|doğalgaz|asansör|pano( montaj)?|oto (elektrik|mekanik)|kaporta|gsm|tesisat|biyomedikal|araç muayene|saha|servis|teknik servis) (teknisyen|tekniker|usta)|((elektrik|mekanik|makine|asansör) )?bakım( onarım)? (teknisyen|tekniker|usta|eleman|personel|operatör|sorumlu)|teknik servis (eleman|personel|uzman)|elektrikçi)\\w*)"]
+
+# --- üretim operatörü / tezgah / kaynak / montaj --------------------------------
+# NEDEN EKLENDİ: kariyer.net'in en yaygın mavi yaka pozisyonları hiçbir aileye
+# girmiyordu: üretim elemanı (132 il), üretim operatörü (91), üretim işçisi (86),
+# ambalaj makinesi operatörü (80), CNC operatörü (78), paketleme elemanı (75), kaynak
+# ustası, makine operatörü, montaj elemanı... uretim_kalite ailesi bunların MÜHENDİS ve
+# MÜDÜR katını tanır; operatörü tanımaz, sorguları da "üretim müdürü".
+#
+# seviye: teknisyen -> yalnız uygulayıcı seviyedeki CV'de açılır (teknisyen_mi; operatör,
+# usta, kaynakçı, üretim elemanı, işçi başlıkları dahil). Üretim mühendisine operatör
+# ilanı gitmesin diye. Forklift/depo operatörü bu ailede DEĞİL (lojistik tarafı);
+# kalite kontrol operatörü uretim_kalite'de.
+uretim_operator:
+  seviye: teknisyen
+  tetik_guclu: ["machine operation", "CNC Machining", "Welding", "conventional machining",
+                "Injection Molding", "packaging operations"]
+  tetik: ["Machining", "Assembly Line", "Sheet Metal Fabrication", "Metal Casting",
+          "technical drawing", "Quality Control", "Dimensional Inspection", "Forklift Operation"]
+  tetik_min: 2
+  agirlik: 1.0
+  # Hepsi site haritasında kanonik yol (2026-10-09). Genelden özele; sorgu kotası 6.
+  tr_pozisyonlar: ["üretim operatörü", "üretim elemanı", "cnc operatörü", "makine operatörü",
+                   "kaynak ustası", "montaj elemanı", "paketleme elemanı", "cnc torna operatörü"]
+  en_pozisyonlar: ["production operator", "cnc machinist"]
+  basliklar: ["(?i)(\\b(?:production (operator|worker|associate|technician)|machine operator|line operator|press operator|cnc (operator|machinist|programmer)|machinist|welder|welding operator|assembler|assembly (operator|worker|technician)|packer|packaging operator)\\w*|\\b(?:üretim (eleman|operatör|işçi|personel|teknisyen|destek|formen)|(cnc( işleme merkezi)?|torna|freze|pres|abkant|lazer( kesim)?|plazma|(plastik )?enjeksiyon|ambalaj( makine\\w*)?|paketleme( makine\\w*)?|dolum( makine\\w*)?|makine|montaj|kaynak|gazaltı( kaynak)?|geri dönüşüm makine\\w*|tezgah|dikiş( makine\\w*)?|kalıp) (operatör|eleman|usta|işçi|personel|teknisyen)|cnc|kaynakçı|(argon|gazaltı|tig|mig) kaynak|torna( freze)? usta|talaşlı imalat|usta ?başı|fabrika işçi)\\w*)"]
