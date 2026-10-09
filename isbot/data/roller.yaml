@@ -358,16 +358,19 @@ enerji_cevre:
   basliklar: ["(?i)(\\b(?:electrical engineer|energy engineer|environmental engineer|renewable|solar|wind|power (systems|distribution)|water treatment)\\w*|\\b(?:elektrik mühendis|enerji (mühendis|uzman)|çevre (mühendis|uzman)|güneş enerji|rüzgar enerji|trafo|şebeke|arıtma|atık)\\w*)"]
 
 isg:
-  tetik_guclu: ["Occupational Health and Safety", "Occupational Risk Assessment", "Safety Management System"]
+  # "Occupational Risk Assessment" DESTEKLEYİCİ: eşanlamlısı "risk değerlendirmesi" finansta,
+  # projede, inşaatta da geçer. Ölçüldü (2026-10-09): bankacı CV'sinin "kredi risk
+  # değerlendirmesi" İSG ailesini tek başına açıyordu. İSG uzmanında aileyi OHS açar.
+  tetik_guclu: ["Occupational Health and Safety", "Safety Management System"]
   # tetik listesi kategorinin KALAN TÜM kalemlerini kapsar. Önceki hâlinde
   # yalnız ilk birkaç kalem vardı ve kategorinin yarısı hiçbir tetikte yoktu;
   # o kalemlerle gelen aday (ör. diş hekimi, veteriner, ebe) aileyi HİÇ açamıyordu.
-  tetik: ["Emergency Action Plan", "Work Permit System", "Accident Investigation", "Personal Protective Equipment", "Occupational Health Surveillance", "Fire Safety", "Chemical Safety", "Safety Training", "Health Safety Environment"]
+  tetik: ["Occupational Risk Assessment", "Emergency Action Plan", "Work Permit System", "Accident Investigation", "Personal Protective Equipment", "Occupational Health Surveillance", "Fire Safety", "Chemical Safety", "Safety Training", "Health Safety Environment"]
   tetik_min: 2
   agirlik: 1.0
   tr_pozisyonlar: ["iş güvenliği uzmanı"]
   en_pozisyonlar: ["hse specialist", "safety engineer"]
-  basliklar: ["(?i)(\\b(?:\\bhse\\b|health and safety|safety (engineer|specialist|officer)|ehs\\b|occupational)\\w*|\\b(?:iş (güvenliği|sağlığı)|isg uzman|risk değerlendirme|acil durum|çevre güvenlik)\\w*)"]
+  basliklar: ["(?i)(\\b(?:\\bhse\\b|health and safety|safety (engineer|specialist|officer)|ehs\\b|occupational)\\w*|\\b(?:iş (güvenliği|sağlığı)|isg uzman|acil durum|çevre güvenlik)\\w*)"]
 
 egitim:
   tetik_guclu: ["Teaching", "Curriculum Development", "Classroom Management", "Assessment and Evaluation"]

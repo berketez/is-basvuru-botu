@@ -67,6 +67,6 @@ if sys.platform == "darwin":
     app = BUNDLE(coll, name="IsBasvuruBotu.app", icon=IKON,
                  bundle_identifier="dev.berketez.isbasvurubotu",
                  info_plist={"CFBundleDisplayName": "İş Başvuru Botu",
-                             "CFBundleShortVersionString": "1.5.11",
+                             "CFBundleShortVersionString": "1.5.12",
                              "LSBackgroundOnly": False,
                              "NSHighResolutionCapable": True})

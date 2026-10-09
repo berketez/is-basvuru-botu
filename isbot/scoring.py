@@ -81,6 +81,25 @@ KIDEM_KALIP = [
     (re.compile(r"(?i)\b(staff|principal|distinguished|fellow|head of|director|vp|chief)\b"), "staff"),
     (re.compile(r"(?i)\b(senior|sr\.?|lead)\b"), "senior"),
 ]
+# KIDEM ARALIĞI: "(Intermediate to Senior Staff)", "Mid/Senior", "Junior – Mid". İlan
+# alt sınırdaki adaya da açıktır, kıdem ALT SINIRDAN okunur. Ölçüldü (2026-10-09): GitLab'ın
+# "Site Reliability Engineer (Intermediate to Senior Staff)" ilanı en yüksek sözcükten
+# "staff" okunup kıdemli DevOps'a da 2 yıllık platform mühendisine de kapatılıyordu.
+# "Senior Staff Engineer" aralık DEĞİLDİR (ayraç yok), staff olarak kalır.
+_KIDEM_SOZ = (r"(intern|junior|jr\.?|entry[- ]level|associate|intermediate|mid(?:[- ]level)?|"
+              r"senior|sr\.?|lead|staff|principal)")
+KIDEM_ARALIK = re.compile(rf"(?i)\b{_KIDEM_SOZ}\s*(?:to|through|thru|-|–|—|/)\s*{_KIDEM_SOZ}\b")
+
+
+def _aralik_alt_siniri(soz: str) -> str:
+    soz = soz.lower()
+    if soz.startswith(("intern", "junior", "jr", "entry", "associate")):
+        return "junior"
+    if soz.startswith(("intermediate", "mid")):
+        return "mid"
+    if soz.startswith(("senior", "sr", "lead")):
+        return "senior"
+    return "staff"
 # İSTENEN deneyim yılı. Dikkat: "we have 40 years of experience" ŞİRKETİN kendi
 # tecrübesidir, adaydan istenen değil (ölçüldü: iki ilan '40 yıl istiyor' diye elendi).
 # Bu yüzden (a) şirket-övgüsü bağlamı dışlanır, (b) bir "şart" ipucu aranır,
@@ -189,6 +208,9 @@ class Puan:
 
 
 def _kidem_bul(job: Job) -> str:
+    m = KIDEM_ARALIK.search(job.title)
+    if m:
+        return _aralik_alt_siniri(m.group(1))
     for kalip, k in KIDEM_KALIP:
         if kalip.search(job.title):
             return k

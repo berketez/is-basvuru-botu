@@ -151,6 +151,17 @@ def yukle(yol: str) -> dict:
         return yaml.safe_load(f) or {}
 
 
+def tr_detay_adaylari(sonuclar: list) -> list:
+    """Metni çekilecek Türk pano ilanları, EN İYİSİ ÖNCE.
+
+    Kaynak en fazla tr_detay_siniri ilanın metnini çeker ve listenin BAŞINDAN alır.
+    Liste eskiden havuz sırasındaydı: başlığı en iyi uyan ilan 31. sıradaysa metni hiç
+    çekilmiyor, beceri puanı 0'da kalıp dibe gömülüyordu (2026-10-09).
+    """
+    return sorted((s_ for s_ in sonuclar if s_.job.source in TR_KAYNAKLARI
+                   and not s_.job.raw.get("detay_cekildi")), key=lambda s_: -s_.nihai)
+
+
 def tara(
     profil_yolu: str = "config/profile.local.yaml",
     sirket_yolu: str = "config/companies.yaml",
@@ -280,8 +291,7 @@ def tara(
     # Liste sayfası ilan METNİ vermiyor; yetenek eşleştirmesi onsuz çalışmaz.
     # Ama 50 ilanın 50'si için detay çekmek hem yavaş hem nezaketsiz. Bu yüzden
     # yalnızca SERT FİLTRELERİ GEÇEN ilanlar için detay çekilip yeniden puanlanıyor.
-    tr_adaylar = [s_ for s_ in rapor.sonuclar if s_.job.source in TR_KAYNAKLARI
-                  and not s_.job.raw.get("detay_cekildi")]
+    tr_adaylar = tr_detay_adaylari(rapor.sonuclar)
     if tr_adaylar:
         _asama(f"Türk panolarında {len(tr_adaylar)} ilanın metni çekiliyor")
         for kaynak_adi, K in TR_KAYNAKLARI.items():

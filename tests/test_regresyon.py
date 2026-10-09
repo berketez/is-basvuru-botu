@@ -1011,6 +1011,55 @@ def t45_rol_ailesi_kapatma():
             sunucu.VARSAYILAN_PROFIL = eski_yol
 
 
+# ---------------------------------------------------------------- 46
+# Bankacı CV'sinin "kredi risk değerlendirmesi" İSG ailesini açıyordu: eşanlamlı çıplak
+# "risk değerlendirmesi" tanımlayıcı tetikti, İSG unvan kalıbı da onu unvan sayıyordu.
+def t46_risk_degerlendirmesi_isg_acmaz():
+    import re
+    import yaml as _y
+    from isbot.cv_import import rol_aileleri_turet
+    from isbot.yollar import kaynak_dosya
+    roller = _y.safe_load(kaynak_dosya("isbot", "data", "roller.yaml").read_text(encoding="utf-8"))
+    sina("tek başına risk değerlendirmesi İSG açmaz", False,
+         "isg" in rol_aileleri_turet({"Occupational Risk Assessment", "Credit Analysis"},
+                                     {"Occupational Risk Assessment", "Credit Analysis"}, set()))
+    sina("İSG uzmanında açılır", True,
+         "isg" in rol_aileleri_turet({"Occupational Health and Safety", "Occupational Risk Assessment"},
+                                     {"Occupational Health and Safety"}, set()))
+    sina("'Kredi Risk Değerlendirme Uzmanı' İSG unvanı değil", False,
+         any(re.search(k, "Kredi Risk Değerlendirme Uzmanı") for k in roller["isg"]["basliklar"]))
+
+
+# ---------------------------------------------------------------- 47
+# Türk panosu ilanlarının metni en fazla tr_detay_siniri tane çekiliyor ve liste BAŞINDAN
+# alınıyordu; liste havuz sırasındaydı. Başlığı en iyi uyan ilan sona düşerse metni hiç
+# çekilmiyor, beceri puanı 0'da kalıyordu.
+def t47_tr_detay_en_iyisi_once():
+    from types import SimpleNamespace as N
+    from isbot.pipeline import tr_detay_adaylari
+    def s_(kaynak, puan, cekildi=False):
+        return N(job=N(source=kaynak, raw={"detay_cekildi": cekildi}, title=str(puan)), nihai=puan)
+    liste = [s_("kariyernet", 10), s_("greenhouse", 90), s_("kariyernet", 40),
+             s_("elemannet", 25), s_("kariyernet", 80, cekildi=True)]
+    sina("TR adayları puan sırasıyla, ATS ve metni çekilmiş olan hariç", [40, 25, 10],
+         [x.nihai for x in tr_detay_adaylari(liste)])
+
+
+# ---------------------------------------------------------------- 48
+# "Site Reliability Engineer (Intermediate to Senior Staff)" en yüksek sözcükten staff
+# okunuyor, kıdemli adaya da kapanıyordu. Aralıkta kıdem ALT SINIRDAN okunur.
+def t48_kidem_araligi():
+    from isbot.scoring import _kidem_bul
+    def k(baslik):
+        return _kidem_bul(Job(source="x", company="x", board_token="x", native_id="1",
+                              title=baslik, url=""))
+    sina("'Intermediate to Senior Staff' -> mid", "mid",
+         k("Site Reliability Engineer (Intermediate to Senior Staff)"))
+    sina("'Mid/Senior' -> mid", "mid", k("Mid/Senior Backend Engineer"))
+    sina("'Senior Staff Engineer' aralık değil -> staff", "staff", k("Senior Staff Engineer"))
+    sina("'Senior - Platform Team' aralık değil -> senior", "senior", k("Senior - Platform Team"))
+
+
 def main() -> int:
     for fn in [v for k, v in sorted(globals().items()) if k.startswith("t") and callable(v)
                and k[1].isdigit()]:
