@@ -296,6 +296,7 @@ def _okunur(aile: str) -> str:
         # Yazılım dışı meslekler: eskiden anahtar adıyla ("saglik", "ik") gidiyordu.
         "bakim_teknik": "bakım, onarım ve teknik servis, maintenance and technical service",
         "uretim_operator": "üretim operatörlüğü, tezgah ve kaynak, production operator and machining",
+        "musteri_hizmetleri": "müşteri hizmetleri ve çağrı merkezi, customer service and call centre",
         "bankacilik": "bankacılık ve finans, banking and finance",
         "denizcilik": "denizcilik ve gemi işletmesi, maritime and shipping",
         "egitim": "eğitim ve öğretmenlik, education and teaching",

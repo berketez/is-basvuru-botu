@@ -15,6 +15,7 @@ bir aileye giriyor. Boşluk ağırlıkla mavi yaka ve hizmet tarafında.
 v1.5.7 (2026-10-09, var olan ailelere Türkçe unvanlar): %40 (ağırlıklı %58).
 v1.5.8 (bakım/teknik servis ailesi): %43 (ağırlıklı %62).
 v1.5.9 (üretim operatörü ailesi): %46 (ağırlıklı %66).
+v1.5.10 (müşteri hizmetleri ailesi): %47 (ağırlıklı %68).
 
     python scripts/tr_kapsam.py [--ilk 70]
 """

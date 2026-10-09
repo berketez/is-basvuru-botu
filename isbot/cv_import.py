@@ -250,7 +250,8 @@ ELEME_KALIPLARI: list[tuple[str, frozenset[str]]] = [
      r"implementation consultant)\b", frozenset()),
     (r"(?i)\b(support (engineer|associate|specialist|analyst|agent|representative|"
      r"consultant|advisor|coordinator)|technical support|"
-     r"l[123] support|help ?desk|(product|customer|saas|client) support)\b", frozenset()),
+     r"l[123] support|help ?desk|(product|customer|saas|client) support)\b",
+     frozenset({"musteri_hizmetleri"})),
     (r"(?i)\b(community manager|developer (advocate|relations)|devrel)\b",
      frozenset({"pazarlama"})),
     (r"(?i)\b(strategist|evangelist)\b", frozenset({"pazarlama"})),

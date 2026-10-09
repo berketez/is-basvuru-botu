@@ -574,6 +574,9 @@ perakende_satis:
   "Cashier Operations": ["kasa işlemleri", "kasiyer", "kasa sorumlusu", "nakit kontrolü", "ödeme alma"]
   "Customer Service": ["customer service", "müşteri hizmetleri", "müşteri ilişkileri", "müşteri memnuniyeti", "müşteri temsilcisi"]
   "Call Centre": ["call center", "call centre", "çağrı merkezi", "çağrı merkezi temsilcisi", "outbound arama", "inbound çağrı"]
+  # Çağrı merkezi / canlı destek temsilcisinin ayırt edici işi (musteri_hizmetleri ailesi).
+  "complaint handling": ["complaint handling", "complaint resolution", "live chat", "şikayet yönetimi",
+                         "şikayet çözümü", "şikayet takibi", "şikayet kayıt", "canlı destek"]
   "After Sales Service": ["after sales", "satış sonrası", "satış sonrası hizmet", "teknik servis", "servis organizasyonu"]
   "Dealer Network Management": ["dealer network", "bayi yönetimi", "bayi ağı", "distribütör yönetimi"]
   "Loss Prevention": ["loss prevention", "kayıp önleme", "fire takibi", "mağaza güvenliği"]

@@ -934,6 +934,39 @@ def t43_uretim_operatoru():
          "CNC" in uyum.uyumsuz_cumlesi({"rol_aileleri": {"uretim_operator": {}}}))
 
 
+# ---------------------------------------------------------------- 44
+# Müşteri hizmetleri temsilcisi/yetkilisi ve çağrı merkezi elemanı hiçbir aileye
+# girmiyordu; çağrı merkezi CV'si satis'e düşüp "satış müdürü" diye aranıyordu.
+# İngilizce "Customer Support Specialist" başlığı sabit eleme listesinde HERKESE yasaktı.
+def t44_musteri_hizmetleri():
+    import re
+    import yaml as _y
+    from isbot.cv_import import eleme_kaliplari, rol_aileleri_turet
+    from isbot.yollar import kaynak_dosya
+    roller = _y.safe_load(kaynak_dosya("isbot", "data", "roller.yaml").read_text(encoding="utf-8"))
+
+    def aile(baslik):
+        return [ad for ad, t in roller.items() if any(re.search(k, baslik) for k in t["basliklar"])]
+
+    for baslik in ("Müşteri Hizmetleri Temsilcisi", "Çağrı Merkezi Elemanı",
+                   "Customer Support Specialist", "Canlı Destek Temsilcisi"):
+        sina(f"'{baslik}' -> musteri_hizmetleri", True, "musteri_hizmetleri" in aile(baslik))
+    sina("'Servis Danışmanı' satış sonrası (satis)", True, "satis" in aile("Servis Danışmanı"))
+
+    def yasak(aileler, baslik):
+        return any(re.search(k, baslik) for k in eleme_kaliplari(aileler, "mid"))
+    sina("müşteri hizmetleri adayına 'Customer Support Specialist' yasak değil", False,
+         yasak({"musteri_hizmetleri": {}}, "Customer Support Specialist"))
+    sina("mühendise 'Customer Support Specialist' hâlâ yasak", True,
+         yasak({"backend": {}}, "Customer Support Specialist"))
+
+    tek = {"Customer Service", "CRM"}
+    sina("'Customer Service' + 'CRM' tek başına aileyi açmaz (bankacı, otelci)", False,
+         "musteri_hizmetleri" in rol_aileleri_turet(tek, tek, set()))
+    sina("çağrı merkezi becerisi açar", True,
+         "musteri_hizmetleri" in rol_aileleri_turet(tek | {"Call Centre"}, tek | {"Call Centre"}, set()))
+
+
 def main() -> int:
     for fn in [v for k, v in sorted(globals().items()) if k.startswith("t") and callable(v)
                and k[1].isdigit()]:

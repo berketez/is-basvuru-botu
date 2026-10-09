@@ -398,13 +398,13 @@ satis:
   # tetik listesi kategorinin KALAN TÜM kalemlerini kapsar. Önceki hâlinde
   # yalnız ilk birkaç kalem vardı ve kategorinin yarısı hiçbir tetikte yoktu;
   # o kalemlerle gelen aday (ör. diş hekimi, veteriner, ebe) aileyi HİÇ açamıyordu.
-  tetik: ["Sales Target Management", "Tender Management", "Merchandising", "Visual Merchandising", "Cashier Operations", "Customer Service", "Call Centre", "After Sales Service", "Dealer Network Management", "Loss Prevention", "E-commerce Operations"]
+  tetik: ["Sales Target Management", "Tender Management", "Merchandising", "Visual Merchandising", "Cashier Operations", "Customer Service", "After Sales Service", "Dealer Network Management", "Loss Prevention", "E-commerce Operations"]
   tetik_min: 2
   agirlik: 1.0
   tr_pozisyonlar: ["satış temsilcisi", "satış müdürü", "mağaza müdürü", "müşteri temsilcisi",
                    "satış elemanı", "mağaza satış elemanı"]
   en_pozisyonlar: ["sales representative", "account manager"]
-  basliklar: ["(?i)(\\b(?:sales (representative|manager|executive|associate)|account (manager|executive)|retail (manager|associate)|store manager|business development)\\w*|\\b(?:satış (temsilci|uzman|müdür|danışman|sorumlu|eleman|personel|yönetic|mühendis|asistan|destek|sonrası|şef|operasyon)|mağaza (müdür|sorumlu|yönetic|satış|eleman|personel)|aktif satış|bölge satış|müşteri temsilci|müşteri danışman|kasiyer|bölge müdür|saha satış|reyon|market (görevli|eleman|personel)|şarküteri|tıbbi (satış|tanıtım)|mümessil|ürün tanıtım|tanıtım (eleman|personel)|e.?ticaret (uzman|sorumlu|yönetic))\\w*)"]
+  basliklar: ["(?i)(\\b(?:sales (representative|manager|executive|associate)|account (manager|executive)|retail (manager|associate)|store manager|business development)\\w*|\\b(?:satış (temsilci|uzman|müdür|danışman|sorumlu|eleman|personel|yönetic|mühendis|asistan|destek|sonrası|şef|operasyon)|servis danışman|mağaza (müdür|sorumlu|yönetic|satış|eleman|personel)|aktif satış|bölge satış|müşteri temsilci|müşteri danışman|kasiyer|bölge müdür|saha satış|reyon|market (görevli|eleman|personel)|şarküteri|tıbbi (satış|tanıtım)|mümessil|ürün tanıtım|tanıtım (eleman|personel)|e.?ticaret (uzman|sorumlu|yönetic))\\w*)"]
 
 pazarlama:
   tetik_guclu: ["Digital Marketing", "Social Media Management", "Content Marketing", "Search Engine Marketing"]
@@ -533,3 +533,25 @@ uretim_operator:
                    "kaynak ustası", "montaj elemanı", "paketleme elemanı", "cnc torna operatörü"]
   en_pozisyonlar: ["production operator", "cnc machinist"]
   basliklar: ["(?i)(\\b(?:production (operator|worker|associate|technician)|machine operator|line operator|press operator|cnc (operator|machinist|programmer)|machinist|welder|welding operator|assembler|assembly (operator|worker|technician)|packer|packaging operator)\\w*|\\b(?:üretim (eleman|operatör|işçi|personel|teknisyen|destek|formen)|(cnc( işleme merkezi)?|torna|freze|pres|abkant|lazer( kesim)?|plazma|(plastik )?enjeksiyon|ambalaj( makine\\w*)?|paketleme( makine\\w*)?|dolum( makine\\w*)?|makine|montaj|kaynak|gazaltı( kaynak)?|geri dönüşüm makine\\w*|tezgah|dikiş( makine\\w*)?|kalıp) (operatör|eleman|usta|işçi|personel|teknisyen)|cnc|kaynakçı|(argon|gazaltı|tig|mig) kaynak|torna( freze)? usta|talaşlı imalat|usta ?başı|fabrika işçi)\\w*)"]
+
+# --- müşteri hizmetleri / çağrı merkezi -----------------------------------------
+# NEDEN EKLENDİ: müşteri hizmetleri temsilcisi (184 il), çağrı merkezi elemanı (175),
+# müşteri hizmetleri yetkilisi (138) hiçbir aileye girmiyordu. Beceriler ("Call Centre",
+# "Customer Service") satis ailesindeydi; çağrı merkezi CV'si satis'e düşüp "satış
+# müdürü", "mağaza müdürü" diye aranıyordu. "Call Centre" satis tetiğinden çıkarıldı.
+# İngilizce "customer support", "support agent", "help desk" başlıkları sabit eleme
+# listesinde HERKES için yasaktı; bu aileye muafiyet verildi (cv_import.ELEME_KALIPLARI).
+# "customer success" BİLEREK yok: ölçüldü, çağrı merkezi CV'sinin ilk 15'ine 8 "Customer
+# Success Manager/Leader/Architect" giriyordu. O iş SaaS hesap yönetimi, satis'e yakın.
+musteri_hizmetleri:
+  tetik_guclu: ["Call Centre", "complaint handling"]
+  tetik: ["Customer Service", "CRM", "After Sales Service", "Cashier Operations",
+          "E-commerce Operations"]
+  # 3: "Customer Service" + "CRM" bankacı, otelci, satışçı CV'sinde de birlikte geçer.
+  tetik_min: 3
+  agirlik: 1.0
+  # Hepsi site haritasında kanonik yol (2026-10-09).
+  tr_pozisyonlar: ["çağrı merkezi müşteri temsilcisi", "müşteri hizmetleri temsilcisi",
+                   "çağrı merkezi elemanı", "müşteri hizmetleri yetkilisi", "müşteri hizmetleri uzmanı"]
+  en_pozisyonlar: ["customer service representative", "customer support specialist"]
+  basliklar: ["(?i)(\\b(?:customer (service|support|care|experience|relations)|call cent(er|re)|contact cent(er|re)|support (agent|specialist|representative|associate|advisor)|help ?desk|live chat)\\w*|\\b(?:müşteri (hizmet|ilişki|deneyim|destek|şikayet|iletişim)|çağrı merkez|canlı destek)\\w*)"]
