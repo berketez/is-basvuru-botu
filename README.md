@@ -325,7 +325,10 @@ atlatılmaz; ona takılmayacak kadar **az istek** atılır:
   birincinin sayfalarını yeniden kullanır. İlan metinleri veritabanına da yazılır —
   eskiden yazılmıyordu ve her tarama aynı ilanın metnini panodan yeniden istiyordu.
 - **İstek bütçesi.** kariyer.net'e saatte en çok **24** istek (kayan pencere, diskte,
-  süreçler arası). Bilinen en düşük engel eşiğinin altında. 8'i ilan metinlerine ayrılır.
+  süreçler arası); bilinen en düşük engel eşiğinin altında. Tek tarama bunun en çok
+  **16**'sını kullanır, 6'sı ilan metinlerine ayrılır. Ölçüldü (12 Eki 2026, canlı): ilk CV
+  24 isteğin tamamını kullanınca 6 dk sonraki ikinci CV'nin kendine özgü sorguları
+  ("havacılık", "aviyonik mühendisi") hiç çekilemedi; artık aynı saatte ona pay kalır.
 - **Tek sıra.** Panoya giden istekler kilitli tek sıradan geçer; aralık en az **8 sn**.
   Eskiden her sorgu ayrı iş parçacığında koşuyordu ve sayaç kilitsizdi: aynı anda birden
   çok istek gidebiliyordu.
@@ -392,6 +395,9 @@ dilini güçlü beceri yapıyordu.
 - **Ortak alan işaretleri:** yazılım geliştirme rolü ("Yazılım Mimarı", "AI Engineer")
   yazılım ailesi olmayan adaya, e-ticaret rolü satış/pazarlama/lojistik dışındakine
   gösterilmez. "Yazılım Satış Temsilcisi" satıştır, işaret sayılmaz.
+- **Başlıktaki uzmanlık adayda yoksa** ilan geri itilir (×0,7) ve kartta yazar: "CAD / CAM
+  Mühendisi" yalnız CAD tutuyordu, işin özü CAM (CNC takım yolu); canlı ölçümde bir yapay
+  zekâ mühendisinin listesinde 5 tane ~50 puanla duruyordu.
 - **Metinsiz ilan:** liste sayfasından gelen ve metni henüz alınmamış Türk pano ilanında
   yetenek başlıktan aranmaz (çift sayım ve alanlar arası haksızlıktı: "Gömülü Yazılım
   Mühendisi" başlığı gömülü yeteneğini tutuyor, "Yapay Zeka Mühendisi" hiçbir şey

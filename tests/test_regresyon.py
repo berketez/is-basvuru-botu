@@ -1546,6 +1546,60 @@ def t67_yoneticinin_asistani_yonetici_degil():
          tahmin("Kim - Director of Engineering\nExperience\nAcme  Jan 2015 - Present\n").kidem)
 
 
+# ---------------------------------------------------------------- 68
+# HATA (canlı ölçüm, 2026-10-12): ilk CV'nin taraması saatlik 24 isteğin tamamını kullandı;
+# 6 dk sonraki ikinci CV'nin kendine özgü sorguları hiç çekilemedi. Tek tarama saatlik
+# bütçenin bir kısmını kullanır, aynı saatteki ikinci taramaya pay kalır.
+def t68_tarama_basina_butce():
+    import requests
+    tp, Sahte, istekler, get, bitir = _sahte_pano_ortami(butce=6)
+    Sahte.kosu_butcesi = 4
+    gercek = requests.Session.get
+    requests.Session.get = get
+    try:
+        k1 = Sahte()
+        k1.cek_coklu(["x", "y"])
+        sina("68a. ilk tarama kendi payı kadar istek atar (robots dahil)", 4, len(istekler))
+        sina("68b. sebebi 'bu tarama için' diye yazılır", True, "bu tarama için" in k1.uyari)
+        k2 = Sahte()
+        k2.cek_coklu(["z"])
+        sina("68c. ikinci taramaya saatlik bütçenin kalanı kalır", 6, len(istekler))
+    finally:
+        requests.Session.get = gercek
+        bitir()
+
+
+# ---------------------------------------------------------------- 69
+# HATA (canlı ölçüm): fizik/yapay zekâ mühendisine 5 "CAD / CAM Mühendisi" ilanı ~50 puanla
+# geldi (yalnız "CAD" tutuyordu; işin özü CAM = CNC programlama). "Gömülü Yazılım Tasarım
+# Mühendisi" "tasarım mühendisi" kalıbıyla makine ailesine düşüp eski alanın düşük
+# ağırlığını deliyordu. "Hesaplamalı Akışkanlar Dinamiği" CFD sayılmıyordu.
+def t69_baslik_uzmanligi_ve_tasarim():
+    import re
+    import yaml as _y
+    from isbot.cv_import import yetenek_tespit
+    from isbot.scoring import puanla
+    from isbot.yollar import kaynak_dosya
+    pr = _profil(["makine_tasarim"], guclu={"CAD": 1.0, "Python": 1.0})
+    metin = "CAD ve CAM yazılımlarıyla CNC takım yolu hazırlanacaktır. SolidWorks bilen. " * 8
+    p1 = puanla(ilan(title="CAD / CAM Mühendisi", locations=["Ankara, Türkiye"],
+                     description=metin), pr)
+    p2 = puanla(ilan(title="CAD Mühendisi", locations=["Ankara, Türkiye"], description=metin), pr)
+    sina("69a. başlıktaki uzmanlık (CAM) adayda yoksa geri itilir", True,
+         not p1.elendi and p1.toplam < p2.toplam * 0.75)
+    sina("69b. kullanıcıya söylenir", True,
+         any("CAM Programming" in u for u in p1.uyarilar))
+    roller = _y.safe_load(kaynak_dosya("isbot", "data", "roller.yaml").read_text(encoding="utf-8"))
+    mt = [re.compile(b) for b in roller["makine_tasarim"]["basliklar"]]
+    for baslik, beklenen in [("Gömülü Yazılım Tasarım Mühendisi", False),
+                             ("Software Design Engineer", False),
+                             ("Elektronik Tasarım Mühendisi", False),
+                             ("Mekanik Tasarım Mühendisi", True), ("Design Engineer", True)]:
+        sina(f"69c. makine ailesi: {baslik}", beklenen, any(k.search(baslik) for k in mt))
+    g, _ = yetenek_tespit("Fizik ve Mühendislik: Hesaplamalı Akışkanlar Dinamiği (Navier-Stokes)\n" * 3)
+    sina("69d. Türkçe CFD tanınır", True, "CFD" in g)
+
+
 def main() -> int:
     for fn in [v for k, v in sorted(globals().items()) if k.startswith("t") and callable(v)
                and k[1].isdigit()]:

@@ -91,7 +91,8 @@ altyapi:
 bilimsel:
   # ANSYS BİLEREK YOK: hem CFD hem FEA için kullanılıyor, tek başına akışkan
   # dinamiği kanıtı değil. Ayrı kalem olarak "simulation tools" altında.
-  CFD: [cfd, "computational fluid dynamics", openfoam, fluent, "star-ccm"]
+  CFD: [cfd, "computational fluid dynamics", openfoam, fluent, "star-ccm",
+        "hesaplamalı akışkanlar dinamiği", "hesaplamalı akışkanlar"]
   "Navier-Stokes": ["navier-stokes", "navier stokes"]
   LES: [les, "large eddy", dns, rans, turbulence]
   "spectral method": ["spectral method", "pseudo-spectral", pseudospectral, fft]
@@ -473,6 +474,12 @@ uretim_kalite:
   "Metrology and Calibration": ["kalibrasyon", "ölçüm belirsizliği", "kalibrasyon takibi", "metroloji", "kalibrasyon sertifikası"]
   "Dimensional Inspection": ["dimensional inspection", "boyutsal kontrol", "kumpas", "mikrometre", "koordinat ölçüm", "cmm ölçümü"]
   "Non-Destructive Testing": ["non-destructive testing", "tahribatsız muayene", "ultrasonik muayene", "penetrant muayene", "radyografik muayene"]
+  # CAM ayrı kalem: "CAD / CAM Mühendisi" ilanı CNC takım yolu programlamadır. Sözlükte
+  # yokken bu ilanlar yalnız "CAD" eşleşmesiyle CAD kullanan herkese (fizik mühendisi,
+  # havacılık yeni mezunu) yüksek puanla gidiyordu (ölçüldü 2026-10-12).
+  "CAM Programming": ["cad/cam", "cad / cam", "cad-cam", "cam programlama", "cam programcı",
+                      "cam yazılım", "mastercam", "powermill", "hypermill", "nx cam",
+                      "takım yolu", "toolpath"]
   "CNC Machining": ["cnc torna", "cnc freze", "cnc tezgah", "cnc programlama", "talaşlı imalat", "cnc torna", "cnc freze", "cnc tezgah", "cnc operatörü", "cnc programlama", "talaşlı imalat", "cnc işleme"]
   Machining: ["machining", "torna", "freze", "taşlama", "tornacı", "tezgah operatörü", "işleme merkezi"]
   Welding: ["kaynakçı", "tig kaynak", "mig kaynak", "argon kaynak", "gazaltı kaynak", "welding", "welder", "kaynakçı", "kaynak operatörü", "gazaltı kaynağı", "argon kaynağı", "tig kaynak", "mig kaynak", "punta kaynak"]

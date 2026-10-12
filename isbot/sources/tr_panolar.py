@@ -111,6 +111,8 @@ class TrPano(Kaynak):
     # sayılmaz. Pano sınıfı kendi değerini koyar (bkz. KariyerNet).
     saatlik_butce = 60
     BUTCE_PENCERE_SN = 3600
+    # Tek taramanın kullanabileceği en çok istek. None = saatlik bütçenin tamamı.
+    kosu_butcesi: int | None = None
 
     def __init__(self) -> None:
         super().__init__()
@@ -202,12 +204,21 @@ class TrPano(Kaynak):
         onbellek.istek_kaydet(self.ad)
         self.sayac["ag"] += 1
 
+    def _butce_mesaji(self) -> str:
+        if self.kosu_butcesi and self.sayac["ag"] >= self.kosu_butcesi:
+            return (f"{self.ad}: bu tarama için istek sınırı ({self.kosu_butcesi}) doldu — "
+                    "bot korumasına takılmamak için")
+        return (f"{self.ad}: saatlik istek sınırı ({self.saatlik_butce}) doldu — bot "
+                "korumasına takılmamak için; kalan sayfalar bir saat içinde açılır")
+
     def _taze_mi(self, url: str, omur_sn: float = LISTE_OMRU_SN) -> bool:
         kayit = onbellek.oku(url)
         return bool(kayit) and time.time() - kayit[0] < omur_sn
 
     def butce_kalan(self) -> int:
-        return max(0, self.saatlik_butce - onbellek.istek_sayisi(self.ad, self.BUTCE_PENCERE_SN))
+        saatlik = self.saatlik_butce - onbellek.istek_sayisi(self.ad, self.BUTCE_PENCERE_SN)
+        kosu = (self.kosu_butcesi - self.sayac["ag"]) if self.kosu_butcesi else saatlik
+        return max(0, min(saatlik, kosu))
 
     def _sayfa(self, url: str, omur_sn: float = LISTE_OMRU_SN) -> str:
         """Tek sayfa: önce önbellek, sonra robots.txt + bütçe + kilitli hız sınırı +
@@ -239,15 +250,13 @@ class TrPano(Kaynak):
         if not self._izinli(url):
             raise KaynakHatasi(f"robots.txt izin vermiyor: {url}")
         if self.butce_kalan() <= 0:
-            return bayat_ya_da(ButceDoldu(
-                f"{self.ad}: saatlik istek sınırı ({self.saatlik_butce}) doldu"))
+            return bayat_ya_da(ButceDoldu(self._butce_mesaji()))
         with onbellek.pano_kilidi(self.ad):
             # Kilidi beklerken başka iş parçacığı engel yemiş ya da bütçeyi bitirmiş olabilir.
             if self._engelli_mi() > 0:
                 return bayat_ya_da(PanoEngeli(f"{self.ad}: pano engel verdi"))
             if self.butce_kalan() <= 0:
-                return bayat_ya_da(ButceDoldu(
-                    f"{self.ad}: saatlik istek sınırı ({self.saatlik_butce}) doldu"))
+                return bayat_ya_da(ButceDoldu(self._butce_mesaji()))
             self._bekle()
             r = self.s.get(url, timeout=30, allow_redirects=True)
             self._istek_bitti()
@@ -382,6 +391,12 @@ class KariyerNet(TrPano):
     # tarama (6 sorgu × ülke geneli + sektör sayfası + 8-10 ilan metni) buna sığar;
     # aynı saat içindeki ikinci tarama çoğunlukla önbellekten beslenir.
     saatlik_butce = 24
+    # Tek tarama saatlik bütçenin en çok 16'sını kullanır. ÖLÇÜLDÜ (2026-10-12, canlı):
+    # ilk CV'nin taraması 24 isteğin tamamını kullandı; 6 dakika sonraki ikinci CV'nin
+    # kendine özgü sorguları ("havacılık", "aviyonik mühendisi") hiç çekilemedi ve listesi
+    # yalnız birincinin sayfalarından oluştu. Kalan 8 istek, ikinci taramanın önbellekte
+    # olmayan sorgularına yeter.
+    kosu_butcesi = 16
     KART = re.compile(r'<a[^>]+href="(/is-ilani/[^"]+)"[^>]*>(.*?)</a>', re.S)
 
     # ÖNEMLİ BULGU: "/is-ilanlari/bilgi-teknolojileri" kategori filtresi DEĞİL —

@@ -150,7 +150,10 @@ makine_tasarim:
   agirlik: 1.0
   tr_pozisyonlar: ["makine mühendisi", "tasarım mühendisi", "üretim mühendisi"]
   en_pozisyonlar: ["mechanical engineer", "design engineer"]
-  basliklar: ['(?i)(?:\b(mechanical|manufacturing|design engineer|cad|process engineer|industrial engineer)\b)|\b(?:makine mühendis|tasarım mühendis|üretim mühendis|imalat mühendis|kalıp tasarım|mekanik tasarım|teknik ressam)\w*']
+  # "tasarım mühendisi"/"design engineer" yazılım ve elektronikte de kullanılır. ÖLÇÜLDÜ
+  # (2026-10-12): "Gömülü Yazılım Tasarım Mühendisi" bu aileye düştü; makine ailesi
+  # gömülüden ağır olduğu için eski alanın düşük ağırlığı delindi.
+  basliklar: ['(?i)(?:\b(mechanical|manufacturing|(?<!software )(?<!hardware )(?<!chip )(?<!circuit )(?<!asic )(?<!fpga )design engineer|cad|process engineer|industrial engineer)\b)|\b(?:makine mühendis|(?<!yazılım )(?<!elektronik )(?<!donanım )(?<!devre )(?<!kart )tasarım mühendis|üretim mühendis|imalat mühendis|kalıp tasarım|mekanik tasarım|teknik ressam)\w*']
 
 # --- kontrol / otomasyon / mekatronik ------------------------------------------
 # NEDEN EKLENDİ: 16 ailenin tamamı yazılım-veri eksenindeydi. Kontrol mühendisi
@@ -532,7 +535,8 @@ uretim_operator:
   tetik_guclu: ["machine operation", "CNC Machining", "Welding", "conventional machining",
                 "Injection Molding", "packaging operations"]
   tetik: ["Machining", "Assembly Line", "Sheet Metal Fabrication", "Metal Casting",
-          "technical drawing", "Quality Control", "Dimensional Inspection", "Forklift Operation"]
+          "technical drawing", "Quality Control", "Dimensional Inspection", "Forklift Operation",
+          "CAM Programming"]
   tetik_min: 2
   agirlik: 1.0
   # Hepsi site haritasında kanonik yol (2026-10-09). Genelden özele; sorgu kotası 6.

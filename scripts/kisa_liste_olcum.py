@@ -47,7 +47,9 @@ def _t(s):
 
 def tr_ilanlar(db_yolu: str) -> list:
     from isbot.models import Job
-    db = sqlite3.connect(db_yolu)
+    # Salt-okur ve bekleyerek: açık uygulama tarama sırasında aynı dosyaya yazıyor olabilir
+    # ("database is locked" ile ölçüm yarıda kalıyordu).
+    db = sqlite3.connect(f"file:{db_yolu}?mode=ro", uri=True, timeout=120)
     db.row_factory = sqlite3.Row
     cikti = []
     for r in db.execute("SELECT * FROM jobs WHERE source IN ('kariyernet','elemannet')"):

@@ -28,7 +28,7 @@ IS_PARCACIGI = 6
 TR_HAVUZ_SAAT = 72
 # İlan metinleri (ikinci aşama) için pano bütçesinden ayrılan istek. Liste sayfaları
 # bütçeyi bitirirse kısa listedeki ilanların hiçbirinin metni alınamıyordu.
-TR_DETAY_AYRILAN = 8
+TR_DETAY_AYRILAN = 6
 
 # Taramada çekilen kaynak İLERLEME satırında şirket adıyla değil, kaynak türüyle yazılır.
 # Kullanıcı "Spotify" görüp "bunun benimle ne ilgisi var" dedi (2026-10-11): yabancı

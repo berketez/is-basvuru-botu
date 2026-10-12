@@ -762,6 +762,24 @@ METIN_ESIGI = 400
 
 
 @lru_cache(maxsize=1)
+def _tum_yetenekler() -> tuple[str, ...]:
+    try:
+        import yaml as _yaml
+        from .yollar import kaynak_dosya
+        sozluk = _yaml.safe_load(
+            kaynak_dosya("isbot", "data", "skills.yaml").read_text(encoding="utf-8")) or {}
+    except Exception:
+        return ()
+    return tuple(k for kalemler in sozluk.values() for k in (kalemler or {}))
+
+
+@lru_cache(maxsize=20000)
+def _baslik_uzmanliklari(baslik: str) -> frozenset[str]:
+    """İlan başlığında ADIYLA geçen sözlük becerileri."""
+    return frozenset(ad for ad in _tum_yetenekler() if _yetenek_ara(baslik, ad))
+
+
+@lru_cache(maxsize=1)
 def _aile_isaretleri() -> dict[str, tuple[str, ...]]:
     """Rol ailesi -> o mesleğin işaret becerileri (roller.yaml tetikleri)."""
     try:
@@ -964,6 +982,18 @@ def puanla(job: Job, profil: dict, idf: dict[str, float] | None = None) -> Puan:
             p.eleme_sebebi = (f"başlık '{en_iyi_ad}' kalıbına uyuyor ama ilan metninde o "
                               "mesleğin de senin yeteneklerinin de hiçbiri geçmiyor")
             return p
+
+    # BAŞLIKTAKİ UZMANLIK ADAYDA YOK: başlık sözlükteki bir beceriyi adıyla söylüyor
+    # ("CAD / CAM Mühendisi", "SAP ABAP Uzmanı", "PLC Programcısı") ve aday o beceriyi hiç
+    # taşımıyor. ÖLÇÜLDÜ (2026-10-12): fizik/yapay zekâ mühendisinin kısa listesinde 5
+    # "CAD / CAM Mühendisi" ilanı ~50 puanla duruyordu — yalnız "CAD" tutuyordu, işin özü
+    # CNC takım yolu programlama (CAM). Elemez, geri iter ve söyler.
+    eksik_uzmanlik = _baslik_uzmanliklari(job.title) - set(yet.get("guclu") or {}) \
+        - set(yet.get("zayif") or {})
+    if eksik_uzmanlik:
+        p.toplam = round(p.toplam * (0.7 if len(eksik_uzmanlik) == 1 else 0.5), 1)
+        p.uyarilar.append("ilan başlığındaki uzmanlık CV'nde yok: "
+                          + ", ".join(sorted(eksik_uzmanlik)[:3]))
 
     # ---------- 5) UYARILAR (elemez, bilgilendirir) ----------
     if p.eksik_yetenekler:
