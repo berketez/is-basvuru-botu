@@ -23,6 +23,23 @@ from .store import Depo
 
 # Eşzamanlı istek sayısı — nazik kalmak için düşük.
 IS_PARCACIGI = 6
+# Bu kadar saat içinde görülmüş Türk pano ilanları her taramanın havuzuna girer
+# (bkz. Depo.son_pano_ilanlari). Kısa tutulur: ilan bu arada kapanmış olabilir.
+TR_HAVUZ_SAAT = 72
+# İlan metinleri (ikinci aşama) için pano bütçesinden ayrılan istek. Liste sayfaları
+# bütçeyi bitirirse kısa listedeki ilanların hiçbirinin metni alınamıyordu.
+TR_DETAY_AYRILAN = 8
+
+# Taramada çekilen kaynak İLERLEME satırında şirket adıyla değil, kaynak türüyle yazılır.
+# Kullanıcı "Spotify" görüp "bunun benimle ne ilgisi var" dedi (2026-10-11): yabancı
+# şirketlerin herkese açık ilan uçları her taramada okunur, ama bu bir ARAMA değildir —
+# sonuçlar CV'ye göre süzülür. Şirket adı bunu yanlış anlatıyordu.
+KAYNAK_ETIKETI = {"greenhouse": "yabancı şirket ilanları (Greenhouse)",
+                  "lever": "yabancı şirket ilanları (Lever)",
+                  "ashby": "yabancı şirket ilanları (Ashby)",
+                  "workable": "şirket ilanları (Workable)",
+                  "smartrecruiters": "şirket ilanları (SmartRecruiters)",
+                  "kariyernet": "kariyer.net", "elemannet": "eleman.net"}
 
 
 @dataclass
@@ -49,6 +66,8 @@ class Sonuc:
 
 @dataclass
 class TaramaRaporu:
+    # Türk panolarının bu taramadaki durumu (bkz. _pano_durumu); panel kullanıcıya yazar.
+    pano_durumu: dict = field(default_factory=dict)
     sonuclar: list[Sonuc] = field(default_factory=list)
     cekilen: int = 0
     elenen: int = 0
@@ -146,6 +165,29 @@ def tekilleştir(ilanlar: list[Job]) -> list[Job]:
     return list(en_iyi.values())
 
 
+def _pano_durumu(nesneler: dict, ham: list[Job], onceki: list[Job]) -> dict:
+    """Pano başına: kaç istek ağa çıktı, kaç sayfa önbellekten geldi, engel/bütçe var mı.
+    Kullanıcı "kariyer.net'e bakılamadı" durumunu sebebiyle görmeli; eskiden panel
+    "geçici hız sınırı, tekrar taramayı dene" diyordu — engel varken tekrar denemek engeli
+    uzatır."""
+    cikti: dict = {}
+    for ad, K in TR_KAYNAKLARI.items():
+        k = nesneler.get(ad)
+        sayac = getattr(k, "sayac", {}) if k else {}
+        kalan_engel = k._engelli_mi() if k else K()._engelli_mi()
+        cikti[ad] = {
+            "ag_istek": sayac.get("ag", 0),
+            "onbellekten": sayac.get("onbellek", 0),
+            "bayat": sayac.get("bayat", 0),
+            "ilan": sum(1 for j in ham if j.source == ad and not j.raw.get("son_gorulme")),
+            "onceki_taramadan": sum(1 for j in onceki if j.source == ad),
+            "engel_kalan_saat": round(kalan_engel / 3600, 1),
+            "butce": getattr(K, "saatlik_butce", None),
+            "uyari": getattr(k, "uyari", "") if k else "",
+        }
+    return cikti
+
+
 def yukle(yol: str) -> dict:
     with open(yol, encoding="utf-8") as f:
         return yaml.safe_load(f) or {}
@@ -220,29 +262,42 @@ def tara(
     # kategori yollarında HİÇ geçmiyor ve kendi kariyer siteleri bot korumalı.
     # Firma profili sayfası o şirketin tüm açık ilanlarını veren tek açık kanal.
     hedef_sirketler = profil.get("tr_hedef_sirketler") or []
+    # TÜRK PANOLARI pano başına TEK iş olarak çekilir: sorguların sayfaları öncelik
+    # sırasıyla (her sorgunun ilk sayfası önce) ve tek istek sırasından geçer. Eskiden her
+    # sorgu ayrı iş parçacığındaydı; panoya aynı anda birden çok istek gidebiliyordu ve
+    # istek bütçesi ilk sorgulara harcanıyordu (bkz. TrPano.cek_coklu).
+    tr_isleri = [f"{sorgu}@{sehir}" if sehir else sorgu
+                 for sorgu in tr_sorgular for sehir in sehirler]
+    tr_isleri += [f"firma:{sirket}" for sirket in hedef_sirketler]
     for kaynak_adi in TR_KAYNAKLARI:
-        if kaynak_adi == "elemannet":            # eleman.net sorgu almıyor, tek akış
-            isler.append((kaynak_adi, "", ""))
-            continue
-        for sorgu in tr_sorgular:
-            for sehir in sehirler:
-                isler.append((kaynak_adi, f"{sorgu}@{sehir}" if sehir else sorgu, ""))
-        for sirket in hedef_sirketler:
-            isler.append((kaynak_adi, f"firma:{sirket}", sirket))
+        isler.append((kaynak_adi, "\n".join(tr_isleri), ""))
 
     ham: list[Job] = []
+    tr_nesne: dict[str, object] = {}             # pano adı -> o panoyu çeken nesne
 
     def cek_tek(is_: tuple[str, str, str]) -> tuple[str, str, str, list[Job], str | None]:
         kaynak_adi, anahtar, ad = is_
         try:
+            if kaynak_adi in TR_KAYNAKLARI:
+                k = tr_nesne[kaynak_adi] = TR_KAYNAKLARI[kaynak_adi]()
+                etiket = KAYNAK_ETIKETI.get(kaynak_adi, kaynak_adi)
+                ilerle = (lambda n: ilerleme(etiket, n)) if ilerleme else None
+                return (kaynak_adi, "", etiket,
+                        k.cek_coklu(anahtar.split("\n"), ilerle=ilerle,
+                                    ayrilan=TR_DETAY_AYRILAN), "-")
             K = (KAYNAKLAR.get(kaynak_adi) or SORGU_KAYNAKLARI.get(kaynak_adi)
-                 or AKIS_KAYNAKLARI.get(kaynak_adi) or TR_KAYNAKLARI[kaynak_adi])
+                 or AKIS_KAYNAKLARI.get(kaynak_adi))
             return (kaynak_adi, anahtar, ad or anahtar, K().cek(anahtar, ad), None)
         except Exception as e:
             return (kaynak_adi, anahtar, ad or anahtar, [], f"{type(e).__name__}: {str(e)[:60]}")
 
+    from .sources import pano_onbellek
+    pano_onbellek.temizle()
     with cf.ThreadPoolExecutor(max_workers=IS_PARCACIGI) as havuz_ip:
         for kaynak_adi, anahtar, ad, ilanlar, hata in havuz_ip.map(cek_tek, isler):
+            if hata == "-":                      # Türk panosu: ilerleme sayfa başına yazıldı
+                ham += ilanlar
+                continue
             if hata:
                 rapor.hatalar.append(f"{kaynak_adi}/{ad}: {hata}")
                 continue
@@ -254,7 +309,15 @@ def tara(
                 tokenlar.append(anahtar)
             ham += ilanlar
             if ilerleme:
-                ilerleme(f"{ad or kaynak_adi}", len(ilanlar))
+                ilerleme(KAYNAK_ETIKETI.get(kaynak_adi, ad or kaynak_adi), len(ilanlar))
+
+    # ÖNCEKİ TARAMALARIN TÜRK PANO İLANLARI. Bu taramada gelmeyen, son TR_HAVUZ_SAAT
+    # içinde görülmüş ilanlar havuza katılır: engel ya da bütçe yüzünden pano bugün az
+    # sayfa verdiyse, ya da başka bir CV'nin sorgusu o ilanı daha önce getirdiyse.
+    gelen = {j.uid for j in ham}
+    onceki = depo.son_pano_ilanlari(list(TR_KAYNAKLARI), TR_HAVUZ_SAAT, gelen)
+    ham += onceki
+    rapor.pano_durumu = _pano_durumu(tr_nesne, ham, onceki)
 
     rapor.cekilen = len(ham)
     _asama("tekrarlar ayıklanıyor")
@@ -269,7 +332,11 @@ def tara(
         ayni_baslik[j.title_key] = ayni_baslik.get(j.title_key, 0) + 1
 
     for job in havuz:
-        gecmis = depo.kaydet(job, run_id)
+        # Önceki taramadan havuza alınan ilan bu taramada GÖRÜLMEDİ: kaydedilirse son
+        # görülme tarihi her taramada yenilenir ve kapanmış ilan sonsuza dek havuzda kalır.
+        gecmis = ({"yeni": False, "sahte_tazeleme": False, "gorulme_sayisi": 1,
+                   "ilk_gorulme": job.raw["son_gorulme"]}
+                  if job.raw.get("son_gorulme") else depo.kaydet(job, run_id))
         p = puanla(job, profil, idf)
         if p.elendi:
             rapor.elenen += 1
@@ -298,7 +365,7 @@ def tara(
             kume = [s_.job for s_ in tr_adaylar if s_.job.source == kaynak_adi]
             if not kume:
                 continue
-            kaynak = K()
+            kaynak = tr_nesne.get(kaynak_adi) or K()
             try:
                 n = kaynak.detaylari_cek(kume, ust_sinir=tr_detay_siniri)
                 rapor.tr_detay_cekilen += n
@@ -306,6 +373,12 @@ def tara(
                     rapor.hatalar.append(f"{kaynak_adi} detay: {h}")
             except Exception as e:
                 rapor.hatalar.append(f"{kaynak_adi} detay: {type(e).__name__}")
+            for j in kume:
+                if j.raw.get("detay_cekildi"):
+                    depo.detay_yaz(j)
+            tr_nesne.setdefault(kaynak_adi, kaynak)
+        depo.commit()
+        rapor.pano_durumu = _pano_durumu(tr_nesne, ham, onceki)
         # metin geldi -> yeniden puanla
         yeniden: list[Sonuc] = []
         for s_ in rapor.sonuclar:
@@ -358,6 +431,16 @@ def tara(
     rapor.sonuclar.sort(key=lambda s: -s.nihai)
     return rapor
 
+def _saat_once(iso: str | None) -> float | None:
+    if not iso:
+        return None
+    try:
+        d = datetime.fromisoformat(iso)
+    except ValueError:
+        return None
+    return round((datetime.now(timezone.utc) - d).total_seconds() / 3600, 1)
+
+
 def sonuc_sozlugu(s: "Sonuc") -> dict:
     """Bir sonucu arayüzün filtreleyebileceği düz sözlüğe çevirir."""
     from .siniflandir import calisma_sekli, istihdam_turu
@@ -390,6 +473,8 @@ def sonuc_sozlugu(s: "Sonuc") -> dict:
         "uyarilar": p.uyarilar,
         # Gelişmiş aramada dolu; None ise o tarama hızlı modda koşmuştur.
         "uyum": round(p.uyum, 4) if p.uyum is not None else None,
+        # Bu taramada panodan gelmedi, önceki bir taramada görüldü (bkz. son_pano_ilanlari).
+        "onceki_tarama_saat": _saat_once(j.raw.get("son_gorulme")),
         "maas": j.raw.get("salary") or (
             f"{j.raw['salary_min']}-{j.raw['salary_max']} USD"
             if j.raw.get("salary_min") else None),
@@ -413,6 +498,7 @@ def json_yaz(rapor: "TaramaRaporu", yol: str = "out/sonuclar.json") -> str:
         "tekrar_atilan": rapor.tekrar_atilan,
         "eleme_dagilimi": rapor.eleme_dagilimi,
         "hatalar": rapor.hatalar,
+        "pano_durumu": rapor.pano_durumu,
         "uyum_denetlenen": rapor.uyum_denetlenen,
         "ilanlar": [sonuc_sozlugu(s) for s in rapor.sonuclar],
     }

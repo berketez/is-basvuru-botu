@@ -1,0 +1,43 @@
+                                   KAI MORROW
+                            A ST RO NAU T I CA L E N G I N E E R I N G G R A D UAT E
+  Maslak, Istanbul | +90 555 000 0000 | kai.morrow@example.com
+
+P RO F E S S I O NA L S U M M A RY
+
+Astronautical Engineering graduate with a hands-on background in rocket propulsion and liquid-propellant
+feed systems. Experienced in MATLAB/Simulink modeling and technical reporting. Seeking a propulsion
+engineering role.
+
+E D U C AT I O N
+
+Istanbul Technical University                                                               2020 – 2026
+B.Sc. in Astronautical Engineering | GPA: 3.10 / 4.00
+
+WORK & PROJECT EXPERIENCE
+
+Defense Systems Company — Propulsion Engineering Intern                                     2025
+  Investigated cavitation in liquid rocket engine feed systems.
+  Supported propulsion analysis and produced engineering documentation.
+Optics R&D Ltd — R&D / Engineering Intern                                                   2023
+  Designed EMI-protected air duct structures for aerospace applications.
+  Performed mechanical design of optical alignment cubes in CATIA.
+Rocket Technologies Student Team — Aerodynamics Unit Leader                                 2022 – 2025
+  Led aerodynamic analysis and system modeling in MATLAB and Simulink for mid-altitude rockets.
+  Designed control systems and competed in a national rocket competition.
+
+PROJECTS
+
+Heat Pipe Thermal Characterization — Graduation Project
+  Designed and tested a polycarbonate heat pipe; characterized two-phase thermal performance.
+Spacecraft Design Competition — Communications Subsystem
+  Performed link-budget analysis in MATLAB to size the spacecraft RF link.
+
+TECHNICAL SKILLS
+
+Software: MATLAB, Simulink, CATIA, ANSYS
+Core Areas: Rocket Propulsion, Liquid Rocket Feed Systems, Orbital Mechanics, Fluid Mechanics, Control Systems,
+Aerodynamics, Technical Documentation
+
+L A N G UAG E S
+
+English – Fluent | Turkish – Native

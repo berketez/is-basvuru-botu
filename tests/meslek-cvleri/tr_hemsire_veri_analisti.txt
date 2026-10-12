@@ -1,0 +1,22 @@
+Aday — Sağlık Veri Analisti
+Ankara
+
+Eğitim
+Hacettepe Üniversitesi, Hemşirelik Lisans                         2008 Eylül – 2012 Haziran
+
+İş Deneyimi
+
+Devlet Hastanesi                                                  Eylül 2012 – Mart 2019
+Servis Hemşiresi
+   • Dahiliye servisinde hasta bakımı, ilaç uygulaması ve vital bulgu takibi yaptım.
+   • Yoğun bakım ünitesinde hasta bakım planlarını hazırladım.
+
+Özel Sağlık Grubu                                                 Nisan 2019 – Halen
+Sağlık Veri Analisti
+   • SQL ve Python (pandas) ile hasta akış verilerini analiz ediyorum.
+   • Power BI ile yönetim panoları hazırladım; istatistiksel analiz ile yatış sürelerini modelledim.
+   • A/B testleri ve raporlama süreçlerini yürütüyorum.
+
+Teknik Beceriler
+   • SQL, Python, pandas, Power BI      • İstatistiksel analiz, Excel
+   • Hasta bakımı

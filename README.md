@@ -25,12 +25,15 @@ cd is-basvuru-botu
 `calistir.sh` kendi izole ortamını kurar (sistem Python'ına dokunmaz), eksik
 paketleri yükler ve paneli açar. Başka bir şey kurmana gerek yok.
 
-## Neden scraping / bot yok
+## Neden bot koruması atlatılmıyor
 
-Bu araç LinkedIn, Kariyer.net gibi platformlara **otomatik istek atmaz** ve bot
-korumalarını atlatmaya çalışmaz. Sebebi pratik: o platformlarda oturum açmış bir hesapla
-otomasyon yapmak hesabın askıya alınmasıyla sonuçlanır ve iş arayan biri için bu
-kaybedilecek en pahalı şeydir.
+Bu araç LinkedIn'e **hiç** girmez; kariyer.net ve eleman.net'i yalnız herkese açık
+kategori sayfalarından, **az ve yavaş** okur (bkz. "Türk panoları"). Bot korumalarını
+atlatmaya çalışmaz: parmak izi taklidi, CAPTCHA çözme, IP/proxy değiştirme, "fark
+edilmeyen" tarayıcılar **yoktur**. Sebebi pratik: koruma engeli kullanıcının kendi IP'sine
+düşer — iş arayan biri aynı siteye aynı ağdan başvuru da yapar — ve oturum açmış bir
+hesapla otomasyon hesabın askıya alınmasıyla sonuçlanır. İş arayan için kaybedilecek en
+pahalı şeyler bunlardır.
 
 Onun yerine **ön kapıdan** girer:
 
@@ -308,32 +311,91 @@ yalnız haber siteleri ve iş ilanı toplayıcıları çıkıyor.
 ## Türk panoları ve nezaket kuralları
 
 kariyer.net ve eleman.net'ten ilan okunur. Bu panolarda herkese açık API yoktur,
-dolayısıyla HTML okunur — ama yapılan şey **nazik tarama**dır, atlatma değil:
+dolayısıyla HTML okunur — ama yapılan şey **nazik tarama**dır, atlatma değil.
 
-- `robots.txt` her koşumda okunur ve **programatik uygulanır**. kariyer.net'te
-  `/filtre/*`, `/servisler/`, `/ozgecmis/*` yasaktır; o yollara hiç gidilmez.
-- İstek aralığı **4 saniye** ve zaman damgası **diske yazılır**. Süreç-içi sayaç
-  yetmez: ard arda çalışan betikler sayacı sıfırlar, gerçek hız yükselir.
-  (Ölçüldü: geliştirme sırasında bu yüzden 403 yendi.)
-- 403/429 alınırsa o panoya **6 saat dokunulmaz**. Israr engeli uzatır.
-- CAPTCHA çözme, parmak izi sahteciliği, IP değiştirerek engeli dolanma **yoktur**.
-  Engel yendiyse doğru davranış beklemektir; VPN ile devam etmek, sitenin koyduğu
-  sınırı kasten dolanmak olur ve aracı kullanan herkesi riske atar.
+**kariyer.net PerimeterX (HUMAN) bot koruması arkasındadır** (yanıtta `_pxhd` çerezi;
+ölçüldü 12 Eki 2026). Koruma art arda gelen istekleri sayıp IP'yi saatlerce kapatıyor:
+4 sn arayla ~45, 8 sn arayla ~30 istekten sonra 403 geldi. Asıl kayıp şöyle yaşandı: bir
+kullanıcının taraması engeli tetikledi, 20 dakika sonra ikinci bir CV'nin taraması panoya
+**hiç** ulaşamadı ve kısa listesi yalnız alakasız yabancı ilanlardan oluştu. Koruma
+atlatılmaz; ona takılmayacak kadar **az istek** atılır:
+
+- **Önbellek.** Aynı sayfa ikinci kez istenmez: kategori sayfası 12 saat, ilan metni 14
+  gün, `robots.txt` 24 saat geçerli (`data/pano-onbellek.db`). İkinci CV'nin taraması
+  birincinin sayfalarını yeniden kullanır. İlan metinleri veritabanına da yazılır —
+  eskiden yazılmıyordu ve her tarama aynı ilanın metnini panodan yeniden istiyordu.
+- **İstek bütçesi.** kariyer.net'e saatte en çok **24** istek (kayan pencere, diskte,
+  süreçler arası). Bilinen en düşük engel eşiğinin altında. 8'i ilan metinlerine ayrılır.
+- **Tek sıra.** Panoya giden istekler kilitli tek sıradan geçer; aralık en az **8 sn**.
+  Eskiden her sorgu ayrı iş parçacığında koşuyordu ve sayaç kilitsizdi: aynı anda birden
+  çok istek gidebiliyordu.
+- **Öncelik sırası.** Önce her sorgunun ülke geneli sayfası, sonra sektör sayfası, sonra
+  il sayfaları. Bütçe yarıda keserse en değerli sayfalar alınmış olur.
+- **Engel/bütçe varken taramaya devam.** 403/429 alınırsa pano **6 saat** rahat bırakılır
+  (ısrar engeli uzatır). Bu sürede önbellekteki sayfalar ve **son 72 saatte görülmüş**
+  ilanlar kullanılır; kartta "N saat önce görüldü" yazar, panel durumu sebebiyle söyler
+  ("tekrar taramayı dene" demez — engel varken yanlış öneri).
+- `robots.txt` okunur ve **programatik uygulanır**: `/filtre/*`, `?ckw=` (anahtar sözcük
+  araması), `/ozgecmis/*` yasak; o yollara hiç gidilmez.
 
 ### Geliştirirken canlı siteye istek atma
 
-> Bu kural ciddiye alınmalı: 14 Eyl 2026'da ham `curl` denemeleri, botun kendi taraması
-> ve detay çekimi aynı gün üst üste gelince kariyer.net **6 saatlik engel** verdi.
-> Ayrıştırıcı değişiklikleri `ISBOT_ORNEK=oku` ile kayıtlı örnekler üzerinde sınanmalı.
-
-Ayrıştırıcı üzerinde çalışırken kayıtlı sayfa örnekleri kullanılır:
+> 14 Eyl 2026'da ham `curl` denemeleri, botun kendi taraması ve detay çekimi aynı gün üst
+> üste gelince kariyer.net **6 saatlik engel** verdi. Ayrıştırıcı değişiklikleri
+> `ISBOT_ORNEK=oku` ile kayıtlı örnekler üzerinde, istek mekanizması (önbellek, bütçe,
+> engel, sıra) sahte panoyla sınanır (`tests/test_regresyon.py` t60–t64; ağa çıkmaz).
 
 ```bash
 ISBOT_ORNEK=kaydet python -m isbot tara    # çekilen sayfaları tests/ornekler/ altına yaz
 ISBOT_ORNEK=oku    python tests/test_regresyon.py   # ağa hiç çıkmadan ayrıştırıcıyı sına
 ```
 
-Regresyon testi bu modu kullanır ve soketi kapatarak ağa çıkılmadığını doğrular.
+## Eski deneyim, bugünkü alan
+
+CV'deki her beceri geçişi eşit sayılıyordu. Dört yıl önce öğrenci kulübünde yapılan
+gömülü sistem işi, bugün yapılan yapay zekâ işi kadar ağır basıyordu. Ölçüldü (12 Eki
+2026): yapay zekâ mühendisinin kısa listesi gömülü yazılım ilanlarıyla doldu. Kusur
+mesleğe bağlı değildi: gömülüden ML'e geçmiş sentetik CV'de ilk 10'un 6'sı, muhasebeden
+İK'ya geçmiş CV'de 7'si eski meslekten geliyordu; öğretmenlikten satışa geçmiş CV'nin 6
+Türkçe sorgusunun 3'ü öğretmenlikti.
+
+Artık her satır ait olduğu CV girdisinin **bitiş tarihini** taşır:
+
+- **Odak (sert yaşlanma):** bir ailenin kanıtı yalnız ~2,3 yıldan eski girdilerdeyse aile
+  **eski alan** sayılır: açık kalır (kişi o işi yapabilir), ağırlığı düşer ve **tarama
+  sorgusu almaz**. Türkçe sorgular ağırlığa göre dağıtılır (D'Hondt, ağırlık³); en güçlü
+  ailenin %70'inin altındaki yan aile de sorgu almaz.
+- **Beceri varlığı (yumuşak yaşlanma):** eski girdideki geçiş becerinin varlığını az
+  etkiler (en az yarısı sayılır). Aynı mesleği yıllardır sürdüren kişinin eski işindeki
+  becerisi "eskimiş" görünmez.
+- Tarihsiz satırlar (ad/unvan, özet, beceriler) eski davranışla sayılır; eski tarihli
+  girdisi olmayan CV'nin hiçbir değeri değişmez.
+
+CV biçimi tarafında: harf aralıklı başlıklar ("E D U C AT I O N"), niteleyicili deneyim
+başlıkları ("WORK & PROJECT EXPERIENCE"), yıl-önce yazılmış tarihler ("2015 Eylül – 2019
+Haziran") ve araya sözcük alan yarışma takımları ("Rocket Technologies Team") tanınır.
+Ölçülen hata: bu biçimdeki yeni mezun CV'si "6 yıl, senior" okunuyordu; "R&D" satırı R
+dilini güçlü beceri yapıyordu.
+
+## Seviye kapısı ve tesadüfi eşleşme
+
+- **Uygulayıcı seviye ilanı** (operatör, usta, teknisyen, işçi, depo elemanı, şoför,
+  güvenlik görevlisi, temizlik görevlisi) uygulayıcı olmayan adaya gösterilmez;
+  **uygulayıcı adaya da** mühendis/müdür/uzman ilanı gösterilmez (şef/amir gösterilir —
+  deneyimli uygulayıcının bir üst basamağı). Ölçüldü: 63 CV'nin ilk 10'larında teknisyen
+  olmayanlara 15 operatör ilanı vardı ("CNC CAD / CAM Operatörü", "Üretim Personeli -
+  Savunma Sanayii"); şimdi 0. Temizlik görevlisine "Gıda Mühendisi" gelmiyor.
+- **Başlık tesadüfen uymuş:** ilan metni, başlığının uyduğu teknik mesleğin hiçbir
+  işaretini ve adayın hiçbir yeteneğini taşımıyorsa elenir ("Design Engineer (Web &
+  Brand)" makine ailesine düşüyordu). Kural yalnız teknik ailelerde çalışır: satış ve
+  pazarlama ilanlarının %65'i sözlükteki hiçbir işareti taşımıyor ama gerçek.
+- **Ortak alan işaretleri:** yazılım geliştirme rolü ("Yazılım Mimarı", "AI Engineer")
+  yazılım ailesi olmayan adaya, e-ticaret rolü satış/pazarlama/lojistik dışındakine
+  gösterilmez. "Yazılım Satış Temsilcisi" satıştır, işaret sayılmaz.
+- **Metinsiz ilan:** liste sayfasından gelen ve metni henüz alınmamış Türk pano ilanında
+  yetenek başlıktan aranmaz (çift sayım ve alanlar arası haksızlıktı: "Gömülü Yazılım
+  Mühendisi" başlığı gömülü yeteneğini tutuyor, "Yapay Zeka Mühendisi" hiçbir şey
+  tutmuyordu). Kartta "ilan metni henüz alınmadı" yazar.
 
 ## Benchmark
 
@@ -342,17 +404,18 @@ tests/hepsi.sh                       # hepsi: regresyon + benchmark + kesinlik
 python tests/benchmark.py --yenile   # havuzu yeniden çek
 ```
 
-Üç test takımı var:
+Dört test takımı var:
 
 | Takım | Ne ölçer | Ağ |
 |---|---|---|
-| `test_regresyon.py` | Düzeltilen 26 hatanın geri gelmemesi (101 kontrol) | yok |
-| `benchmark.py` | 15 CV'nin ayrıştırılması + eleme/konum/negatif kontrol (105 kontrol) | önbellek |
+| `test_regresyon.py` | Düzeltilen hataların geri gelmemesi (356 kontrol, t1–t67) | yok |
+| `meslek_kapsami.py` | 57 meslek CV'sinin ailesi, beceri sayısı, deneyim yılı, güncellik | yok |
+| `benchmark.py` | 16 CV'nin ayrıştırılması + eleme/konum/negatif kontrol (112 kontrol) | önbellek |
 | `kesinlik.py` | **Her CV'nin ilk 10 sonucunda alan dışı ilan sayısı — hedef 0** | önbellek |
 
 `tests/ornekler/` (Türk panolarından kaydedilmiş sayfa örnekleri) **depoda yoktur** —
-üçüncü tarafa ait içerik, yerelde kalır. O örneklere bağlı beş kontrol dosyalar yoksa
-sessizce atlanır, kalan 96 kontrol ağa hiç çıkmadan koşar.
+üçüncü tarafa ait içerik, yerelde kalır. O örneklere bağlı kontroller dosyalar yoksa
+sessizce atlanır, kalanlar ağa hiç çıkmadan koşar.
 
 15 sahte CV (farklı sektör ve seviye) iki katmanda sınanır. Beklentiler
 `tests/beklenen.yaml` içinde **elle** yazılmıştır — motorun çıktısına bakılarak değil,
@@ -368,37 +431,14 @@ yazılım havuzundan neredeyse hiç sonuç almamalı (1 aday alıyor).
 
 Son koşu: `docs/benchmark-sonuc.txt`.
 
-### Türk panoları ve nezaket kuralları
-
-kariyer.net ve eleman.net'ten ilan okunur. Bu panolarda herkese açık API yoktur,
-dolayısıyla HTML okunur — ama yapılan şey **nazik tarama**dır, atlatma değil:
-
-- `robots.txt` her koşumda okunur ve **programatik uygulanır**. kariyer.net'te
-  `/filtre/*`, `/servisler/`, `/ozgecmis/*` yasaktır; o yollara hiç gidilmez.
-- İstek aralığı **4 saniye** ve zaman damgası **diske yazılır**. Süreç-içi sayaç
-  yetmez: ard arda çalışan betikler sayacı sıfırlar, gerçek hız yükselir.
-  (Ölçüldü: geliştirme sırasında bu yüzden 403 yendi.)
-- 403/429 alınırsa o panoya **6 saat dokunulmaz**. Israr engeli uzatır.
-- CAPTCHA çözme, parmak izi sahteciliği, IP değiştirerek engeli dolanma **yoktur**.
-  Engel yendiyse doğru davranış beklemektir; VPN ile devam etmek, sitenin koyduğu
-  sınırı kasten dolanmak olur ve aracı kullanan herkesi riske atar.
-
-### Geliştirirken canlı siteye istek atma
-
-Ayrıştırıcı üzerinde çalışırken kayıtlı sayfa örnekleri kullanılır:
-
-```bash
-ISBOT_ORNEK=kaydet python -m isbot tara    # çekilen sayfaları tests/ornekler/ altına yaz
-ISBOT_ORNEK=oku    python tests/test_regresyon.py   # ağa hiç çıkmadan ayrıştırıcıyı sına
-```
-
-Regresyon testi bu modu kullanır ve soketi kapatarak ağa çıkılmadığını doğrular.
-
 ## Meslek kapsamı testi
 
-`tests/meslek_kapsami.py` — 16 sentetik CV (8 Türkçe + 8 İngilizce; makine, inşaat,
-muhasebe, hemşirelik, teknisyenlik, lojistik, mimarlık, öğretmenlik, kimya, pazarlama)
-doğru rol ailesine gidiyor mu? Ağ istemez, saniyeler sürer.
+`tests/meslek_kapsami.py` — 57 sentetik CV (Türkçe + İngilizce; mühendislik,
+teknisyenlik, sağlık, hukuk, muhasebe, lojistik, eğitim, turizm, özel güvenlik, depo,
+şoför/kurye, ofis/idari, temizlik, gayrimenkul…) doğru rol ailesine gidiyor mu, deneyim
+yılı doğru mu? Meslek değiştirmiş 5 CV'de bugünkü alanın ilk sırada olduğu ve eski alana
+sorgu harcanmadığı da sınanır. Ağ istemez; "Halen/Present" süreleri takvimle kaymasın diye
+değerlendirme sabit bir tarihe göre yapılır.
 
 Türkçe CV'ler bilerek **NFD** (ayrıştırılmış Unicode) yazılmıştır — `pdftotext`
 gerçeğini taklit eder. Normalizasyon kaldırılırsa testler anında kırmızıya döner.
@@ -450,15 +490,23 @@ motor komşu alandan sonuç getirir ve bunları **"alan dışı"** diye etiketle
       ya da deneyimde o ailenin unvanı geçiyorsa açılıyor. Gerçek bir Türkçe CV'de
       "ağ, depolama ve kullanıcı yönetimi" lojistik, "Platt kalibrasyonu" üretim/kalite,
       "kompozitler" kimya ailesi açıyordu. Ay yazılmamış dönem ("Yaz 2025") 3 yerine 2 ay.
-- [ ] **Türkiye meslek kapsamı** — `python scripts/tr_kapsam.py`. kariyer.net'te en az 3
-      ilde açılmış pozisyonların yalnız ~%34'ü (ilan yaygınlığıyla ağırlıklı ~%46) bir
-      rol ailesine giriyor. Boşluk mavi yaka ve hizmet tarafında: üretim operatörü,
-      mekanik/elektrik bakım teknisyeni, CNC operatörü, kaynak ustası, depo/forklift,
-      şoför, güvenlik görevlisi, müşteri hizmetleri, grafik tasarım, gayrimenkul, tıbbi
-      tanıtım. Var olan ailelerde de delik var ("satış elemanı", "depo elemanı", "kalite
-      mühendisi"). Yeni aile + kalıp + CV'den tanıyacak beceri birlikte eklenmeli.
+- [x] ~~Türkiye meslek kapsamı~~ (v1.5.7–v1.5.15) — `python scripts/tr_kapsam.py`.
+      kariyer.net'te en az 3 ilde açılmış pozisyonların %34'ünden **%51**'ine (ilan
+      yaygınlığıyla ağırlıklı %46'dan **%74**'üne). v1.5.15'te altı aile: özel güvenlik,
+      depo & forklift, şoför & kurye, ofis & idari işler, temizlik & servis, gayrimenkul.
+      Kalan en yaygın boşluklar meslek değil etiket ("genel başvuru", "part time",
+      "üniversite öğrencisi"). roller.yaml'daki 10 ölü tetik (sözlükte karşılığı yoktu)
+      bağlandı.
+- [x] ~~Eski deneyim bugünkü alanı ezmez~~ (v1.5.15) — bkz. "Eski deneyim, bugünkü alan".
+- [x] ~~Seviye kapısı + tesadüfi eşleşme~~ (v1.5.15) — 75 CV'lik ölçümde uygulayıcı
+      olmayanların ilk 10'unda operatör ilanı 15 → 0, metni olup hiçbir işaret
+      taşımayan teknik ilan 0, kesinlik (alan dışı) 0.
+- [x] ~~kariyer.net istek disiplini~~ (v1.5.15) — önbellek, saatlik bütçe, tek sıra,
+      engelde önceki taramaların ilanları. Bkz. "Türk panoları".
 - [ ] **Türkiye kapsamının canlı ölçümü** — il çeşitliliği + sektör sayfaları yazıldı
       ama gerçek tarama ile sınanmadı (pano engeli). 329 → ? ilan ölçülecek.
+- [ ] Kısa açıklamalı ilan (ör. 343 karakterlik tanıtım): beceri puanı 0 kalıyor.
+      Model tahminiyle doldurmak sahte veri kuralına değiyor — karar bekliyor.
 - [ ] İş alarmı e-postalarından ilan okuma (LinkedIn kapsamı için tek meşru yol)
 - [ ] Başvuru hazırlama: ilana özel CV + ön yazı, formu doldur, gönderimi kullanıcıya bırak
 

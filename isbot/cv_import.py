@@ -19,7 +19,7 @@ from pathlib import Path
 
 import yaml
 
-from .experience import _deneyim_bolumu, metin_normalize
+from .experience import _deneyim_bolumu, metin_normalize, satir_agirliklari
 from .experience import tahmin as deneyim_tahmin
 
 from .yollar import kaynak_dosya
@@ -95,47 +95,108 @@ def _ek_toleransli(terim: str) -> bool:
     return " " in terim.strip() or len(terim) >= 7
 
 
-def _gecis_sayisi(metin: str, terim: str) -> int:
+def _gecis_kalibi(terim: str) -> str:
     if re.fullmatch(r"[A-Za-z+#.]{1,4}", terim):
-        kalip = rf"(?<![\w+#.]){re.escape(terim)}(?![\w+#.])"
-    elif _ek_toleransli(terim):
-        kalip = rf"(?<!\w){re.escape(terim)}\w*"
-    else:
-        kalip = rf"(?<!\w){re.escape(terim)}(?!\w)"
-    return len(re.findall(kalip, metin, re.IGNORECASE))
+        # "&" ve "sınıf" da sınır sayılır. ÖLÇÜLDÜ (2026-10-12): "R&D Intern" satırı R dilini
+        # GÜÇLÜ yetenek yaptı (bir havacılık CV'sinde); ilan tarafında "C Sınıfı İş Güvenliği
+        # Uzmanı" C dili eşleşmesi aldı (bkz. scoring._yetenek_kalibi, aynı kural).
+        return (rf"(?<![\w+#.&]){re.escape(terim)}(?![\w+#.&])"
+                r"(?!\s*-?\s*(?:sınıf|class\b))")
+    if _ek_toleransli(terim):
+        return rf"(?<!\w){re.escape(terim)}\w*"
+    return rf"(?<!\w){re.escape(terim)}(?!\w)"
 
 
-def yetenek_tespit(metin: str) -> tuple[dict[str, float], dict[str, float]]:
-    """CV metnini sözlükle tarar → (güçlü, zayıf) yetenek haritaları.
+def _gecis_sayisi(metin: str, terim: str) -> int:
+    return len(re.findall(_gecis_kalibi(terim), metin, re.IGNORECASE))
+
+
+# Beceriler bölümünde ilan edilen ama yalnız ESKİ tarihli girdilerde kullanılmış bir
+# becerinin güncelliği bu tabanın altına inmez: kişi onu hâlâ beceri diye yazıyor.
+BECERI_GUNCELLIK_TABANI = 0.6
+# Eski girdideki geçiş becerinin VARLIĞINI çok az, kişinin ODAĞINI çok etkiler. Sayımda
+# yaşlanma yumuşak (en eski girdi bile yarıdan fazla sayılır), güncellikte sert. ÖLÇÜLDÜ
+# (2026-10-12): sayımda da sert yaşlanma kullanılınca 2017'den beri avukat olan CV'nin
+# 2017-2021 avukatlık işi dörtte bir sayıldı ve güçlü beceri sayısı 5'ten 3'e düştü —
+# aynı mesleği sürdüren kişinin becerisi eskimiş göründü.
+SAYIM_TABANI = 0.5
+
+
+def yetenek_ayrintili(metin: str) -> tuple[dict[str, float], dict[str, float], dict[str, float]]:
+    """CV metnini sözlükle tarar → (güçlü, zayıf, güncellik) haritaları.
 
     Ağırlık, kanıt yoğunluğundan gelir: kaç kez geçiyor + 'Skills' bölümünde mi.
     Tek kez geçen bir teknoloji 'zayıf', birden çok yerde geçen 'güçlü' sayılır.
+
+    GÜNCELLİK: geçiş, ait olduğu CV girdisinin tarihine göre sayılır (bkz.
+    experience.satir_agirliklari). Dört yıl önce biten girdideki geçiş ~0,7 sayılır
+    (SAYIM_TABANI); tarihsiz satırdaki (ad/unvan, özet, beceriler) geçiş 1,0 — eski
+    davranış. Üçüncü harita becerinin ne kadar GÜNCEL kullanıldığını verir (tarihli
+    kullanımın en yenisi, sert yaşlanmayla); yalnız beceri listesinde geçen beceri haritada
+    yoktur (bilinmiyor). Rol ailesinin ağırlığı ve sorgu payı bundan etkilenir.
 
     Girdi burada TEKRAR normalize edilir. Şu an tek çağıran metin_cikar'dan geçiyor,
     yani zaten NFC; ama bu fonksiyon ham metinle çağrılırsa Türkçe CV'de sahte
     yetenek üretir (Gömülü->Go, Çift->C, sensör->R) ve hata SESSİZDİR — çıktı
     makul görünür, yalnızca yanlıştır. NFC idempotenttir, ikinci çağrının bedeli yok.
     """
+    import bisect
     metin = metin_normalize(metin)
     sozluk = yaml.safe_load(SOZLUK.read_text(encoding="utf-8"))
     bolum_m = YETENEK_BOLUM.search(metin)
     yetenek_bolumu = bolum_m.group(2) if bolum_m else ""
+    agirliklar = satir_agirliklari(metin)
+    baslar = [0] + [i + 1 for i, c in enumerate(metin) if c == "\n"]
 
     skor: Counter[str] = Counter()
+    guncellik: dict[str, float] = {}
     for _kat, kalemler in sozluk.items():
         for kanonik, esanlamlilar in kalemler.items():
             terimler = [kanonik] + list(esanlamlilar or [])
-            n = sum(_gecis_sayisi(metin, t) for t in terimler)
-            if n == 0:
+            toplam, tarihsiz, becerili, tarihli_en = 0.0, False, False, None
+            for t in terimler:
+                for m in re.finditer(_gecis_kalibi(t), metin, re.IGNORECASE):
+                    w, tur = agirliklar[bisect.bisect_right(baslar, m.start()) - 1]
+                    if tur == "baslik":
+                        continue
+                    toplam += SAYIM_TABANI + (1.0 - SAYIM_TABANI) * w
+                    if tur == "tarihli":
+                        tarihli_en = w if tarihli_en is None else max(tarihli_en, w)
+                    elif tur == "beceri":
+                        becerili = True
+                    else:
+                        tarihsiz = True
+            if toplam == 0:
                 continue
-            s = min(n, 6) / 6.0                       # 6+ geçiş = doygunluk
+            # Güncellik: tarihli kullanımın en yenisi; ad/unvan/özet satırında geçiyorsa güncel.
+            # YALNIZ beceri listesinde geçiyorsa BİLİNMİYOR (None): bilinmeyen, bilineni ezmesin
+            # diye aile güncelliğine katılmaz (bkz. rol_aileleri_turet).
+            if tarihsiz:
+                g = 1.0
+            elif tarihli_en is not None:
+                g = max(tarihli_en, BECERI_GUNCELLIK_TABANI if becerili else 0.0)
+            else:
+                g = None
+            s = min(toplam, 6.0) / 6.0                # 6+ geçiş = doygunluk
             if any(_gecis_sayisi(yetenek_bolumu, t) for t in terimler):
-                s += 0.35                             # Skills bölümünde ilan edilmiş
+                # Skills bölümünde ilan edilmiş. Kullanımı yalnız eski girdilerdeyse bu
+                # ilan da eskiyi anlatıyor; bonus güncellikle ölçeklenir (en az yarısı).
+                s += 0.35 * (0.5 + 0.5 * (1.0 if g is None else g))
             skor[kanonik] = round(min(s, 1.0), 2)
+            if g is not None:
+                guncellik[kanonik] = round(g, 2)
 
     guclu = {k: v for k, v in skor.items() if v >= 0.45}
     zayif = {k: round(v * 0.5, 2) for k, v in skor.items() if v < 0.45}
-    return dict(sorted(guclu.items(), key=lambda x: -x[1])), dict(sorted(zayif.items(), key=lambda x: -x[1]))
+    return (dict(sorted(guclu.items(), key=lambda x: -x[1])),
+            dict(sorted(zayif.items(), key=lambda x: -x[1])),
+            guncellik)
+
+
+def yetenek_tespit(metin: str) -> tuple[dict[str, float], dict[str, float]]:
+    """(güçlü, zayıf) — güncellik haritası gerekmeyen çağıranlar için."""
+    guclu, zayif, _ = yetenek_ayrintili(metin)
+    return guclu, zayif
 
 
 # ---------------- profil üretimi ----------------
@@ -160,7 +221,8 @@ def unvan_aileleri(metin: str) -> list[str]:
 
 def rol_aileleri_turet(yetenekler: set[str], guclu_yetenekler: set[str] | None = None,
                        unvan_kanitli: set[str] | None = None, teknisyen: bool = False,
-                       haric: set[str] | None = None) -> dict:
+                       haric: set[str] | None = None,
+                       guncellik: dict[str, float] | None = None) -> dict:
     """CV'de tespit edilen yeteneklerden rol ailelerini çıkarır.
 
     NEDEN: Eskiden bu liste SABİTTİ (llm/ml/yazılım/veri). Sonuç: iOS geliştiricisi,
@@ -191,6 +253,11 @@ def rol_aileleri_turet(yetenekler: set[str], guclu_yetenekler: set[str] | None =
     istemediğini söylemez. Gerçek bir CV'de FastAPI/Flask kanıtı backend'i %62 ağırlıkla
     açıyordu, aday backend işi aramıyordu. Aile türetmeden çıkınca sorgular, eleme
     muafiyetleri ve öteki ailelerin ağırlıkları da onsuz hesaplanır.
+
+    guncellik: beceri -> 0..1 (bkz. yetenek_ayrintili). Ailenin kanıtı yalnız ESKİ CV
+    girdilerindeyse ağırlığı düşer: çarpan 0,55 + 0,45 × güncellik (en az ~0,66).
+    Aile KAPANMAZ — kişi o işi yapabilir — ama bugünkü alanının altına iner ve Türkçe
+    sorgu kontenjanından pay alamaz. Verilmezse (eski profil) çarpan 1, eski davranış.
     """
     tanimlar = yaml.safe_load(ROLLER.read_text(encoding="utf-8"))
     secilen = {}
@@ -214,6 +281,11 @@ def rol_aileleri_turet(yetenekler: set[str], guclu_yetenekler: set[str] | None =
             "_tetikleyen": tetikler[:6],
             "_guclu_kanit": bool(set(tetikler) & (guclu_yetenekler or set()))
                             or ad in (unvan_kanitli or set()),
+            # Tanımlayıcı tetik varsa güncellik ondan okunur: destekleyici tetikler genel
+            # beceriler (C, MATLAB) ve başka bir güncel işten gelip eski aileyi taze
+            # gösterebiliyor (ölçüldü: gömülü ailesi, güncel bir tersine mühendislik
+            # projesindeki "C/C++" sayesinde taze görünüyordu).
+            "_guncellik": _aile_guncelligi(guclu, tetikler, guncellik or {}),
         }
     if guclu_yetenekler is not None and any(d["_guclu_kanit"] for d in secilen.values()):
         secilen = {ad: d for ad, d in secilen.items() if d["_guclu_kanit"]}
@@ -225,7 +297,9 @@ def rol_aileleri_turet(yetenekler: set[str], guclu_yetenekler: set[str] | None =
     for ad, d in secilen.items():
         taban = 0.55 if d["_guclu_var"] else 0.40
         merkezilik = d["_tetik_sayisi"] / en_cok
-        d["agirlik"] = round(d["_ham_agirlik"] * min(1.0, taban + 0.45 * merkezilik), 2)
+        d["agirlik"] = round(d["_ham_agirlik"] * min(1.0, taban + 0.45 * merkezilik)
+                             * (0.55 + 0.45 * d["_guncellik"]), 2)
+        d["_guncellik"] = round(d["_guncellik"], 2)
         for k in ("_ham_agirlik", "_guclu_var", "_tetik_sayisi", "_guclu_kanit"):
             d.pop(k)
 
@@ -236,6 +310,17 @@ def rol_aileleri_turet(yetenekler: set[str], guclu_yetenekler: set[str] | None =
             "_tetikleyen": [],
         }
     return dict(sorted(secilen.items(), key=lambda x: -x[1]["agirlik"]))
+
+
+def _aile_guncelligi(guclu: list[str], tetikler: list[str], guncellik: dict[str, float]) -> float:
+    """Ailenin kanıtı ne kadar güncel (0..1). Güncelliği BİLİNEN tetiklerin en yenisi;
+    tanımlayıcı tetiklerden biri biliniyorsa yalnız onlara bakılır. Hiçbiri bilinmiyorsa
+    (yalnız beceri listesi, tarihsiz CV) 1,0 — eski davranış."""
+    for kume in (guclu, tetikler):
+        bilinen = [guncellik[x] for x in kume if x in guncellik]
+        if bilinen:
+            return max(bilinen)
+    return 1.0
 
 
 # Her kalıp: (başlık eleme kalıbı, bu kalıbın KENDİ MESLEĞİ olduğu rol aileleri).
@@ -282,7 +367,7 @@ def eleme_kaliplari(roller: dict | None, kidem: str) -> list[str]:
 # Kural değişince bu metni değiştir — yoksa kayıtlı profiller eski ailelerle kalır
 # (v1.5.5'te oldu: kural değişti, damga değişmedi, profiller tazelenmedi).
 AILE_KURALI = ("guclu-beceri-veya-unvan-kaniti/2026-10-08+seviye-teknisyen/2026-10-09"
-               "+haric-aile/2026-10-09")
+               "+haric-aile/2026-10-09+guncellik-carpani/2026-10-12+dhondt-sorgu/2026-10-12")
 
 
 def motor_surumu() -> str:
@@ -313,6 +398,8 @@ BIREYSEL_YONETICI_ONEKLERI: dict[str, tuple[str, ...]] = {
     "satis": ("sales", "account", "retail", "store", "territory"),
     "ik": ("hr", "human resources", "people", "recruiting", "talent acquisition",
            "compensation"),
+    "ofis_idari": ("office", "administrative"),
+    "gayrimenkul": ("property", "leasing"),
 }
 
 
@@ -386,6 +473,20 @@ def _hedef_sirketler(roller: dict, ust_sinir: int = 8) -> list[str]:
     return cikti
 
 
+# ESKİ ALAN: kanıtının en yenisi bu güncelliğin altında kalan aile (bitişinin üstünden
+# ~2,3 yıldan fazla geçmiş girdiler). Aile açık kalır, ilanları puanlanır; ama tarama
+# sorgusu ona harcanmaz. Her sorgu kariyer.net'e istek demek ve istek bütçesi sınırlı.
+ESKI_ALAN_ESIGI = 0.75
+YAN_ALAN_ORANI = 0.7
+
+
+def _guncel_aileler(roller: dict) -> list[str]:
+    """Sorgu üretilecek aileler: güncel olanlar; hepsi eskiyse hepsi."""
+    guncel = [ad for ad in roller
+              if float((roller[ad] or {}).get("_guncellik", 1.0)) >= ESKI_ALAN_ESIGI]
+    return guncel or list(roller)
+
+
 def _en_sorgular(roller: dict, ust_sinir: int = 3) -> list[str]:
     """Etkin rol ailelerinden İngilizce pozisyon adları (ağırlığa göre sıralı).
 
@@ -398,7 +499,7 @@ def _en_sorgular(roller: dict, ust_sinir: int = 3) -> list[str]:
     # Seviye ailesi açıksa (aday teknisyen) yalnız onun pozisyonları: kalan kota öteki
     # aileden doluyordu ve klima teknisyenine "civil engineer" aranıyordu (2026-10-09).
     seviyeli = [ad for ad in roller if (tanimlar.get(ad, {}) or {}).get("seviye")]
-    for ad in seviyeli[:1] or roller:                   # roller zaten ağırlığa göre sıralı
+    for ad in seviyeli[:1] or _guncel_aileler(roller):  # roller zaten ağırlığa göre sıralı
         for poz in (tanimlar.get(ad, {}) or {}).get("en_pozisyonlar", []):
             if poz not in cikti:
                 cikti.append(poz)
@@ -410,10 +511,24 @@ def _en_sorgular(roller: dict, ust_sinir: int = 3) -> list[str]:
 def _tr_sorgular(roller: dict, ust_sinir: int = 6) -> list[str]:
     """Etkin rol ailelerinden Türkçe pozisyon adları toplar (ağırlığa göre sıralı)."""
     tanimlar = yaml.safe_load(ROLLER.read_text(encoding="utf-8"))
-    # SIRAYLA al (round-robin): tek ailenin tüm pozisyonlarını alıp kotayı doldurmak,
-    # ikinci ailenin hiç temsil edilmemesine yol açıyordu — CV'si hem gömülü hem
-    # yapay zeka olan birinde "yapay zeka mühendisi" listeye hiç girmiyordu.
-    listeler = [list((tanimlar.get(ad, {}) or {}).get("tr_pozisyonlar", [])) for ad in roller]
+    # KONTENJAN AĞIRLIKLA DAĞITILIR (D'Hondt, ağırlık³). İlk hâli düz sıra sırayla
+    # (round-robin) idi: her aile ağırlığından bağımsız BİRER sorgu alıyordu. Tek ailenin
+    # kotayı yutmasını önlüyordu ama 7 ailesi olan CV'de 7. aile de 1. aile kadar sorgu
+    # alıyordu. ÖLÇÜLDÜ (2026-10-12): yapay zekâ mühendisinin 6 sorgusundan biri, dört yıl
+    # önce bıraktığı alanın "gömülü yazılım mühendisi" sorgusuydu; kariyer.net o sorguya
+    # 50 gömülü ilan döndürüyor ve kısa liste onlarla doluyordu. Küp, yakın ağırlıklı
+    # aileleri yine dönüşümlü tutar (1,0 ve 0,95 → 1-1-1...), uzak olanı (0,6) seyreltir.
+    # Eski alanlar kontenjana girmez (bkz. ESKI_ALAN_ESIGI). Boş kalan kontenjan
+    # doldurulmaz: daha az sorgu, kariyer.net'e daha az istek demek.
+    secili = _guncel_aileler(roller)
+    # Ağırlığı en güçlü ailenin %70'inin altında kalan aile de sorgu almaz: ana alanın
+    # pozisyonları bitince kontenjan zayıf aileyle dolmasın (ölçüldü: veri analistine,
+    # A/B testinden açılan ürün ailesi 3 "ürün yöneticisi" sorgusu yazdırıyordu).
+    en_agir = max((float((roller[ad] or {}).get("agirlik", 1.0)) for ad in secili), default=1.0)
+    secili = [ad for ad in secili
+              if float((roller[ad] or {}).get("agirlik", 1.0)) >= YAN_ALAN_ORANI * en_agir]
+    listeler = [list((tanimlar.get(ad, {}) or {}).get("tr_pozisyonlar", [])) for ad in secili]
+    agirliklar = [float((roller[ad] or {}).get("agirlik", 1.0)) ** 3 for ad in secili]
     cikti: list[str] = []
     # SEVİYE AİLESİ ÖNCE: teknisyenin öteki aileleri (kontrol/otomasyon, üretim/kalite)
     # mühendis/müdür pozisyonu taşıyor. Ölçüldü (2026-10-09): bakım teknisyeni CV'sinin
@@ -426,18 +541,32 @@ def _tr_sorgular(roller: dict, ust_sinir: int = 6) -> list[str]:
                     cikti.append(poz)
                     if len(cikti) >= ust_sinir:
                         return cikti
-    for i in range(max((len(x) for x in listeler), default=0)):
-        for lst in listeler:
-            if i < len(lst) and lst[i] not in cikti:
-                cikti.append(lst[i])
-                if len(cikti) >= ust_sinir:
-                    return cikti
+    koltuk = [0] * len(listeler)        # ailenin aldığı sorgu sayısı
+    imlec = [0] * len(listeler)         # ailenin listesinde nerede kalındı
+    while len(cikti) < ust_sinir:
+        adaylar = [(agirliklar[i] / (koltuk[i] + 1), -i) for i in range(len(listeler))
+                   if imlec[i] < len(listeler[i])]
+        if not adaylar:
+            break
+        i = -max(adaylar)[1]
+        poz = listeler[i][imlec[i]]
+        imlec[i] += 1
+        if poz not in cikti:            # başka aileden zaten gelmişse koltuk sayılmaz
+            cikti.append(poz)
+            koltuk[i] += 1
     return cikti[:ust_sinir]
 
 
 _TEKNISYEN = re.compile(r"(?i)\b(teknisyen|tekniker|technician|elektrikçi|electrician|"
                         r"operatör|operator|usta|kaynakçı|welder|machinist|assembler|işçi|"
-                        r"(üretim|montaj|paketleme) eleman|production worker)\w*")
+                        r"(üretim|montaj|paketleme|bakım( onarım)?) (eleman|personel)|production worker|"
+                        # 2026-10-12 aileleri: özel güvenlik, depo, şoför/kurye, temizlik.
+                        # Kalıp scoring.UYGULAYICI_ILAN ile AYNI mesleği tarif eder.
+                        r"güvenlik görevli|özel güvenlik|bekçi|security guard|"
+                        r"depo (eleman|işçi|personel|görevli)|warehouse (worker|associate|operative)|"
+                        r"forklift|şoför|sürücü(?!\s*belge)|driver(?!'?s licen)|kurye|courier|"
+                        r"temizlik (görevli|personel|eleman)|cleaner|janitor|housekeep|"
+                        r"çaycı|çay servis)\w*")
 _MUHENDIS = re.compile(r"(?i)\b(mühendis|engineer|mimar|architect)\w*")
 
 
@@ -474,7 +603,7 @@ def profil_uret(cv_yolu: str | Path, haric: set[str] | list[str] | None = None) 
     metin = metin_cikar(cv_yolu)
     if len(metin) < 200:
         raise RuntimeError("CV'den anlamlı metin çıkmadı (taranmış PDF olabilir — OCR gerekir)")
-    guclu, zayif = yetenek_tespit(metin)
+    guclu, zayif, guncellik = yetenek_ayrintili(metin)
     dnm = deneyim_tahmin(metin)
     yil, kidem = dnm.profesyonel_yil, dnm.kidem
     tr = bool(re.search(r"(?i)\b(turkey|türkiye|istanbul|ankara|izmir)\b", metin))
@@ -483,7 +612,7 @@ def profil_uret(cv_yolu: str | Path, haric: set[str] | list[str] | None = None) 
     _unvanlar = unvan_aileleri(metin)
     _haric = sorted(set(haric or ()))
     _roller = rol_aileleri_turet(set(guclu) | set(zayif), set(guclu), set(_unvanlar), teknisyen,
-                                 set(_haric))
+                                 set(_haric), guncellik)
 
     return {
         "_NOT": "cv-import ile ÜRETİLDİ — TASLAKTIR. Aşağıdaki alanları elle gözden geçir: "
@@ -530,7 +659,9 @@ def profil_uret(cv_yolu: str | Path, haric: set[str] | list[str] | None = None) 
         # kullanıcı bu listeye kendi şirketlerini yazar (firma profili taranır).
         "tr_hedef_sirketler": [],
         **SABLON_KUYRUK,
-        "yetenekler": {"guclu": guclu, "zayif": zayif},
+        # _guncellik: yalnız eski CV girdilerinde kullanılmış beceriler (bkz. yetenek_ayrintili).
+        # Profil tazelemesi CV'ye ulaşamadığı için aile ağırlığı buradan yeniden hesaplanır.
+        "yetenekler": {"guclu": guclu, "zayif": zayif, "_guncellik": guncellik},
     }
 
 
@@ -562,8 +693,11 @@ def profil_tazele(profil: dict, zorla: bool = False) -> tuple[dict, list[str]]:
         yeni_roller = rol_aileleri_turet(tum, set(yet.get("guclu") or {}),
                                          set(profil.get("_unvan_aileleri") or []),
                                          bool((profil.get("kimlik") or {}).get("teknisyen")),
-                                         set(profil.get("_haric_aileler") or []))
-        if set(yeni_roller) != set(profil.get("rol_aileleri") or {}):
+                                         set(profil.get("_haric_aileler") or []),
+                                         yet.get("_guncellik") or {})
+        # Yalnız aile KÜMESİ değil ağırlıklar da karşılaştırılır: güncellik çarpanı ya da
+        # roller.yaml değişince aileler aynı kalıp ağırlıklar değişebiliyor.
+        if yeni_roller != (profil.get("rol_aileleri") or {}):
             profil["rol_aileleri"] = yeni_roller
             degisen.append("rol aileleri")
         # İngilizce sorgular da ailelerden gelir; eskiden tazelenmiyordu, kapatılan

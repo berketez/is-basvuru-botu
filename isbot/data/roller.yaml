@@ -34,7 +34,7 @@ oyun:
 
 gomulu:
   tetik_guclu: ["embedded systems", "STM32"]
-  tetik: ["PCB", "C", "Assembly"]
+  tetik: ["PCB", "C", "assembly language"]
   tetik_min: 2
   agirlik: 1.0
   tr_pozisyonlar: ["gömülü yazılım mühendisi", "elektronik mühendisi", "donanım mühendisi"]
@@ -48,7 +48,7 @@ guvenlik:
   agirlik: 1.0
   tr_pozisyonlar: ["siber güvenlik uzmanı", "bilgi güvenliği uzmanı", "sızma testi uzmanı"]
   en_pozisyonlar: ["security engineer", "penetration tester"]
-  basliklar: ['(?i)(?:\b(security|cyber|penetration|appsec|infosec|malware|threat|vulnerabilit|reverse engineer|cryptograph)\b)|\b(?:siber güvenlik|bilgi güvenliği|sızma test|güvenlik uzman|zafiyet)\w*']
+  basliklar: ['(?i)(?:\b(security(?!\s+(?:guard|officer|patrol|supervisor))|(?:information|it|data|chief)\s+security\s+officer|cyber|penetration|appsec|infosec|malware|threat|vulnerabilit|reverse engineer|cryptograph)\b)|\b(?:siber güvenlik|bilgi güvenliği|sızma test|güvenlik uzman|zafiyet)\w*']
 
 platform_sre:
   tetik_guclu: ["Kubernetes", "Terraform"]
@@ -70,7 +70,7 @@ veri_muh:
 
 veri_bilimi:
   tetik_guclu: ["scikit-learn", "statistical analysis", "A/B testing"]
-  tetik: ["XGBoost", "pandas", "R", "LightGBM"]
+  tetik: ["XGBoost", "pandas", "R", "LightGBM", "data analysis", "Tableau"]
   tetik_min: 2
   agirlik: 1.0
   tr_pozisyonlar: ["veri bilimci", "veri analisti", "istatistik uzmanı"]
@@ -109,7 +109,7 @@ qa:
   # (Berke'nin CV'sinde Playwright bir AI ajanı projesinde geçiyor; motor onu
   # test mühendisi sandı — Swift/mobil hatasının aynısı.)
   tetik_guclu: []
-  tetik: ["Playwright", "Selenium", "pytest", "load testing", "k6"]
+  tetik: ["Playwright", "pytest", "load testing"]
   tetik_min: 2
   agirlik: 1.0
   tr_pozisyonlar: ["test uzmanı", "yazılım test mühendisi", "kalite kontrol uzmanı"]
@@ -316,7 +316,7 @@ lojistik:
   tr_pozisyonlar: ["lojistik uzmanı", "satın alma uzmanı", "depo sorumlusu", "ihracat uzmanı", "tedarik zinciri uzmanı",
                    "dış ticaret uzmanı"]
   en_pozisyonlar: ["supply chain specialist", "procurement specialist"]
-  basliklar: ["(?i)(\\b(?:supply chain|procurement|logistics|warehouse (manager|supervisor)|customs|import|export|purchasing)\\w*|\\b(?:lojistik|satın alma|tedarik zincir|depo (sorumlu|eleman|görevli|operatör|personel|şef|müdür)|ihracat|ithalat|dış ticaret|gümrük|sevkiyat|nakliye|planlama uzman)\\w*)"]
+  basliklar: ["(?i)(\\b(?:supply chain|procurement|logistics|warehouse (manager|supervisor)|customs|import|export|purchasing)\\w*|\\b(?:lojistik|satın alma|tedarik zincir|depo (sorumlu|şef|müdür|yönetic|planlama)|ihracat|ithalat|dış ticaret|gümrük|sevkiyat|nakliye|planlama uzman)\\w*)"]
 
 uretim_kalite:
   tetik_guclu: ["Lean Manufacturing", "Kaizen", "Six Sigma", "Total Productive Maintenance", "Equipment Effectiveness"]
@@ -565,3 +565,77 @@ musteri_hizmetleri:
                    "çağrı merkezi elemanı", "müşteri hizmetleri yetkilisi", "müşteri hizmetleri uzmanı"]
   en_pozisyonlar: ["customer service representative", "customer support specialist"]
   basliklar: ["(?i)(\\b(?:customer (service|support|care|experience|relations)|call cent(er|re)|contact cent(er|re)|support (agent|specialist|representative|associate|advisor)|help ?desk|live chat)\\w*|\\b(?:m[üu][şs]teri (hizmet|ilişki|iliski|deneyim|destek|şikayet|sikayet|iletişim|iletisim|temsilci)|[çc]a[ğg]r[ıi] merkez|[iİ]leti[şs]im merkez|canlı destek)\\w*)"]
+
+# --- 2026-10-12: kariyer.net'te en çok ilde açılmış, hiçbir aileye girmeyen kollar ----
+# (scripts/tr_kapsam.py): gayrimenkul danışmanı 307 il, güvenlik görevlisi 208, temizlik
+# görevlisi 165, şoför sürücü 163, yönetici asistanı 127, forklift operatörü 100, dağıtım
+# elemanı 92. Tr_pozisyonların hepsi site haritasında kanonik yol (2026-10-12).
+# Uygulayıcı seviyedekiler (güvenlik, depo, şoför/kurye, temizlik) seviye: teknisyen —
+# yalnız CV başlığı o işi söyleyen adayda açılır (cv_import.teknisyen_mi) ve öteki
+# adaylara bu ilanlar gösterilmez (scoring.UYGULAYICI_ILAN).
+
+# Siber güvenlik (guvenlik) ile KARIŞMAMALI: "Siber Güvenlik Görevlisi", "Bilgi Güvenliği
+# Sorumlusu" bu kalıba girmez; "Security Guard/Officer" da siber kalıbından çıkarıldı.
+ozel_guvenlik:
+  seviye: teknisyen
+  tetik_guclu: ["Private Security", "Armed Security"]
+  tetik: ["Access Control Point", "CCTV Monitoring", "First Aid", "Fire Safety"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["güvenlik görevlisi", "özel güvenlik elemanı", "silahlı güvenlik görevlisi",
+                   "güvenlik amiri", "gece bekçisi"]
+  en_pozisyonlar: ["security guard", "patrol officer"]
+  basliklar: ["(?i)(\\b(?:security (guard|officer|patrol|supervisor)|patrol officer|night watch\\w*|watchman|doorman|bodyguard|loss prevention officer)\\w*|(?<!siber )(?<!bilgi )\\b(?:özel güvenlik|silahlı güvenlik|güvenlik (görevli|eleman|personel|amir|şef|memur)|gece bekçi|bekçi|yakın koruma|zırhlı araç)\\w*)"]
+
+# Depo uygulayıcısı. Depo SORUMLUSU/şefi/müdürü lojistik ailesinde kalır (beyaz yaka).
+depo:
+  seviye: teknisyen
+  tetik_guclu: ["Warehouse Operations", "Forklift Operation"]
+  tetik: ["Warehouse Management System", "Inventory Management", "packaging operations"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["depo elemanı", "forklift operatörü", "lojistik depo elemanı", "depo işçisi"]
+  en_pozisyonlar: ["warehouse associate", "forklift operator"]
+  basliklar: ["(?i)(\\b(?:warehouse (worker|associate|operative|clerk|assistant)|forklift (operator|driver)|picker|order picker|stock (clerk|handler)|loader)\\w*|\\b(?:depo (eleman|personel|işçi|görevli|operatör|yardımcı)|forklift|istif (makine|operatör)|yükleme boşaltma|sevkiyat (eleman|personel|işçi)|mal kabul (eleman|personel))\\w*)"]
+
+sofor_kurye:
+  seviye: teknisyen
+  tetik_guclu: ["Professional Driving", "Last-mile Delivery", "Professional Driving License"]
+  tetik: ["Driving Licence", "Road Transport", "Dangerous Goods Transport"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["şoför sürücü", "kurye", "dağıtım elemanı", "tır şoförü", "motorlu kurye",
+                   "sevkiyat şoförü", "servis şoförü", "makam şoförü"]
+  en_pozisyonlar: ["delivery driver", "truck driver"]
+  basliklar: ["(?i)(\\b(?:(truck|lorry|delivery|van|bus|hgv) driver|courier|chauffeur|delivery (associate|rider))\\w*|\\b(?:şoför|sürücü(?! eğitmen)|kurye|dağıtım (eleman|şoför|personel|görevli)|tır şoför|kamyon şoför|servis şoför|makam şoför|sevkiyat şoför)\\w*)"]
+
+ofis_idari:
+  tetik_guclu: ["Executive Assistance", "Office Administration"]
+  tetik: ["Data Entry", "Front Office", "Excel", "Medical Secretary"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["yönetici asistanı", "ofis asistanı", "idari işler uzmanı", "sekreter",
+                   "veri giriş elemanı", "idari işler sorumlusu", "danışma görevlisi"]
+  en_pozisyonlar: ["executive assistant", "office administrator"]
+  basliklar: ["(?i)(\\b(?:executive assistant|personal assistant|administrative (assistant|coordinator|specialist|officer|manager)|office (assistant|coordinator|administrator|manager)|receptionist|front desk (coordinator|associate)|data entry|secretary)\\w*|\\b(?:yönetici asistan|ofis (asistan|eleman|personel)|idari (işler|asistan|personel|eleman|sorumlu|uzman|sekreter)|sekreter|resepsiyonist|danışma görevli|veri giriş|arşiv (sorumlu|eleman|görevli)|muhaberat)\\w*)"]
+
+temizlik:
+  seviye: teknisyen
+  tetik_guclu: ["Cleaning Services"]
+  tetik: ["Tea Service", "Hotel Housekeeping", "Hygiene and Sanitation"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["temizlik görevlisi", "çay servis ve temizlik elemanı", "çay kahve servis elemanı",
+                   "kat görevlisi"]
+  en_pozisyonlar: ["cleaner", "housekeeping attendant"]
+  basliklar: ["(?i)(\\b(?:cleaner|cleaning (staff|operative|technician|attendant)|janitor|custodian|housekeep\\w*|room attendant)\\w*|\\b(?:temizlik (görevli|eleman|personel|işçi|sorumlu|şef|ekip)|çay (servis|ocağı|kahve)|çaycı|ofis görevli|kat görevli|hijyen (görevli|eleman)|bulaşık(çı| eleman))\\w*)"]
+
+gayrimenkul:
+  tetik_guclu: ["Real Estate Sales", "Property Leasing"]
+  tetik: ["Real Estate Appraisal", "Real Estate Law", "CRM", "Field Sales"]
+  tetik_min: 2
+  agirlik: 1.0
+  tr_pozisyonlar: ["gayrimenkul danışmanı", "gayrimenkul satış danışmanı", "emlak danışmanı",
+                   "gayrimenkul uzmanı", "gayrimenkul değerleme uzmanı", "gayrimenkul yatırım danışmanı"]
+  en_pozisyonlar: ["real estate agent", "property consultant"]
+  basliklar: ["(?i)(\\b(?:real estate (agent|consultant|advisor|broker|sales|associate)|property (consultant|advisor|manager|agent)|leasing (consultant|agent|specialist|manager)|realtor|estate agent|letting agent)\\w*|\\b(?:gayrimenkul (danışman|uzman|satış|kiralama|portföy|yatırım|geliştirme|müdür|sorumlu|temsilci|değerleme)|emlak (danışman|uzman|sorumlu|eleman|müşavir|satış|geliştirme)|kiralama (uzman|sorumlu|danışman)|portföy danışman)\\w*)"]

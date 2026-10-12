@@ -1,0 +1,17 @@
+Alex Morgan - Real Estate Agent
+Dublin, Ireland
+
+Experience
+
+City Lettings Ltd                                              May 2014 - Oct 2019
+Letting Agent
+   - Property leasing for residential lettings; tenant relations and renewals.
+
+Prime Property Group                                            Nov 2019 - Present
+Real Estate Agent
+   - Real estate sales for new-build residential projects; viewings and negotiation.
+   - Pipeline management in the CRM (Salesforce) and property valuation support.
+
+Skills
+   - Real estate sales, property leasing, tenant relations
+   - Property valuation, CRM, negotiation

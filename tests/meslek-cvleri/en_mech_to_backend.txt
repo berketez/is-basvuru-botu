@@ -1,0 +1,22 @@
+Riley Novak - Backend Software Engineer
+Istanbul, Turkey
+
+Education
+Istanbul Technical University, BSc Mechanical Engineering         Sep 2009 - Jun 2013
+
+Experience
+
+Automotive Supplier Co.                                           Jul 2013 - Dec 2017
+Mechanical Design Engineer
+   - Designed brackets and housings in SolidWorks and CATIA; ran FEA in ANSYS.
+   - Prepared technical drawings with GD&T and managed CAD data.
+
+Logistics Software Startup                                        Jan 2018 - Present
+Backend Software Engineer
+   - Build REST and gRPC services in Python (Django, FastAPI) and Go.
+   - Design PostgreSQL schemas and Kafka-based event pipelines.
+   - Run services on Kubernetes with Docker; on-call for production.
+
+Technical Skills
+   - Python, Go, Django, FastAPI          - PostgreSQL, Kafka, Redis
+   - Docker, Kubernetes                   - SolidWorks, CATIA, AutoCAD

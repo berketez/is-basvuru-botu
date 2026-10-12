@@ -368,6 +368,8 @@ const ROL_AD = {
   madencilik: "Madencilik", muhasebe: "Muhasebe & Finans", pazarlama: "Pazarlama",
   saglik: "Sağlık", satis: "Satış", tekstil: "Tekstil", turizm: "Turizm & Otelcilik",
   uretim_kalite: "Üretim & Kalite",
+  ozel_guvenlik: "Özel Güvenlik", depo: "Depo & Forklift", sofor_kurye: "Şoför & Kurye",
+  ofis_idari: "Ofis & İdari İşler", temizlik: "Temizlik & Servis", gayrimenkul: "Gayrimenkul",
 };
 const rolAdi = a => ROL_AD[a] || a.replace(/_/g, " ");
 
@@ -661,11 +663,25 @@ async function yukle() {
   }
   // Kaynak hataları KULLANICIYA söylenir. Eskiden yalnız JSON'a yazılıyordu:
   // yarım kalan taramada "az ilan geldi" görünüyor, sebebi hiçbir yerde yazmıyordu.
-  if (VERI.hatalar && VERI.hatalar.length) {
-    const ilk = VERI.hatalar.slice(0, 3).map(h => h.split(":")[0]).join(", ");
-    uyari(`${VERI.hatalar.length} kaynak ilan veremedi (${ilk}${VERI.hatalar.length > 3 ? "…" : ""}). `
-          + `Liste eksik olabilir — genelde geçici hız sınırı, tekrar taramayı dene.`);
+  // Türk panoları ayrı anlatılır: engel varken "tekrar dene" demek yanlış öneri —
+  // ısrar engeli uzatır. Ne kadar ilanın önceki taramadan geldiği de yazılır.
+  const panoNot = [];
+  for (const [ad, d] of Object.entries(VERI.pano_durumu || {})) {
+    const isim = kaynakAdi(ad);
+    if (d.engel_kalan_saat > 0)
+      panoNot.push(`${isim} bot koruması bu ağı geçici olarak durdurdu (${d.engel_kalan_saat} saat daha `
+        + `dokunulmayacak; ısrar engeli uzatır). Önceki taramalardan ${d.onceki_taramadan} ilan kullanıldı.`);
+    else if (d.uyari)
+      panoNot.push(`${isim}: ${d.uyari}. Önceki taramalardan ${d.onceki_taramadan} ilan kullanıldı.`);
   }
+  const digerHata = (VERI.hatalar || []).filter(h => !/^(kariyernet|elemannet)/.test(h));
+  if (digerHata.length) {
+    const ilk = digerHata.slice(0, 3).map(h => h.split(":")[0]).join(", ");
+    panoNot.push(`${digerHata.length} kaynak ilan veremedi (${ilk}${digerHata.length > 3 ? "…" : ""}). `
+                 + `Liste eksik olabilir — genelde geçici hız sınırı.`);
+  }
+  // uyari() alanın içeriğini DEĞİŞTİRİR; iki ayrı çağrı ilk mesajı siler. Tek çağrı.
+  if (panoNot.length) uyari(panoNot.join(" "));
   const kaynaklar = [...new Set(VERI.ilanlar.map(x => x.kaynak))].sort();
   $("#fKaynak").innerHTML = `<option value="">Tümü (${kaynaklar.length} kaynak)</option>` +
     kaynaklar.map(k => `<option value="${kacar(k)}">${kacar(kaynakAdi(k))}</option>`).join("");
@@ -742,6 +758,10 @@ function kartHTML(x) {
     et.push(`<span class="et ${sn}">${x.yas_gun} gün önce</span>`);
   }
   if (x.maas) et.push(`<span class="et">${kacar(x.maas)}</span>`);
+  // Panodan bu taramada değil önceki bir taramada alındı (engel/bütçe ya da başka bir
+  // CV'nin sorgusu). Gizlenmez, söylenir: ilan bu arada kapanmış olabilir.
+  if (x.onceki_tarama_saat !== null && x.onceki_tarama_saat !== undefined)
+    et.push(`<span class="et" title="Bu ilan bu taramada panodan değil, önceki bir taramadan geldi; kapanmış olabilir">${Math.max(1, Math.round(x.onceki_tarama_saat))} saat önce görüldü</span>`);
   if (x.istenen_yil) et.push(`<span class="et">${x.istenen_yil}+ yıl ister</span>`);
   // Uyum hakemi yalnız gelişmiş aramada dolu gelir. NEGATİF olanı işaretlemek
   // pozitifi işaretlemekten önemli: kullanıcıya "bu ilan sana benziyor ama senin

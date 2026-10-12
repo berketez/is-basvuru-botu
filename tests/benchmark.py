@@ -26,7 +26,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import yaml
 
+import isbot.experience as _deneyim
 from isbot.cv_import import profil_uret
+
+# SABİT REFERANS TARİHİ: beklenen.yaml'daki kıdem/yıl beklentileri 14 Eyl 2026'da yazıldı.
+# "Present" yazan CV'nin süresi her ay uzar; Ekim 2026'da iOS CV'si 6 yıla ulaşıp "senior"
+# oldu ve bu takım takvim yüzünden kırmızıya döndü. Değerlendirme o tarihe sabitlenir.
+class _SabitTarih(_deneyim.date):
+    @classmethod
+    def today(cls):
+        return cls(2026, 9, 14)
+
+
+_deneyim.date = _SabitTarih
 from isbot.ghost import degerlendir
 from isbot.pipeline import idf_hesapla, tekilleştir
 from isbot.scoring import puanla

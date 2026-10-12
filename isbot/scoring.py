@@ -23,7 +23,10 @@ from .models import Job
 # engineer" kalıbından), platform junior'a "UX DESIGNER - Infrastructure"
 # ("infrastructure" kalıbından), blockchain'ciye "Crypto Analyst & TRADER" geliyordu.
 ALAN_ISARETI: dict[str, str] = {
-    "guvenlik":       r"(?i)\b(security|cyber|infosec|appsec|malware|penetration test|soc analyst)\b",
+    # "Security Guard/Officer" fiziki güvenliktir, siber değil (bkz. roller.yaml ozel_guvenlik).
+    "guvenlik":       r"(?i)\b(security(?!\s+(?:guard|patrol|staff|attendant|officer))|"
+                      r"(?:information|it|data|chief)\s+security\s+officer|cyber|"
+                      r"infosec|appsec|malware|penetration test|soc analyst)\b",
     "mobil":          r"(?i)\b(ios|android|mobile app|swiftui)\b",
     "oyun":           r"(?i)\b(game|unity|unreal|gameplay)\b",
     "gomulu":         r"(?i)\b(embedded|firmware|rtos|kernel|device driver|bsp)\b",
@@ -59,12 +62,69 @@ ALAN_ISARETI: dict[str, str] = {
 # Hiçbir mühendislik ailesine ait olmayan, ama sık karışan roller
 YABANCI_ISARET = r"(?i)\b(trader|trading desk|portfolio manager|actuary|paralegal|nurse|chef)\b"
 
+# YAZILIM GELİŞTİRME İŞARETİ — birden çok ailenin ortak alanı, bu yüzden tek aileye
+# bağlanamaz: adayın bu ailelerden HİÇBİRİ yoksa çatışmadır. ÖLÇÜLDÜ (2026-10-12): inşaat
+# mühendisine "Geliştirici / Yazılım Mimarı" ("mimar" kalıbından) ve "Senior AI Engineer /
+# Architect" ("architect" kalıbından) geliyordu. Yalnız YAZILIM YAPAN rol adları sayılır:
+# "Yazılım Satış Temsilcisi" satıştır, "Business Developer" satıştır, "Ürün Geliştirme"
+# gıdada/tekstilde Ar-Ge'dir — hiçbiri işaret değildir.
+YAZILIM_ISARETI = re.compile(
+    r"(?i)\b(software (?:engineer|developer|architect|programmer)|programmer|full[- ]?stack|"
+    r"(?:web|mobile|ios|android|backend|back[- ]end|frontend|front[- ]end|game|python|java|"
+    r"\.net|react|node(?:\.js)?|php|golang|ruby|unity) developer|"
+    r"(?:ai|ml|machine learning|llm|data) engineer|data scientist)\b|"
+    r"\b(yazılım (?:mühendis|geliştir|uzman|mimar|test|program|ekip)\w*|yazılımcı\w*|programcı\w*|"
+    r"(?:web|mobil|backend|frontend|full ?stack|oyun|uygulama) geliştirici\w*|yapay zek[aâ] mühendis\w*)")
+YAZILIM_AILELERI = frozenset({
+    "mobil", "oyun", "gomulu", "guvenlik", "platform_sre", "veri_muh", "veri_bilimi", "ml_ai",
+    "bilimsel_hpc", "blockchain", "qa", "frontend", "backend", "urun", "kontrol_otomasyon",
+    "havacilik_savunma"})
+# E-ticaret satış/pazarlama/lojistik alanıdır. ÖLÇÜLDÜ (2026-10-12): havacılık mühendisine
+# "E-Ticaret Sistem ve Otomasyon Uzmanı" ("otomasyon" kalıbından) geliyordu.
+ETICARET_ISARETI = re.compile(r"(?i)(\be-?ticaret|\be-?commerce)")
+ETICARET_AILELERI = frozenset({"satis", "pazarlama", "lojistik", "musteri_hizmetleri", "urun"})
+# İlan metninin araç/yöntem adı taşıdığı aileler (bkz. puanla, "başlık tesadüfen uymuş").
+TEKNIK_AILELER = YAZILIM_AILELERI | {"makine_tasarim", "insaat", "uretim_kalite"}
+# Birden çok ailenin ortak alanı olan işaretler: adayda bu ailelerden HİÇBİRİ yoksa çatışma.
+COK_SAHIPLI_ISARETLER = (("yazılım geliştirme", YAZILIM_ISARETI, YAZILIM_AILELERI),
+                         ("e-ticaret", ETICARET_ISARETI, ETICARET_AILELERI))
+
+# UYGULAYICI SEVİYE İLAN: operatör, usta, teknisyen, işçi... Teknisyen OLMAYAN adaya
+# gösterilmez. ÖLÇÜLDÜ (2026-10-12): bir yapay zekâ mühendisine ve bir havacılık yeni
+# mezununa "CNC CAD / CAM Operatörü", "Üretim Personeli - Savunma Sanayii" geliyordu
+# ("cad" ve "savunma" sözcükleri aile kalıbına uyduğu için); 63 CV'nin ilk 10'larında
+# teknisyen olmayanlara 16 böyle ilan vardı. Kalıp CV tarafındaki teknisyen_mi ile AYNI
+# mesleği tarif eder: kapı yalnız adayın kendisi uygulayıcı seviyede DEĞİLSE çalışır.
+# Başlıkta mühendis/uzman/şef gibi üst seviye sözcüğü de varsa ilan kapıdan geçer.
+UYGULAYICI_ILAN = re.compile(
+    r"(?i)\b(teknisyen|tekniker|technician|elektrikçi|electrician|operatör|operator|usta|"
+    r"kaynakçı|welder|machinist|assembler|işçi|production worker|"
+    r"(?:üretim|montaj|paketleme|bakım(?: onarım)?) (?:eleman|personel|işçi)|"
+    r"güvenlik görevli|özel güvenlik|bekçi|security guard|"
+    r"depo (?:eleman|işçi|personel|görevli)|warehouse (?:worker|associate|operative)|"
+    r"forklift|şoför|sürücü(?!\s*belge)|(?:truck|delivery|van|lorry) driver|kurye|courier|"
+    r"temizlik (?:görevli|personel|eleman)|cleaner|janitor|housekeep|çaycı|çay servis)\w*")
+UST_SEVIYE = re.compile(
+    r"(?i)\b(mühendis|engineer|uzman|specialist|şef|chief|sorumlu|müdür|manager|supervisor|"
+    r"lider|lead|yönetici|koordinatör|coordinator|planlama|planner)\w*")
+# KAPININ ÖTEKİ YÜZÜ: uygulayıcı seviyedeki adaya diploma/uzmanlık isteyen ilan gösterilmez.
+# ÖLÇÜLDÜ (2026-10-12): temizlik görevlisine "Gıda Mühendisi" (hijyen becerisi gıda
+# ailesini açıyordu), depo elemanına "Satın Alma Müdürü", "Procurement & Supply Chain
+# Manager" geliyordu. Şef/amir/sorumlu BİLEREK yok: deneyimli uygulayıcının bir üst
+# basamağı (güvenlik amiri, bakım şefi) gerçekten onun işidir.
+BEYAZ_YAKA_ILAN = re.compile(
+    r"(?i)\b(mühendis|engineer|müdür|manager|direktör|director|uzman|specialist|"
+    r"analist|analyst|mimar|architect|consultant|scientist)\w*")
+
 
 def _alan_catismasi(baslik: str, aileler: set[str]) -> str | None:
     """Başlık, adayda OLMAYAN bir alanın işaretini taşıyorsa o alanın adını döndürür."""
     import re as _re
     if _re.search(YABANCI_ISARET, baslik):
         return "meslek dışı"
+    for ad, kalip, sahipler in COK_SAHIPLI_ISARETLER:
+        if not (aileler & sahipler) and kalip.search(baslik):
+            return ad
     for aile, kalip in ALAN_ISARETI.items():
         if aile in aileler:
             continue
@@ -679,7 +739,10 @@ def _yetenek_kalibi(ad: str) -> re.Pattern:
     bayrak = 0 if ad in BELIRSIZ else re.IGNORECASE
     if re.fullmatch(r"[A-Za-z+#]{1,3}", ad):        # C, Go, R, C++, C#
         govde = "|".join(re.escape(t) for t in terimler)
-        return re.compile(rf"(?<![\w+#])(?:{govde})(?![\w+#])", bayrak)
+        # "&" sınırdır ("R&D" R dili değildir); "C Sınıfı İş Güvenliği Uzmanı"ndaki C de
+        # dil değildir (ölçüldü, 2026-10-12: makine mühendisi ilanı C eşleşmesi alıyordu).
+        return re.compile(rf"(?<![\w+#&])(?:{govde})(?![\w+#&])"
+                          r"(?!\s*-?\s*(?i:sınıf|class\b))", bayrak)
     # Ek/çoğul toleransı TERİM BAŞINA karar verilir: "control systems" ekli hâliyle
     # de tutmalı ama aynı yetenek altındaki kısa bir eşanlamlı ("ida", "les")
     # genişletilirse sahte eşleşme üretir.
@@ -692,6 +755,24 @@ def _yetenek_ara(metin: str, ad: str) -> bool:
     """Kelime sınırıyla arar: 'C' dili 'CI/CD' içinde eşleşmesin, 'Go' 'Google'da eşleşmesin.
     Kanonik adın yanı sıra sözlükteki eşanlamlıları da arar (bkz. _esanlamli_harita)."""
     return _yetenek_kalibi(ad).search(metin) is not None
+
+
+# Bu uzunluğun altındaki ilan metni bir tanıtım cümlesidir; yetenek yokluğundan hüküm çıkmaz.
+METIN_ESIGI = 400
+
+
+@lru_cache(maxsize=1)
+def _aile_isaretleri() -> dict[str, tuple[str, ...]]:
+    """Rol ailesi -> o mesleğin işaret becerileri (roller.yaml tetikleri)."""
+    try:
+        import yaml as _yaml
+        from .yollar import kaynak_dosya
+        roller = _yaml.safe_load(
+            kaynak_dosya("isbot", "data", "roller.yaml").read_text(encoding="utf-8")) or {}
+    except Exception:
+        return {}
+    return {ad: tuple((t.get("tetik_guclu") or []) + (t.get("tetik") or []))
+            for ad, t in roller.items()}
 
 
 def puanla(job: Job, profil: dict, idf: dict[str, float] | None = None) -> Puan:
@@ -708,6 +789,16 @@ def puanla(job: Job, profil: dict, idf: dict[str, float] | None = None) -> Puan:
             # bölünüyordu ve sonuç her zaman "(?i)" çıkıyordu — hiçbir bilgi taşımıyordu.
             p.elendi, p.eleme_sebebi = True, f"başlık yasaklı kalıba uyuyor ({m.group(0)[:40]})"
             return p
+
+    uygulayici_aday = bool((profil.get("kimlik") or {}).get("teknisyen"))
+    if (not uygulayici_aday
+            and (m := UYGULAYICI_ILAN.search(job.title)) and not UST_SEVIYE.search(job.title)):
+        p.elendi, p.eleme_sebebi = True, f"uygulayıcı seviye ilan ({m.group(0)[:30]})"
+        return p
+    if (uygulayici_aday and (m := BEYAZ_YAKA_ILAN.search(job.title))
+            and not UYGULAYICI_ILAN.search(job.title)):
+        p.elendi, p.eleme_sebebi = True, f"uzman/mühendis seviyesi ilan ({m.group(0)[:30]})"
+        return p
 
     p.kidem = _kidem_bul(job)
     max_k = sert.get("max_kidem", "mid")
@@ -757,6 +848,21 @@ def puanla(job: Job, profil: dict, idf: dict[str, float] | None = None) -> Puan:
     # ---------- 3) YETENEK ÖRTÜŞMESİ (ağırlık 45 puan) ----------
     yet = profil.get("yetenekler", {})
     guclu, zayif = yet.get("guclu", {}) or {}, yet.get("zayif", {}) or {}
+    # METNİ OLMAYAN İLAN (Türk panosu, detay sayfası henüz çekilmemiş): yetenek BAŞLIKTAN
+    # aranmaz. Başlık zaten rol puanını verdi; ondan yetenek de saymak çift sayım ve
+    # alanlar arasında haksız: "Gömülü Yazılım Mühendisi" başlığı "gömülü sistem"
+    # yeteneğini tutuyordu, "Yapay Zeka Mühendisi" hiçbir yeteneği tutmuyordu. ÖLÇÜLDÜ
+    # (2026-10-12): yapay zekâ mühendisinin kısa listesinde metinsiz gömülü ilanları 53
+    # puanla, metinsiz yapay zekâ ilanları 37 puanla duruyordu — sıra yalnız bu yüzdendi.
+    metinsiz = not job.description.strip()
+    if metinsiz:
+        # Aynı ailedeki metinsiz ilanlar eşit puan alıp keyfi sıralanmasın diye başlıkta
+        # geçen güçlü yetenek KÜÇÜK bir eşitlik bozucu olarak sayılır (yetenek başına 1
+        # puan, en çok 3). Aile ağırlıkları arasındaki fark (0,1 ağırlık = 4 puan) bunu
+        # aşar; sıralamayı aileler arasında değil, aile içinde belirler.
+        p.yetenek_puan = float(min(sum(1 for ad in guclu if _yetenek_ara(job.title, ad)), 3))
+        guclu, zayif = {}, {}
+        p.uyarilar.append("ilan metni henüz alınmadı — puan yalnız başlığa göre")
     toplanan = 0.0
     bilgilendirici = 0          # havuzda seyrek geçen, yani gerçekten ayırt edici eşleşme
     for ad, w in guclu.items():
@@ -779,7 +885,8 @@ def puanla(job: Job, profil: dict, idf: dict[str, float] | None = None) -> Puan:
             p.eksik_yetenekler.append(ad)
     p.bilgilendirici_eslesme = bilgilendirici
     # normalize: ~8 birim ağırlıklı örtüşme tam puan sayılır
-    p.yetenek_puan = min(toplanan / 8.0, 1.0) * 45
+    if not metinsiz:
+        p.yetenek_puan = min(toplanan / 8.0, 1.0) * 45
 
     # ---------- 4) TERCİH BONUSLARI (15 puan) ----------
     terc = profil.get("tercihler", {})
@@ -835,11 +942,34 @@ def puanla(job: Job, profil: dict, idf: dict[str, float] | None = None) -> Puan:
                           f"({p.bilgilendirici_eslesme} ayırt edici eşleşme)")
         return p
 
+    # BAŞLIK TESADÜFEN UYMUŞ: ilan metni, başlığının uyduğu mesleğin HİÇBİR işaretini
+    # (o ailenin tetik becerileri) taşımıyor ve adayın yeteneklerinden de hiçbiri geçmiyor.
+    # Motor bunu eskiden yalnız uyarıyordu ("büyük ihtimalle alakasız"), ilan listede
+    # kalıyordu. ÖLÇÜLDÜ (2026-10-12): havacılık mühendisine "Design Engineer (Web &
+    # Brand)" ("design engineer" kalıbından), "Engineering Manager, Automations"
+    # ("automation" kalıbından) gösteriliyordu; 63 CV'nin ilk 10'larında 42 ilan böyleydi.
+    # Yalnız "adayın yeteneği yok" demek YETMEZ: sözlüğün zayıf kaldığı mesleklerde gerçek
+    # ilanı da siliyordu (pazarlamacının "Regional Marketing Manager"ı, satışçının
+    # "Account Executive"i, İK'cının "Recruiter"ı). Mesleğin kendi işareti metindeyse ilan
+    # o mesleğindir, kalır. Metin kısaysa (tanıtım cümlesi) karar verilmez.
+    # Kural yalnız TEKNİK ailelerde çalışır. ÖLÇÜLDÜ (2026-10-12, 9.207 ilan): teknik bir
+    # ilanın metni araç/yöntem adı taşır, taşımayanlar çoğunlukla kaza eşleşmesidir
+    # ("Design Engineer" web tasarımcısı, "Research Engineer" yapay zekâ araştırmacısı);
+    # satış/pazarlama ilanlarının ise %65'i sözlükteki hiçbir işareti taşımıyor ama gerçek.
+    if (baslik_eslesti and not metinsiz and len(job.description) >= METIN_ESIGI
+            and not p.eslesen_yetenekler and en_iyi_ad in TEKNIK_AILELER):
+        isaretler = _aile_isaretleri().get(en_iyi_ad, ())
+        if isaretler and not any(_yetenek_ara(job.description, x) for x in isaretler):
+            p.elendi = True
+            p.eleme_sebebi = (f"başlık '{en_iyi_ad}' kalıbına uyuyor ama ilan metninde o "
+                              "mesleğin de senin yeteneklerinin de hiçbiri geçmiyor")
+            return p
+
     # ---------- 5) UYARILAR (elemez, bilgilendirir) ----------
     if p.eksik_yetenekler:
         p.uyarilar.append("ilanın istediği ama CV'de zayıf: " + ", ".join(p.eksik_yetenekler[:5]))
     if re.search(r"(?i)\b(fluent|native|c1|c2)\b[^.]{0,30}\b(english|ingilizce)\b", job.description):
         p.uyarilar.append("ileri seviye İngilizce şartı geçiyor")
-    if not p.eslesen_yetenekler:
+    if not p.eslesen_yetenekler and not metinsiz:
         p.uyarilar.append("CV'den hiçbir teknik yetenek eşleşmedi — büyük ihtimalle alakasız")
     return p

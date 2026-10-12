@@ -2,11 +2,13 @@
 
 DURUŞ: Bu panolarda herkese açık API yok, dolayısıyla HTML okunur. Yapılan şey
 "atlatma" değil, NAZİK TARAMA:
-  - robots.txt her koşuda okunur ve PROGRAMATİK uygulanır (izin yoksa istek yok)
-  - istek hızı elle sınırlanır (varsayılan 1 istek / 2 sn), tek iş parçacığı
-  - gerçek User-Agent + iletişim adresi
-  - 403/429 görülürse pano O KOŞUM için kapatılır ve kullanıcıya bildirilir
-Yapılmayan: CAPTCHA çözme, parmak izi sahteciliği, giriş yapmış oturum sürme.
+  - robots.txt okunur ve PROGRAMATİK uygulanır (izin yoksa istek yok)
+  - istek hızı pano başına sınırlanır ve istekler TEK sıradan geçer (bkz. pano_onbellek)
+  - sayfa önbelleği + kayan pencereli istek bütçesi: aynı sayfa yeniden istenmez
+  - 403/429 görülürse pano saatlerce rahat bırakılır, o sürede önbellek kullanılır
+Yapılmayan: CAPTCHA çözme, parmak izi sahteciliği, IP değiştirme, giriş yapmış oturum.
+kariyer.net PerimeterX (HUMAN) bot koruması arkasındadır (ölçüldü 2026-10-12);
+koruma atlatılmaz, ona takılmayacak kadar az istek atılır.
 
 Ölçüldü (11 Eyl 2026): kariyer.net robots.txt ilan sayfalarını yasaklamıyor
 (/filtre/*, /servisler/, /ozgecmis/* yasak — onlara dokunulmuyor). Düz anonim
@@ -33,7 +35,16 @@ import urllib.robotparser as rp
 from urllib.parse import urljoin, urlparse
 
 from ..models import Job
+from . import pano_onbellek as onbellek
 from .base import Kaynak, KaynakHatasi, html_temizle, iso_tarih
+
+
+class PanoEngeli(KaynakHatasi):
+    """Pano 403/429 verdi ya da soğuma süresi sürüyor. Israr engeli uzatır."""
+
+
+class ButceDoldu(KaynakHatasi):
+    """Panonun kayan pencereli istek bütçesi doldu (engel DEĞİL, kendi sınırımız)."""
 
 TR_SAAT_FARKI = 3   # Europe/Istanbul, UTC+3 (yaz saati uygulaması yok)
 
@@ -54,6 +65,14 @@ ISTEK_ARASI = 4.0          # saniye — robots.txt'de Crawl-delay yok, kendi sı
                            # (pano sınıfı kendi istek_arasi'nı koyabilir; bkz. KariyerNet)
 DETAY_UST_SINIR = 40       # koşum başına en fazla kaç detay sayfası
 ENGEL_SOGUMA_SAAT = 6      # 403/429 sonrası panoya kaç saat dokunulmayacağı
+# Önbellek ömürleri. Liste sayfası (kategori) gün içinde yavaş değişir; ilan metni
+# yayından kalkana kadar neredeyse hiç değişmez. robots.txt günde bir okunur — eskiden
+# her sorgu için ayrı okunuyordu (kariyer.net'e taramada 7 fazladan istek).
+LISTE_OMRU_SN = 12 * 3600
+DETAY_OMRU_SN = 14 * 86400
+ROBOTS_OMRU_SN = 24 * 3600
+# Engel ya da bütçe varken bu yaşa kadar BAYAT önbellek kullanılır (kullanıcıya söylenir).
+BAYAT_UST_SN = 72 * 3600
 
 # ÖRNEK SAYFA (fixture) MODU — geliştirme sırasında canlı siteye HİÇ istek atmamak için.
 #   ISBOT_ORNEK=kaydet  -> her çekilen sayfa tests/ornekler/ altına yazılır
@@ -88,6 +107,10 @@ class TrPano(Kaynak):
     ad = "tr-pano"
     KOK = ""
     istek_arasi = ISTEK_ARASI
+    # Kayan pencerede (BUTCE_PENCERE_SN) ağa çıkan en çok istek. Önbellekten okunan sayfa
+    # sayılmaz. Pano sınıfı kendi değerini koyar (bkz. KariyerNet).
+    saatlik_butce = 60
+    BUTCE_PENCERE_SN = 3600
 
     def __init__(self) -> None:
         super().__init__()
@@ -99,16 +122,33 @@ class TrPano(Kaynak):
         })
         self._robot: rp.RobotFileParser | None = None
         self._son_istek = 0.0
+        # Bu nesnenin tarama boyunca ne yaptığı — panelde "pano durumu" olarak gösterilir.
+        self.sayac = {"ag": 0, "onbellek": 0, "bayat": 0}
+        self.uyari = ""                  # engel/bütçe nedeniyle yarım kaldıysa sebebi
 
     # ---------- nezaket ----------
     def _robots(self) -> rp.RobotFileParser:
         if self._robot is None:
             p = rp.RobotFileParser()
-            try:
-                r = self.s.get(urljoin(self.KOK, "/robots.txt"), timeout=15)
-                p.parse(r.text.splitlines() if r.status_code == 200 else [])
-            except Exception:
-                p.parse([])                      # okunamadıysa boş kural: izin var say
+            url = urljoin(self.KOK, "/robots.txt")
+            kayit = onbellek.oku(url)
+            if kayit and time.time() - kayit[0] < ROBOTS_OMRU_SN:
+                p.parse(kayit[1].splitlines())
+            else:
+                try:
+                    with onbellek.pano_kilidi(self.ad):
+                        self._bekle()
+                        r = self.s.get(url, timeout=15)
+                        self._istek_bitti()
+                    if r.status_code == 200:
+                        onbellek.yaz(url, r.text)
+                    elif r.status_code in (403, 429):    # robots.txt bile engelli: pano kapalı
+                        self._damga_yaz("engel", time.time())
+                    p.parse(r.text.splitlines() if r.status_code == 200 else
+                            (kayit[1].splitlines() if kayit else []))
+                except Exception:
+                    # okunamadıysa: eski kopya varsa o, yoksa boş kural (izin var say)
+                    p.parse(kayit[1].splitlines() if kayit else [])
             self._robot = p
         return self._robot
 
@@ -148,8 +188,30 @@ class TrPano(Kaynak):
         ad = hashlib.sha256(url.encode()).hexdigest()[:16]
         return ORNEK_DIZIN / f"{self.ad}-{ad}.html"
 
-    def _sayfa(self, url: str) -> str:
-        """robots.txt + KALICI hız sınırı + engel soğuması ile tek sayfa çeker.
+    def _bekle(self) -> None:
+        """Panoya giden son istekten bu yana istek_arasi geçene kadar bekler.
+        Çağıran pano_kilidi içinde olmalı; yoksa iki iş parçacığı aynı damgayı okur."""
+        son = max(self._son_istek, self._damga_oku("son"))
+        gecen = time.time() - son
+        if gecen < self.istek_arasi:
+            time.sleep(self.istek_arasi - gecen)
+
+    def _istek_bitti(self) -> None:
+        self._son_istek = time.time()
+        self._damga_yaz("son", self._son_istek)
+        onbellek.istek_kaydet(self.ad)
+        self.sayac["ag"] += 1
+
+    def _taze_mi(self, url: str, omur_sn: float = LISTE_OMRU_SN) -> bool:
+        kayit = onbellek.oku(url)
+        return bool(kayit) and time.time() - kayit[0] < omur_sn
+
+    def butce_kalan(self) -> int:
+        return max(0, self.saatlik_butce - onbellek.istek_sayisi(self.ad, self.BUTCE_PENCERE_SN))
+
+    def _sayfa(self, url: str, omur_sn: float = LISTE_OMRU_SN) -> str:
+        """Tek sayfa: önce önbellek, sonra robots.txt + bütçe + kilitli hız sınırı +
+        engel soğuması ile ağ. Engel/bütçe varken BAYAT önbellek (≤ BAYAT_UST_SN) döner.
         ISBOT_ORNEK=oku ise ağa HİÇ çıkmaz, kayıtlı örnekten okur."""
         ornek = self._ornek_yolu(url)
         if ORNEK_MOD == "oku":
@@ -157,30 +219,50 @@ class TrPano(Kaynak):
                 raise KaynakHatasi(f"örnek yok (ISBOT_ORNEK=oku): {url}")
             return ornek.read_text(encoding="utf-8")
 
+        kayit = None if ORNEK_MOD == "kaydet" else onbellek.oku(url)
+        yas = time.time() - kayit[0] if kayit else None
+        if kayit and yas < omur_sn:
+            self.sayac["onbellek"] += 1
+            return kayit[1]
+
+        def bayat_ya_da(hata: KaynakHatasi) -> str:
+            if kayit and yas < BAYAT_UST_SN:
+                self.sayac["bayat"] += 1
+                return kayit[1]
+            raise hata
+
         kalan = self._engelli_mi()
         if kalan > 0:
-            raise KaynakHatasi(
-                f"{self.ad}: pano engel verdi, {kalan/3600:.1f} saat soğuma sürüyor")
+            return bayat_ya_da(PanoEngeli(
+                f"{self.ad}: pano bot korumasıyla engel verdi, {kalan/3600:.1f} saat "
+                f"dokunulmayacak"))
         if not self._izinli(url):
             raise KaynakHatasi(f"robots.txt izin vermiyor: {url}")
-        son = max(self._son_istek, self._damga_oku("son"))
-        gecen = time.time() - son
-        if gecen < self.istek_arasi:
-            time.sleep(self.istek_arasi - gecen)
-        r = self.s.get(url, timeout=30, allow_redirects=True)
-        self._son_istek = time.time()
-        self._damga_yaz("son", self._son_istek)
-        if r.status_code in (403, 429):
-            # Panoyu SAATLERCE rahat bırak. Israrla denemek engeli uzatır.
-            self._damga_yaz("engel", time.time())
-            raise KaynakHatasi(
-                f"{r.status_code} — {self.ad} engel verdi, {ENGEL_SOGUMA_SAAT} saat "
-                f"dokunulmayacak ({url})")
+        if self.butce_kalan() <= 0:
+            return bayat_ya_da(ButceDoldu(
+                f"{self.ad}: saatlik istek sınırı ({self.saatlik_butce}) doldu"))
+        with onbellek.pano_kilidi(self.ad):
+            # Kilidi beklerken başka iş parçacığı engel yemiş ya da bütçeyi bitirmiş olabilir.
+            if self._engelli_mi() > 0:
+                return bayat_ya_da(PanoEngeli(f"{self.ad}: pano engel verdi"))
+            if self.butce_kalan() <= 0:
+                return bayat_ya_da(ButceDoldu(
+                    f"{self.ad}: saatlik istek sınırı ({self.saatlik_butce}) doldu"))
+            self._bekle()
+            r = self.s.get(url, timeout=30, allow_redirects=True)
+            self._istek_bitti()
+            if r.status_code in (403, 429):
+                # Panoyu SAATLERCE rahat bırak. Israrla denemek engeli uzatır.
+                self._damga_yaz("engel", time.time())
+                return bayat_ya_da(PanoEngeli(
+                    f"{r.status_code} — {self.ad} bot korumasıyla engel verdi, "
+                    f"{ENGEL_SOGUMA_SAAT} saat dokunulmayacak"))
         if r.status_code >= 400:
             raise KaynakHatasi(f"HTTP {r.status_code}: {url}")
         if ORNEK_MOD == "kaydet":
             ornek.parent.mkdir(parents=True, exist_ok=True)
             ornek.write_text(r.text, encoding="utf-8")
+        onbellek.yaz(url, r.text)
         return r.text
 
     # ---------- alt sınıfların doldurduğu ----------
@@ -196,14 +278,48 @@ class TrPano(Kaynak):
 
     # ---------- akış ----------
     def cek(self, sorgu: str = "", etiket: str = "") -> list[Job]:
-        ilanlar: list[Job] = []
-        for u in self.liste_urlleri(sorgu):
+        return self.cek_coklu([sorgu])
+
+    def cek_coklu(self, sorgular: list[str], ilerle=None, ayrilan: int = 0) -> list[Job]:
+        """Bütün sorguların liste sayfalarını ÖNCELİK SIRASIYLA çeker: önce her sorgunun
+        ilk (ülke geneli) sayfası, sonra ikincileri... Bütçe ya da engel taramayı yarıda
+        keserse en değerli sayfalar alınmış olur. Eskiden her sorgu ayrı iş parçacığında
+        tüm sayfalarını çekiyordu; bütçe ilk sorgulara gidiyor, sonrakiler hiç sayfa
+        alamıyordu. Yarıda kalırsa toplanan ilanlar döner, sebep self.uyari'ya yazılır.
+
+        ayrilan: bütçeden ilan metinlerine (ikinci aşama) bırakılacak istek sayısı. Liste
+        sayfaları bunu tüketirse kısa listedeki ilanların hiçbirinin metni alınamaz."""
+        kuyruklar = []
+        for sorgu in sorgular:
             try:
-                ilanlar += self.kartlari_ayikla(self._sayfa(u))
-            except KaynakHatasi:
-                raise                            # 403/429: tüm panoyu bırak
+                kuyruklar.append(self.liste_urlleri(sorgu))
+            except (PanoEngeli, ButceDoldu) as e:
+                self.uyari = str(e)
+                kuyruklar.append([])
+        sira: list[str] = []
+        for i in range(max((len(k) for k in kuyruklar), default=0)):
+            for k in kuyruklar:
+                if i < len(k) and k[i] not in sira:
+                    sira.append(k[i])
+        ilanlar: list[Job] = []
+        for u in sira:
+            if ayrilan and self.butce_kalan() <= ayrilan and not self._taze_mi(u):
+                self.uyari = self.uyari or (
+                    f"{self.ad}: istek bütçesinin kalanı ilan metinlerine ayrıldı; "
+                    "kalan liste sayfaları sonraki taramada")
+                continue                         # önbellekte tazesi olanlar yine okunur
+            try:
+                kartlar = self.kartlari_ayikla(self._sayfa(u, LISTE_OMRU_SN))
+            except (PanoEngeli, ButceDoldu) as e:
+                # Ağa çıkılmadı (engel/bütçe kontrolü istekten ÖNCE). Devam edilir:
+                # sıradaki sayfaların önbellekte kopyası olabilir.
+                self.uyari = str(e)
+                continue
             except Exception:
                 continue                         # tek sayfa bozuksa diğerine geç
+            ilanlar += kartlar
+            if ilerle:
+                ilerle(len(kartlar))
         # tekrarları at (aynı ilan birden çok kategoride görünebilir)
         gorulen, tekil = set(), []
         for j in ilanlar:
@@ -221,10 +337,24 @@ class TrPano(Kaynak):
         geçenler). Dönüş: başarıyla zenginleştirilen ilan sayısı."""
         n = 0
         self.detay_hatalari: list[str] = []
+        ard_ag_hatasi = 0
         for j in ilanlar[:ust_sinir]:
             try:
                 self.detay_zenginlestir(j)
                 n += 1
+                ard_ag_hatasi = 0
+            except (PanoEngeli, ButceDoldu) as e:
+                self.uyari = str(e)              # önbellekte metni olanlar yine okunur
+                continue
+            except OSError as e:
+                # Bağlantı yok (requests hataları OSError'dur). Art arda 3 kez olursa
+                # pano ulaşılamıyor demektir; her deneme istek_arasi bekleyip dakikalar
+                # yiyordu.
+                self.detay_hatalari.append(f"{j.url[:60]}: {type(e).__name__}")
+                ard_ag_hatasi += 1
+                if ard_ag_hatasi >= 3:
+                    self.uyari = self.uyari or f"{self.ad}: bağlantı kurulamadı, ilan metinleri alınamadı"
+                    break
             except Exception as e:
                 # Sessizce yutmak yanıltıcıydı: "1 detay çekildi" görülüp sebebi
                 # bilinmiyordu. Hatalar toplanıp çağırana bildiriliyor.
@@ -246,6 +376,12 @@ class KariyerNet(TrPano):
     # 30 detay). Engelin hıza mı sayıya mı bağlı olduğu bilinmiyor; Berke'nin kararıyla
     # önce yavaşlatıldı. Tarama süresi bu panoda ~8 dakikaya çıkabilir.
     istek_arasi = 8.0
+    # Saatte en çok 24 istek (önbellekten okunan sayılmaz). ÖLÇÜLDÜ: engel, dakikalar
+    # içinde ~30 (8 sn arayla) ve ~45 (4 sn arayla) istekten sonra geldi. Engelin süre mi
+    # sayı mı olduğu bilinmiyor; sınır bilinen en düşük eşiğin altında tutuldu. Normal bir
+    # tarama (6 sorgu × ülke geneli + sektör sayfası + 8-10 ilan metni) buna sığar;
+    # aynı saat içindeki ikinci tarama çoğunlukla önbellekten beslenir.
+    saatlik_butce = 24
     KART = re.compile(r'<a[^>]+href="(/is-ilani/[^"]+)"[^>]*>(.*?)</a>', re.S)
 
     # ÖNEMLİ BULGU: "/is-ilanlari/bilgi-teknolojileri" kategori filtresi DEĞİL —
@@ -267,7 +403,9 @@ class KariyerNet(TrPano):
         return re.sub(r"\s+", "+", t).strip("+")
 
     HARITA_ONBELLEK = "kariyernet-sitemap.json"
-    HARITA_OMUR_GUN = 7
+    # 14 gün: tazeleme 10 istek (dizin + 9 alt harita) ve saatlik bütçenin yarısına yakın.
+    # Kategori yolları (pozisyon/sektör/il) haftalar içinde pek değişmez.
+    HARITA_OMUR_GUN = 14
 
     def _kanonik_yollar(self) -> list[str]:
         """Sitenin sitemap'inde İLAN EDİLEN gerçek kategori yollarını döndürür.
@@ -281,18 +419,24 @@ class KariyerNet(TrPano):
         import json as _json
         import time as _time
         yol = veri_dosya("data", self.HARITA_ONBELLEK)
-        if yol.exists() and (_time.time() - yol.stat().st_mtime) < self.HARITA_OMUR_GUN * 86400:
+        eski: list[str] = []
+        if yol.exists():
             try:
-                return _json.loads(yol.read_text(encoding="utf-8"))
+                eski = _json.loads(yol.read_text(encoding="utf-8"))
             except Exception:
-                pass
+                eski = []
+            if eski and (_time.time() - yol.stat().st_mtime) < self.HARITA_OMUR_GUN * 86400:
+                return eski
         toplam: list[str] = []
         firmalar: list[str] = []
         try:
-            idx = self._sayfa(urljoin(self.KOK, "/sitemaps/"))
+            idx = self._sayfa(urljoin(self.KOK, "/sitemaps/"), self.HARITA_OMUR_GUN * 86400)
             for alt in re.findall(r"<loc>(.*?)</loc>", idx):
                 try:
-                    x = self._sayfa(alt)
+                    x = self._sayfa(alt, self.HARITA_OMUR_GUN * 86400)
+                except (PanoEngeli, ButceDoldu):
+                    # Yarım harita eksik kategori demek; eskisi varsa onunla devam.
+                    return eski
                 except Exception:
                     continue
                 toplam += re.findall(
@@ -305,14 +449,16 @@ class KariyerNet(TrPano):
                 firmalar += re.findall(
                     rf"<loc>{re.escape(self.KOK)}(/firma-profil/[^<]+)</loc>", x)
         except Exception:
-            return []
+            # Tazelenemedi (engel, bütçe, ağ). ESKİ kopya varsa o kullanılır: yoksa
+            # liste_urlleri uydurma dilime düşer ve site genel listeyi (alakasız) döndürür.
+            return eski
         if firmalar:
             veri_dosya("data", self.FIRMA_ONBELLEK).write_text(
                 _json.dumps(sorted(set(firmalar))), encoding="utf-8")
         toplam = sorted(set(toplam))
         if toplam:
             yol.write_text(_json.dumps(toplam), encoding="utf-8")
-        return toplam
+        return toplam or eski
 
     FIRMA_ONBELLEK = "kariyernet-firmalar.json"
 
@@ -426,7 +572,10 @@ class KariyerNet(TrPano):
             # geliyordu ("savunma sanayi" -> "boru+sanayi", ortak sözcük: sanayi).
             for skor, y in puanli:
                 if y in sektorler and y not in secilen and skor >= en_iyi * 0.42:
-                    secilen.append(y)
+                    # İKİNCİ SIRAYA: istek bütçesi sınırlı ve sayfalar sırayla çekiliyor
+                    # (bkz. cek_coklu). Sektör sayfası tüm firmaları verdiği için il
+                    # sayfalarından değerli; sona eklenince bütçe ona hiç yetmiyordu.
+                    secilen.insert(1 if secilen else 0, y)
                     break
         return [urljoin(self.KOK, y) for y in secilen]
 
@@ -594,7 +743,7 @@ class KariyerNet(TrPano):
         return ilanlar
 
     def detay_zenginlestir(self, job: Job) -> None:
-        h = self._sayfa(job.url)
+        h = self._sayfa(job.url, DETAY_OMRU_SN)
         # ilan gövdesi: sayfadaki en uzun metin bloğu (sınıf adları değişken)
         parcalar = re.findall(r'<(?:div|section|article)[^>]*>(.*?)</(?:div|section|article)>',
                               h, re.S)
@@ -617,6 +766,7 @@ class ElemanNet(TrPano):
     """
     ad = "elemannet"
     KOK = "https://www.eleman.net"
+    saatlik_butce = 40               # Cloudflare arkasında; 4 sn arayla, tek liste sayfası
     # DİKKAT: eleman.net href'te MUTLAK URL kullanıyor; göreli yol beklersen 0 bulursun.
     # title="" niteliğinde ilan başlığı da var -> liste aşamasında başlık alınır,
     # böylece gereksiz detay isteği atılmaz.
@@ -643,7 +793,7 @@ class ElemanNet(TrPano):
         return ilanlar
 
     def detay_zenginlestir(self, job: Job) -> None:
-        h = self._sayfa(job.url)
+        h = self._sayfa(job.url, DETAY_OMRU_SN)
         for m in self.LD.finditer(h):
             try:
                 d = json.loads(m.group(1))

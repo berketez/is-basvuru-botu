@@ -69,10 +69,12 @@ UYUMSUZ_MADDELER: list[tuple[str, str, frozenset[str], bool]] = [
      frozenset({"uretim_kalite", "uretim_operator"}), True),
     ("maintenance and repair technician", "bakım onarım teknisyenliği", frozenset({"bakim_teknik"}),
      True),
-    ("warehouse and logistics", "depo ve sevkiyat", frozenset({"lojistik"}), False),
+    ("warehouse and logistics", "depo ve sevkiyat",
+     frozenset({"lojistik", "depo", "sofor_kurye"}), False),
     ("sales and marketing", "satış ve pazarlama", frozenset({"satis", "pazarlama"}), False),
     ("human resources and payroll", "insan kaynakları ve özlük işleri", frozenset({"ik"}), False),
-    ("cleaning and administrative support", "temizlik ve idari işler", frozenset(), False),
+    ("cleaning and administrative support", "temizlik ve idari işler",
+     frozenset({"temizlik", "ofis_idari"}), False),
 ]
 
 
@@ -104,6 +106,10 @@ MUHENDISLIK_AILELERI = frozenset({
 UYGULAYICI_ISI = {
     "bakim_teknik": "Kurulum, bakım, arıza giderme ve saha işi.",
     "uretim_operator": "Üretim hattı, tezgah, kaynak, montaj ve paketleme işi.",
+    "ozel_guvenlik": "Güvenlik görevliliği, devriye, giriş kontrol ve koruma işi.",
+    "depo": "Depo, mal kabul, sipariş toplama, yükleme ve forklift işi.",
+    "sofor_kurye": "Şoförlük, sevkiyat, dağıtım ve kurye işi.",
+    "temizlik": "Temizlik, hijyen, çay ve ikram servisi işi.",
 }
 
 MODEL_DOSYA = "model_int8.onnx"
@@ -317,5 +323,11 @@ def _okunur(aile: str) -> str:
         "tekstil": "tekstil ve hazır giyim, textiles and apparel",
         "turizm": "turizm ve otelcilik, tourism and hospitality",
         "uretim_kalite": "üretim ve kalite, manufacturing and quality",
+        "ozel_guvenlik": "özel güvenlik ve koruma, security guard services",
+        "depo": "depo ve forklift operasyonu, warehouse operations",
+        "sofor_kurye": "şoförlük, dağıtım ve kurye, driving and delivery",
+        "ofis_idari": "ofis yönetimi ve idari işler, office administration",
+        "temizlik": "temizlik ve ikram servisi, cleaning services",
+        "gayrimenkul": "gayrimenkul danışmanlığı, real estate",
     }
     return ADLAR.get(aile, re.sub(r"_", " ", aile))

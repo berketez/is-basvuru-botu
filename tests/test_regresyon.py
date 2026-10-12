@@ -831,7 +831,10 @@ def t41_turkce_unvan_kapsami():
         return [ad for ad, t in roller.items() if any(re.search(k, baslik) for k in t["basliklar"])]
 
     for baslik, beklenen in [("MAĞAZA SATIŞ ELEMANI", "satis"), ("Tıbbi Mümessil", "satis"),
-                             ("Depo Elemanı", "lojistik"), ("Dış Ticaret Uzmanı", "lojistik"),
+                             # 2026-10-12: depo UYGULAYICISI kendi ailesine (depo) taşındı;
+                             # depo sorumlusu/şefi beyaz yaka lojistikte kaldı.
+                             ("Depo Elemanı", "depo"), ("Depo Sorumlusu", "lojistik"),
+                             ("Dış Ticaret Uzmanı", "lojistik"),
                              ("Kalite Mühendisi", "uretim_kalite"),
                              ("Üretim Planlama Mühendisi", "uretim_kalite"),
                              ("Teknik Ofis Mühendisi", "insaat"), ("Grafik Tasarımcı", "pazarlama"),
@@ -1109,7 +1112,438 @@ def t51_kariyernet_yavas():
     sina("kariyer.net en az 8 sn arayla", True, KariyerNet.istek_arasi >= 8.0)
     sina("eleman.net 4 sn", 4.0, ElemanNet.istek_arasi)
     sina("bekleme sınıfın değerini kullanır", True,
-         "self.istek_arasi" in inspect.getsource(TrPano._sayfa))
+         "self.istek_arasi" in inspect.getsource(TrPano._bekle))
+
+
+# ================================================================ 2026-10-12
+# Bir kullanıcının taraması kariyer.net engelini tetikledi, ikinci CV'nin taraması o
+# panoya hiç ulaşamadı; yapay zekâ mühendisinin kısa listesi dört yıl önce bıraktığı
+# gömülü alanla doldu; mühendise CNC operatörü ilanı geldi. Testler bu turun düzeltmeleri.
+
+# ---------------------------------------------------------------- 52
+# HATA: roller.yaml'daki 10 tetik sözlükte kanonik ad olarak YOKTU, hiç çalışmıyordu
+# (mobilin tüm tanımlayıcıları: SwiftUI/UIKit/Flutter/React Native; veri biliminin
+# "statistical analysis"i; QA'nın Selenium/pytest/k6'sı; gömülünün Assembly'si).
+def t52_tetikler_sozlukte():
+    import yaml as _y
+    from isbot.yollar import kaynak_dosya
+    soz = _y.safe_load(kaynak_dosya("isbot", "data", "skills.yaml").read_text(encoding="utf-8"))
+    kanonik = {k for kat in soz.values() for k in kat}
+    roller = _y.safe_load(kaynak_dosya("isbot", "data", "roller.yaml").read_text(encoding="utf-8"))
+    olu = [(ad, x) for ad, t in roller.items()
+           for x in (t.get("tetik_guclu") or []) + (t.get("tetik") or []) if x not in kanonik]
+    sina("52. her rol tetiği sözlükte kanonik ad", [], olu)
+
+
+# ---------------------------------------------------------------- 53
+# HATA: "WORK & PROJECT EXPERIENCE" başlığı ve harf aralıklı başlıklar ("E D U C AT I O N")
+# tanınmıyordu; deneyim CV genelinden toplandı, lisans yılları sayıldı, yeni mezun
+# "6 yıl, senior" oldu. "R&D" satırı R dilini güçlü yetenek yaptı.
+def t53_yeni_mezun_bicimi():
+    from isbot.cv_import import yetenek_tespit
+    from isbot.experience import _aralikli_birlestir
+    cv = ("                 KAI MORROW\n"
+          "      A ST RO NAU T I CA L E N G I N E E R I N G G R A D UAT E\n\n"
+          "E D U C AT I O N\n"
+          "Istanbul Technical University                         2020 – 2026\n"
+          "B.Sc. in Astronautical Engineering | GPA: 3.10 / 4.00\n\n"
+          "WORK & PROJECT EXPERIENCE\n"
+          "Defense Systems Company — Propulsion Engineering Intern         2025\n"
+          "  Investigated cavitation in liquid rocket engine feed systems.\n"
+          "Optics R&D Ltd — R&D / Engineering Intern                        2023\n"
+          "  Designed EMI-protected air duct structures.\n"
+          "Rocket Technologies Team — Aerodynamics Unit Leader              2022 – 2025\n"
+          "  Competed in the TEKNOFEST Rocket Competition.\n\n"
+          "L A N G UAG E S\nEnglish – Fluent\n")
+    sina("53a. harf aralıklı başlık birleşir", "EDUCATION", _aralikli_birlestir("E D U C AT I O N"))
+    sina("53b. sözcük arası korunur", "İŞ DENEYİMİ", _aralikli_birlestir("İ Ş  D E N E Y İ M İ"))
+    sina("53c. noktalamalı satır dokunulmaz", "C, C++, R", _aralikli_birlestir("C, C++, R"))
+    d = tahmin(cv)
+    sina("53d. 'WORK & PROJECT EXPERIENCE' bölümü bulunur", "deneyim bölümündeki sürelerin toplamı",
+         d.kaynak)
+    sina("53e. lisans yılları ve yarışma takımı profesyonel sayılmaz", 0.0, d.profesyonel_yil)
+    sina("53f. kıdem junior", "junior", d.kidem)
+    g, z = yetenek_tespit(cv)
+    sina("53g. 'R&D' R dili değildir", False, "R" in g or "R" in z)
+    # bölüm bulunamazsa bile eğitim satırı deneyim sayılmaz
+    d2 = tahmin("Ali Veli\nIstanbul Technical University   2020 – 2026\nB.Sc. Physics\n")
+    sina("53h. bölümsüz CV'de eğitim yılı deneyim değil", 0.0, d2.profesyonel_yil)
+
+
+# ---------------------------------------------------------------- 54
+# HATA: CV'deki her geçiş eşit sayılıyordu; meslek değiştirmiş adayın ESKİ alanı bugünkü
+# alanı kadar ağır basıyor, Türkçe sorgu kontenjanından pay alıyordu (gömülüden ML'e geçen
+# adaya "gömülü yazılım mühendisi", muhasebeden İK'ya geçene "muhasebe elemanı" aranıyordu).
+def t54_eski_alan_sorgu_almaz():
+    from isbot.cv_import import profil_uret
+    import tempfile, os
+    cv = ("Morgan Hale - Machine Learning Engineer\nIzmir, Turkey\n\nExperience\n\n"
+          "Edge Devices Ltd                                   Jul 2012 - Aug 2016\n"
+          "Embedded Software Engineer\n"
+          "   - Developed firmware in C for STM32 microcontrollers on FreeRTOS.\n"
+          "   - Debugged embedded systems with JTAG.\n\n"
+          "Vision Analytics Inc                               Sep 2019 - Present\n"
+          "Machine Learning Engineer\n"
+          "   - Train and deploy PyTorch models; built a RAG pipeline with LLM fine-tuning.\n\n"
+          "Technical Skills\n   - Python, PyTorch, LLM, RAG\n   - C, embedded systems, STM32\n")
+    with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8") as f:
+        f.write(cv * 2)
+    try:
+        p = profil_uret(f.name)
+    finally:
+        os.unlink(f.name)
+    r = p["rol_aileleri"]
+    sina("54a. güncel alan ilk sırada", "ml_ai", next(iter(r)))
+    sina("54b. eski alan açık kalır (kişi o işi yapabilir)", True, "gomulu" in r)
+    sina("54c. eski alanın ağırlığı güncelin altında", True,
+         r["gomulu"]["agirlik"] < r["ml_ai"]["agirlik"])
+    sina("54d. eski alana Türkçe sorgu harcanmaz", [],
+         [q for q in p["tr_arama_sorgulari"] if "gömülü" in q])
+    sina("54e. güncellik profilde saklanır (CV'siz tazeleme için)", True,
+         p["yetenekler"]["_guncellik"].get("STM32", 1.0) < 0.75)
+
+
+# ---------------------------------------------------------------- 55
+# HATA: "C Sınıfı İş Güvenliği Uzmanı" ilanı C dili eşleşmesi alıyordu.
+def t55_tek_harfli_dil_sinirlari():
+    sina("55a. C Sınıfı C dili değil", False,
+         _yetenek_ara("Makine Mühendisi/ C Sınıfı İş Güvenliği Uzmanı", "C"))
+    sina("55b. C/C++ C dilidir", True, _yetenek_ara("C/C++ developer", "C"))
+    sina("55c. R&D R dili değil", False, _yetenek_ara("R&D Engineer", "R"))
+    sina("55d. 'R, Python' R dilidir", True, _yetenek_ara("Skills: R, Python", "R"))
+
+
+def _profil(aileler, teknisyen=False, guclu=None):
+    import yaml as _y
+    from isbot.yollar import kaynak_dosya
+    roller = _y.safe_load(kaynak_dosya("isbot", "data", "roller.yaml").read_text(encoding="utf-8"))
+    return {"kimlik": {"teknisyen": teknisyen},
+            "sert_filtreler": {"max_kidem": "senior", "zorunlu_konum_kosulu": ["turkey"]},
+            "rol_aileleri": {a: {"agirlik": 1.0, "basliklar": roller[a]["basliklar"]}
+                             for a in aileler},
+            "yetenekler": {"guclu": guclu or {}, "zayif": {}}}
+
+
+# ---------------------------------------------------------------- 56
+# HATA: mühendis adayına "CNC CAD / CAM Operatörü" ("cad" kalıbından) ve "Üretim
+# Personeli - Savunma Sanayii" ("savunma" kalıbından) geliyordu.
+def t56_uygulayici_seviye_kapisi():
+    from isbot.scoring import puanla
+    muh = _profil(["makine_tasarim", "havacilik_savunma"])
+    for baslik in ("CNC CAD / CAM Operatörü", "Üretim Personeli - Savunma Sanayii",
+                   "Uçak Bakım Teknisyeni"):
+        p = puanla(ilan(title=baslik, locations=["Ankara, Türkiye"]), muh)
+        sina(f"56. mühendise gösterilmez: {baslik}", True,
+             p.elendi and p.eleme_sebebi.startswith("uygulayıcı seviye"))
+    p = puanla(ilan(title="Makine Bakım Teknisyeni Şefi", locations=["Bursa, Türkiye"]),
+               _profil(["makine_tasarim"]))
+    sina("56b. üst seviye sözcüğü taşıyan geçer", False,
+         p.eleme_sebebi.startswith("uygulayıcı seviye"))
+    tek = _profil(["uretim_operator"], teknisyen=True)
+    p = puanla(ilan(title="CNC Torna Operatörü", locations=["Bursa, Türkiye"]), tek)
+    sina("56c. uygulayıcı adaya kendi ilanı gösterilir", False,
+         p.eleme_sebebi.startswith("uygulayıcı seviye"))
+
+
+# ---------------------------------------------------------------- 57
+# HATA: inşaat mühendisine "Geliştirici / Yazılım Mimarı" ("mimar"), "AI Engineer /
+# Architect" ("architect"); havacılık mühendisine "E-Ticaret ... Otomasyon Uzmanı" geliyordu.
+def t57_coklu_sahipli_alan_isareti():
+    from isbot.scoring import _alan_catismasi
+    sina("57a. yazılım rolü yazılım dışı adaya çatışma", "yazılım geliştirme",
+         _alan_catismasi("Geliştirici / Yazılım Mimarı", {"insaat"}))
+    sina("57b. AI mühendisi inşaatçıya çatışma", "yazılım geliştirme",
+         _alan_catismasi("Senior Independent AI Engineer / Architect", {"insaat"}))
+    sina("57c. yazılım SATIŞI satıştır", None,
+         _alan_catismasi("Yazılım Satış Temsilcisi", {"satis"}))
+    sina("57d. ürün geliştirme yazılım değildir", None,
+         _alan_catismasi("Ürün Geliştirme Uzmanı", {"gida_tarim"}))
+    sina("57e. yazılım ailesi olan adaya çatışma yok", None,
+         _alan_catismasi("Yazılım Mimarı", {"backend"}))
+    sina("57f. e-ticaret mühendise çatışma", "e-ticaret",
+         _alan_catismasi("E-Ticaret Sistem ve Otomasyon Uzmanı", {"kontrol_otomasyon"}))
+    sina("57g. e-ticaret depocuya çatışma değil", None,
+         _alan_catismasi("E-Ticaret Depo Personeli", {"lojistik"}))
+    sina("57h. Security Guard siber işaret değil", None,
+         _alan_catismasi("Security Guard", {"satis"}))
+
+
+# ---------------------------------------------------------------- 58
+# HATA: metni olan ve başlığı aile kalıbına TESADÜFEN uyan ilan listede kalıyordu:
+# havacılık mühendisine "Design Engineer (Web & Brand)". Kural yalnız teknik ailelerde:
+# satış/pazarlama ilanlarının %65'i sözlük işareti taşımıyor ama gerçek.
+def t58_baslik_tesadufen_uymus():
+    from isbot.scoring import puanla
+    muh = _profil(["makine_tasarim"], guclu={"MATLAB": 1.0, "CAD": 1.0, "propulsion": 1.0})
+    web = ("We are looking for a design engineer to craft our marketing website, brand "
+           "campaigns and landing pages. You will prototype interactions in Figma and ship "
+           "them in React with our web team. ") * 4
+    p = puanla(ilan(title="Design Engineer (Web & Brand)", locations=["İstanbul, Türkiye"],
+                    description=web), muh)
+    sina("58a. tesadüfi teknik eşleşme elenir", True,
+         p.elendi and "hiçbiri geçmiyor" in p.eleme_sebebi)
+    mak = web.replace("Figma", "SolidWorks")
+    p = puanla(ilan(title="Design Engineer", locations=["İstanbul, Türkiye"], description=mak), muh)
+    sina("58b. mesleğin işareti varsa kalır", False, p.elendi)
+    sat = _profil(["satis"], guclu={"Field Sales": 1.0, "CRM": 1.0, "Negotiation": 1.0})
+    ae = ("Own the full sales cycle for mid-market customers across the region, from "
+          "prospecting to close, and grow long-term relationships. ") * 5
+    p = puanla(ilan(title="Account Executive, Mid Market", locations=["İstanbul, Türkiye"],
+                    description=ae), sat)
+    sina("58c. satış ilanı işaretsiz de kalır (teknik aile değil)", False, p.elendi)
+
+
+# ---------------------------------------------------------------- 59
+# HATA: metinsiz Türk pano ilanında yetenek BAŞLIKTAN aranıyordu: "Gömülü Yazılım
+# Mühendisi" gömülü yeteneği tutup 53 puan, "Yapay Zeka Mühendisi" hiçbir şey tutmayıp
+# 37 puan alıyordu — sıra yalnız buydu.
+def t59_metinsiz_ilan_baslik_yetenegi():
+    from isbot.scoring import puanla
+    pr = _profil(["gomulu", "ml_ai"], guclu={"embedded systems": 1.0, "PyTorch": 1.0})
+    pr["rol_aileleri"]["gomulu"]["agirlik"] = 0.7
+    g = puanla(ilan(title="Gömülü Yazılım Mühendisi", locations=["İstanbul, Türkiye"]), pr)
+    y = puanla(ilan(title="Yapay Zeka Mühendisi", locations=["İstanbul, Türkiye"]), pr)
+    sina("59a. metinsiz ilanda yetenek puanı en çok eşitlik bozucu kadar", True,
+         g.yetenek_puan <= 3)
+    sina("59b. sıra aile ağırlığından gelir", True, y.toplam > g.toplam)
+    sina("59c. kullanıcıya söylenir", True,
+         any("metni henüz alınmadı" in u for u in g.uyarilar))
+
+
+# ---------------------------------------------------------------- 60
+# HATA (kök): kariyer.net PerimeterX bot koruması arkasında. Her sorgu ayrı iş
+# parçacığında koşuyordu ve 8 sn sayacı kilitsizdi; aynı sayfa her taramada yeniden
+# isteniyordu; bütçe yoktu. Sahte bir panoyla (ağ yok) önbellek/bütçe/engel/sıra sınanır.
+def _sahte_pano_ortami(butce=100, istek_arasi=0.0, yanit=200):
+    import os, tempfile, time as _t
+    import isbot.sources.tr_panolar as tp
+    eski_dizin = os.getcwd()
+    gecici = tempfile.mkdtemp()
+    os.chdir(gecici)
+    istekler: list[tuple[float, str]] = []
+
+    class Yanit:
+        def __init__(self, url, kod):
+            self.status_code, self.text = kod, ("" if url.endswith("robots.txt") else url)
+
+    class Sahte(tp.TrPano):
+        ad = "sahte"
+        KOK = "https://ornek.test"
+
+        def liste_urlleri(self, sorgu):
+            return [f"{self.KOK}/{sorgu}/{i}" for i in range(3)]
+
+        def kartlari_ayikla(self, html):
+            return [Job(source="sahte", company="A", board_token="s", native_id=html,
+                        title="Mühendis", url=html)]
+
+    Sahte.saatlik_butce = butce
+    Sahte.istek_arasi = istek_arasi
+
+    def get(self, url, **kw):
+        istekler.append((_t.time(), url))
+        return Yanit(url, yanit if not url.endswith("robots.txt") else 200)
+
+    def bitir():
+        os.chdir(eski_dizin)
+    return tp, Sahte, istekler, get, bitir
+
+
+def t60_pano_onbellek():
+    import requests
+    tp, Sahte, istekler, get, bitir = _sahte_pano_ortami()
+    gercek = requests.Session.get
+    requests.Session.get = get
+    try:
+        a = Sahte().cek_coklu(["x", "y"])
+        n1 = len(istekler)
+        b = Sahte().cek_coklu(["x", "y"])
+        sina("60a. ilk tarama 6 sayfa + robots çeker", 7, n1)
+        sina("60b. ikinci tarama ağa ÇIKMAZ (önbellek)", n1, len(istekler))
+        sina("60c. ikinci tarama aynı ilanları verir", len(a), len(b))
+        sira = [u for _, u in istekler if not u.endswith("robots.txt")]
+        sina("60d. öncelik sırası: her sorgunun ilk sayfası önce",
+             ["https://ornek.test/x/0", "https://ornek.test/y/0"], sira[:2])
+    finally:
+        requests.Session.get = gercek
+        bitir()
+
+
+def t61_pano_butce():
+    import requests
+    tp, Sahte, istekler, get, bitir = _sahte_pano_ortami(butce=3)
+    gercek = requests.Session.get
+    requests.Session.get = get
+    try:
+        k = Sahte()
+        ilanlar = k.cek_coklu(["x", "y"])
+        sina("61a. bütçe kadar istek atılır (robots dahil)", 3, len(istekler))
+        sina("61b. yarıda kalan tarama toplananı döndürür", 2, len(ilanlar))
+        sina("61c. sebep kullanıcıya yazılır", True, "istek sınırı" in k.uyari)
+        k2 = Sahte()
+        k2.cek_coklu(["x"])
+        sina("61d. bütçe süreçler/nesneler arası geçerli", 3, len(istekler))
+        sina("61e. önbellekteki sayfa bütçe dolsa da okunur", 1, k2.sayac["onbellek"])
+    finally:
+        requests.Session.get = gercek
+        bitir()
+
+
+def t62_pano_engel():
+    import requests
+    tp, Sahte, istekler, get, bitir = _sahte_pano_ortami()
+    gercek = requests.Session.get
+    requests.Session.get = get
+    try:
+        Sahte().cek_coklu(["x"])                       # önbelleğe 3 sayfa
+        tp2, Sahte2, ist2, get403, _ = None, None, None, None, None
+        def get403(self, url, **kw):
+            istekler.append((0, url))
+            class Y:
+                status_code, text = 403, ""
+            return Y()
+        requests.Session.get = get403
+        k = Sahte()
+        sonuc = k.cek_coklu(["z"])                     # önbellekte yok -> 403
+        sina("62a. 403 engel damgası yazar, tarama durur", True,
+             k._engelli_mi() > 0 and "engel" in k.uyari and sonuc == [])
+        once = len(istekler)
+        k3 = Sahte()
+        tekrar = k3.cek_coklu(["x", "z"])
+        sina("62b. engel sürerken ağa ÇIKILMAZ", once, len(istekler))
+        sina("62c. engel sürerken önbellekteki ilanlar kullanılır", 3, len(tekrar))
+    finally:
+        requests.Session.get = gercek
+        bitir()
+
+
+def t63_pano_tek_sira():
+    import requests, threading
+    tp, Sahte, istekler, get, bitir = _sahte_pano_ortami(istek_arasi=0.15)
+    gercek = requests.Session.get
+    requests.Session.get = get
+    try:
+        Sahte()._robots()
+        isler = [threading.Thread(target=lambda i=i: Sahte()._sayfa(f"https://ornek.test/p{i}"))
+                 for i in range(5)]
+        for t in isler:
+            t.start()
+        for t in isler:
+            t.join()
+        zaman = sorted(t for t, u in istekler if "/p" in u)
+        aralik = min(b - a for a, b in zip(zaman, zaman[1:]))
+        sina("63. eşzamanlı iş parçacıkları da istek aralığına uyar", True, aralik >= 0.14)
+    finally:
+        requests.Session.get = gercek
+        bitir()
+
+
+# ---------------------------------------------------------------- 64
+# HATA: ilan metni (ikinci aşama) veritabanına HİÇ yazılmıyordu; liste kartı metinsiz
+# geldiği için önceki metnin üstüne boş yazılıyordu. Önceki taramanın ilanları havuza
+# alınırken son görülme tarihi yenilenirse kapanmış ilan sonsuza dek havuzda kalır.
+def t64_pano_ilani_yeniden_kullanim():
+    import os, tempfile
+    from isbot.store import Depo
+    d = tempfile.mkdtemp()
+    depo = Depo(os.path.join(d, "j.db"))
+    run = depo.kosu_baslat()
+    j = ilan(source="kariyernet", board_token="kariyernet", native_id="9", title="Otomasyon Mühendisi",
+             url="https://www.kariyer.net/is-ilani/x-9", employment_type="Tam zamanlı",
+             raw={"workplaceType": "hybrid"})
+    depo.kaydet(j, run)
+    j.description = "PLC ve SCADA ile otomasyon projeleri yürütülecektir." * 5
+    depo.detay_yaz(j)
+    bos = ilan(source="kariyernet", board_token="kariyernet", native_id="9",
+               title="Otomasyon Mühendisi", url=j.url)
+    depo.kaydet(bos, depo.kosu_baslat())
+    depo.commit()
+    geri = depo.son_pano_ilanlari(["kariyernet"], 72, set())
+    sina("64a. metin saklanır ve metinsiz kart onu silmez", True,
+         len(geri) == 1 and "PLC" in geri[0].description)
+    sina("64b. ek alanlar geri gelir", ("Tam zamanlı", "hybrid"),
+         (geri[0].employment_type, geri[0].raw.get("workplaceType")))
+    sina("64c. bu taramada gelen ilan tekrar eklenmez", [],
+         depo.son_pano_ilanlari(["kariyernet"], 72, {j.uid}))
+    depo.close()
+
+
+# ---------------------------------------------------------------- 65
+# HATA: Türkçe sorgu kontenjanı sırayla (round-robin) dağıtılıyordu: 7 ailesi olan CV'de
+# 7. aile de 1. aile kadar sorgu alıyordu. Artık ağırlık³ ile (D'Hondt); zayıf yan aile
+# (en güçlünün %70'i altı) sorgu almaz, boş kontenjan doldurulmaz.
+def t65_sorgu_kontenjani_agirlikla():
+    from isbot.cv_import import _tr_sorgular
+    r = {"havacilik_savunma": {"agirlik": 1.0}, "kontrol_otomasyon": {"agirlik": 0.74},
+         "makine_tasarim": {"agirlik": 0.6}}
+    q = _tr_sorgular(r)
+    sina("65a. ana aile çoğunluğu alır", True,
+         sum(1 for x in q if x in ("savunma sanayi", "havacılık", "aviyonik mühendisi",
+                                   "simülasyon mühendisi", "sistem mühendisi", "test mühendisi",
+                                   "uçak mühendisi", "uzay bilimleri mühendisi",
+                                   "aerodinamik mühendisi")) >= 3)
+    sina("65b. zayıf yan aile sorgu almaz", [], [x for x in q if "makine" in x])
+    r2 = {"ik": {"agirlik": 1.0}, "muhasebe": {"agirlik": 0.7, "_guncellik": 0.6}}
+    sina("65c. eski alan kontenjana girmez", [], [x for x in _tr_sorgular(r2) if "muhasebe" in x])
+
+
+# ---------------------------------------------------------------- 66
+# Türkiye'nin en yaygın boş kolları hiçbir aileye girmiyordu (gayrimenkul danışmanı 307 il,
+# güvenlik görevlisi 208, temizlik görevlisi 165, şoför 163, yönetici asistanı 127,
+# forklift operatörü 100). Uygulayıcı seviyedeki dört aile, kapının iki yüzüyle sınanır:
+# o meslekten adaya kendi ilanı gelir, mühendise/uzmana gelmez.
+def t66_yeni_meslek_aileleri():
+    import re
+    import yaml as _y
+    from isbot.cv_import import teknisyen_mi
+    from isbot.scoring import puanla
+    from isbot.yollar import kaynak_dosya
+    roller = _y.safe_load(kaynak_dosya("isbot", "data", "roller.yaml").read_text(encoding="utf-8"))
+
+    def aile(baslik):
+        return [ad for ad, t in roller.items() if any(re.search(k, baslik) for k in t["basliklar"])]
+
+    for baslik, beklenen in [("Güvenlik Görevlisi", "ozel_guvenlik"),
+                             ("Silahlı Güvenlik Görevlisi", "ozel_guvenlik"),
+                             ("Security Guard", "ozel_guvenlik"),
+                             ("Forklift Operatörü", "depo"), ("Warehouse Associate", "depo"),
+                             ("Tır Şoförü", "sofor_kurye"), ("Motorlu Kurye", "sofor_kurye"),
+                             ("Delivery Driver", "sofor_kurye"),
+                             ("Yönetici Asistanı", "ofis_idari"), ("Executive Assistant", "ofis_idari"),
+                             ("Çay Servis ve Temizlik Elemanı", "temizlik"), ("Cleaner", "temizlik"),
+                             ("Gayrimenkul Danışmanı", "gayrimenkul"),
+                             ("Real Estate Agent", "gayrimenkul")]:
+        sina(f"66. '{baslik}' -> {beklenen}", True, beklenen in aile(baslik))
+    sina("66b. 'Siber Güvenlik Görevlisi' özel güvenliğe girmez", False,
+         "ozel_guvenlik" in aile("Siber Güvenlik Görevlisi"))
+    sina("66c. 'Security Guard' siber güvenliğe girmez", False, "guvenlik" in aile("Security Guard"))
+    sina("66d. 'Information Security Officer' siber güvenlikte kalır", True,
+         "guvenlik" in aile("Information Security Officer"))
+    sina("66e. 'İş Güvenliği Uzmanı' özel güvenliğe girmez", False,
+         "ozel_guvenlik" in aile("İş Güvenliği Uzmanı"))
+    sina("66f. başlığında 'sürücü belgesi' olan CV şoför sayılmaz", False,
+         teknisyen_mi("Ali Veli\nAnkara | B sınıfı sürücü belgesi\n0555"))
+    sina("66g. güvenlik görevlisi CV'si uygulayıcı seviyede", True,
+         teknisyen_mi("Aday — Özel Güvenlik Görevlisi\nİstanbul"))
+    muh = _profil(["lojistik"])
+    p = puanla(ilan(title="Depo Elemanı", locations=["Gebze, Türkiye"]), muh)
+    sina("66h. lojistik uzmanına depo elemanı ilanı gelmez", True,
+         p.elendi and p.eleme_sebebi.startswith("uygulayıcı seviye"))
+    p = puanla(ilan(title="Sürücü Belgesi Olan Satış Temsilcisi", locations=["Bursa, Türkiye"]),
+               _profil(["satis"]))
+    sina("66i. 'sürücü belgesi' isteyen satış ilanı kapıya takılmaz", False,
+         p.eleme_sebebi.startswith("uygulayıcı seviye"))
+
+
+# ---------------------------------------------------------------- 67
+# HATA: "Executive Assistant to the Managing Director" satırındaki "Director" asistanı
+# staff kıdemine çıkarıyordu.
+def t67_yoneticinin_asistani_yonetici_degil():
+    sina("67a. asistan yönetici sayılmaz", "senior",
+         tahmin("Taylor - Office Administrator\nExecutive Assistant to the Managing Director\n"
+                "Experience\nAcme  Jan 2015 - Present\n").kidem)
+    sina("67b. gerçek direktör staff kalır", "staff",
+         tahmin("Kim - Director of Engineering\nExperience\nAcme  Jan 2015 - Present\n").kidem)
 
 
 def main() -> int:

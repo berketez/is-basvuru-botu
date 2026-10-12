@@ -1,0 +1,23 @@
+Morgan Hale - Machine Learning Engineer
+Izmir, Turkey
+
+Education
+Middle East Technical University, BSc Electrical Engineering     Sep 2011 - Jun 2015
+
+Experience
+
+Edge Devices Ltd                                                  Jul 2015 - Aug 2019
+Embedded Software Engineer
+   - Developed firmware in C for STM32 microcontrollers on FreeRTOS.
+   - Wrote device drivers for SPI/I2C sensors and designed PCB test fixtures in Altium.
+   - Debugged embedded systems with JTAG and oscilloscopes.
+
+Vision Analytics Inc                                              Sep 2019 - Present
+Machine Learning Engineer
+   - Train and deploy PyTorch models for document understanding.
+   - Built a RAG pipeline with LLM fine-tuning and evaluation.
+   - Own MLOps: model serving with FastAPI and Docker, monitoring with MLflow.
+
+Technical Skills
+   - Python, PyTorch, scikit-learn         - LLM, RAG, fine-tuning
+   - MLOps, MLflow, Docker                 - C, embedded systems, STM32

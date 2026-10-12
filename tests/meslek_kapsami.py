@@ -21,7 +21,21 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import yaml
+
+import isbot.experience as _deneyim
 from isbot.cv_import import profil_uret
+
+# SABİT REFERANS TARİHİ. CV'lerde "Halen/Present" yazan girdinin süresi her ay uzar;
+# beklenen yıllar bu tarihe göre ELLE hesaplandı. Sabitlenmezse test takvimle kırılır
+# (benchmark'taki iOS CV'si Ekim 2026'da 6 yıla ulaşıp "senior" oldu).
+class _SabitTarih(_deneyim.date):
+    @classmethod
+    def today(cls):
+        return cls(2026, 10, 12)
+
+
+_deneyim.date = _SabitTarih
 
 CV_DIZIN = Path(__file__).resolve().parent / "meslek-cvleri"
 
@@ -70,7 +84,43 @@ BEKLENEN = [
     # --- beşinci grup: müşteri hizmetleri / çağrı merkezi ---
     ("tr_cagri_merkezi",     "musteri_hizmetleri", 4, 9.6),
     ("en_customer_service",  "musteri_hizmetleri", 4, 11.1),
+    # --- altıncı grup (2026-10-12): Türkiye'nin en yaygın boş kolları ---
+    ("tr_guvenlik_gorevlisi",   "ozel_guvenlik", 3, 12.6),
+    ("en_security_guard",       "ozel_guvenlik", 3, 11.7),
+    ("tr_depo_elemani",         "depo",          3, 10.3),
+    ("en_warehouse_operative",  "depo",          3, 9.6),
+    ("tr_sofor",                "sofor_kurye",   3, 14.4),
+    ("en_delivery_driver",      "sofor_kurye",   3, 12.5),
+    ("tr_yonetici_asistani",    "ofis_idari",    3, 14.9),
+    ("en_office_administrator", "ofis_idari",    3, 13.1),
+    ("tr_temizlik_gorevlisi",   "temizlik",      2, 11.3),
+    ("en_cleaner",              "temizlik",      2, 10.4),
+    ("tr_gayrimenkul_danismani", "gayrimenkul",  3, 13.2),
+    ("en_real_estate_agent",    "gayrimenkul",   3, 12.3),
+    # --- yedinci grup (2026-10-12): meslek değiştirenler ve CV biçimi ---
+    ("en_embedded_to_ml",        "ml_ai",             5, 11.2),
+    ("en_mech_to_backend",       "backend",           5, 13.2),
+    ("tr_hemsire_veri_analisti", "veri_bilimi",       3, 14.0),
+    ("tr_muhasebe_to_ik",        "ik",                4, 16.1),
+    ("tr_ogretmen_to_satis",     "satis",             3, 17.0),
+    # harf aralıklı başlıklar + "WORK & PROJECT EXPERIENCE" + "R&D" (yeni mezun)
+    ("en_astronautical_newgrad", "havacilik_savunma", 4, 0.0),
+    ("tr_insaat_aralikli",       "insaat",            2, 10.2),
 ]
+
+# MESLEK DEĞİŞTİRENLER: (CV, bugünkü aile, eski aile). Bugünkü aile ilk sırada olmalı;
+# eski aile açık kalabilir ama ağırlığı düşük olmalı ve Türkçe sorgu almamalı. NEDEN:
+# CV'deki her geçiş eşit sayılıyordu; gömülüden ML'e geçmiş adaya "gömülü yazılım
+# mühendisi", muhasebeden İK'ya geçmiş adaya "muhasebe elemanı" aranıyordu (2026-10-12).
+GUNCELLIK = [
+    ("en_embedded_to_ml",        "ml_ai",       "gomulu"),
+    ("en_mech_to_backend",       "backend",     "makine_tasarim"),
+    ("tr_hemsire_veri_analisti", "veri_bilimi", "saglik"),
+    ("tr_muhasebe_to_ik",        "ik",          "muhasebe"),
+    ("tr_ogretmen_to_satis",     "satis",       "egitim"),
+]
+# Yazılım CV'leri: YASAK listesindeki diller (C, Go, PyTorch) onlarda gerçek beceri.
+YAZILIM_CV = {"en_embedded_to_ml", "en_mech_to_backend"}
 
 # Hiçbir CV'de çıkmaması gereken yetenekler. "C"/"Go"/"R" Unicode NFD hatasının
 # imzasıdır: Türkçe "Gömülü/Çift/sensör" içinden sahte dil çıkarsa buradan görülür.
@@ -102,7 +152,7 @@ def main() -> int:
             sorun.append(f"yetenek az: {len(guclu)} < {en_az_yetenek}")
         if abs(yil - bek_yil) > TOLERANS:
             sorun.append(f"deneyim {yil} != {bek_yil} (±{TOLERANS})")
-        kacak = [y for y in YASAK if y in guclu]
+        kacak = [y for y in YASAK if y in guclu] if ad not in YAZILIM_CV else []
         if kacak:
             sorun.append(f"SAHTE yetenek: {kacak}")
 
@@ -112,6 +162,27 @@ def main() -> int:
         else:
             gecti += 1
         print(f"{ad:18} {yil:6} {len(guclu):8}  {bek_rol:20} {'OK' if not sorun else 'BAŞARISIZ'}")
+
+    roller = yaml.safe_load((Path(__file__).resolve().parent.parent / "isbot" / "data"
+                             / "roller.yaml").read_text(encoding="utf-8"))
+    for ad, guncel, eski in GUNCELLIK:
+        p = profil_uret(CV_DIZIN / f"{ad}.txt")
+        r = p["rol_aileleri"]
+        sorun = []
+        if next(iter(r), None) != guncel:
+            sorun.append(f"ilk aile {next(iter(r), None)} (beklenen {guncel})")
+        if eski in r and r[eski]["agirlik"] >= r.get(guncel, {}).get("agirlik", 0):
+            sorun.append(f"eski aile {eski} ağırlığı güncelden düşük değil")
+        eski_poz = set(roller[eski].get("tr_pozisyonlar", [])) - set(
+            roller[guncel].get("tr_pozisyonlar", []))
+        if eski_poz & set(p["tr_arama_sorgulari"]):
+            sorun.append(f"eski aileye sorgu: {sorted(eski_poz & set(p['tr_arama_sorgulari']))}")
+        if sorun:
+            basarisiz += 1
+            hatalar.append(f"{ad} (güncellik): " + "; ".join(sorun))
+        else:
+            gecti += 1
+        print(f"{ad:18} güncel {guncel:14} eski {eski:14} {'OK' if not sorun else 'BAŞARISIZ'}")
 
     print("-" * 74)
     print(f"{gecti} geçti, {basarisiz} başarısız")

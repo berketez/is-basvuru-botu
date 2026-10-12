@@ -68,7 +68,7 @@ web_backend:
   FastAPI: [fastapi]
   Flask: [flask]
   Django: [django]
-  "Node.js": ["node.js", nodejs, express]
+  "Node.js": ["node.js", nodejs, "express.js", expressjs]  # çıplak "express": "Parcel Express Ltd"
   React: [react, "react.js", nextjs, "next.js"]
   Vue: [vue, "vue.js", nuxt]
   REST: ["rest api", restful]
@@ -119,6 +119,8 @@ gomulu:
                        "gömülü sistem", "gömülü yazılım", "gömülü kontrol"]
   STM32: [stm32, "arm cortex", microcontroller, mcu, "mikrodenetleyici", arduino]
   PCB: [pcb, altium, kicad, "circuit design"]
+  # Çıplak "assembly" YOK: "assembly line" (montaj hattı) üretim işidir, gömülü değil.
+  "assembly language": ["assembly language", "x86 assembly", "arm assembly", "assembly programming"]
   # "AutoCAD" içindeki "cad" kelime sınırına takılıp eşleşmiyordu; "Fusion360"
   # (boşluksuz) de kaçıyordu. Yazım varyantları açıkça listelenir.
   CAD: [cad, autocad, solidworks, "fusion 360", fusion360, catia, freecad, nx, inventor]
@@ -126,6 +128,7 @@ gomulu:
 arac:
   LaTeX: [latex, xelatex, pdflatex]
   Playwright: [playwright, selenium, puppeteer]
+  pytest: [pytest, unittest]
   Jupyter: [jupyter, notebook]
   Tableau: [tableau, "power bi", powerbi]
   Excel: [excel, "vba"]
@@ -136,6 +139,17 @@ frontend:
   CSS: [css, css3, sass, scss, less, tailwind, "tailwind css"]
   Bootstrap: [bootstrap]
   jQuery: [jquery]
+  Webflow: [webflow]
+
+# --- mobil ---------------------------------------------------------------------
+# roller.yaml'daki mobil TANIMLAYICI tetikleri sözlükte YOKTU: aile tanımlayıcı kanıtla
+# hiç açılamıyor, yalnız Swift+Kotlin desteğiyle açılıyordu (2026-10-12'de bulundu;
+# aynı taramada 10 ölü tetik çıktı — bkz. test t52_tetikler_sozlukte).
+mobil:
+  SwiftUI: [swiftui]
+  UIKit: [uikit]
+  Flutter: [flutter]
+  "React Native": ["react native"]
 
 # --- oyun motorları ve blockchain: rol ailelerinin tetikleri sözlükte YOKSA aile
 # hiç açılmaz. Ölçüldü: Unity ve Solidity eksikti, oyun ve blockchain CV'leri
@@ -191,9 +205,14 @@ operasyon:
 urun_analitik:
   "product management": ["product manager", "product management", roadmap, "user stories"]
   Agile: [agile, scrum, kanban, jira]
-  "A/B testing": ["a/b testing", "experimentation", "split test"]
+  "A/B testing": ["a/b test", "experimentation", "split test"]
   "business intelligence": ["business intelligence", "bi", looker]
-  "data analysis": ["data analysis", "data analytics", "statistical analysis"]
+  "data analysis": ["data analysis", "data analytics", "veri analizi", "veri analitiği"]
+  # Ayrı kalem: veri_bilimi ailesinin TANIMLAYICI tetiği. "data analysis"in eşanlamlısı
+  # olarak duruyordu ve tetik hiç çalışmıyordu; onu genişletmek ("data analysis"
+  # tanımlayıcı olsun) her "veri analizi yaptım" diyen mühendisi veri bilimci yapardı.
+  "statistical analysis": ["statistical analysis", "statistical modeling", "istatistiksel analiz",
+                           "istatistiksel modelleme", "regression analysis", "regresyon analizi"]
   CRM: [crm, salesforce, hubspot]
 
 # --- kontrol & otomasyon -------------------------------------------------------
@@ -724,3 +743,51 @@ teknik_meslek:
   # elemanı 75). Çıplak "packaging"/"ambalaj" BİLEREK yok: ambalaj tasarımı pazarlamadır.
   "packaging operations": ["packaging line", "packing line", "paketleme", "ambalajlama",
                            "ambalaj makinesi", "dolum makinesi", "dolum hattı"]
+
+# --- 2026-10-12: Türkiye'nin en yaygın beş boş meslek kolu (scripts/tr_kapsam.py) -----
+# Özel güvenlik, depo/forklift, şoför/kurye, ofis/idari işler, temizlik/servis,
+# gayrimenkul. Çıplak genel sözcükler BİLEREK yok: "temizlik" veri bilimcinin "veri
+# temizliği"nde, "kiralama" bankacının "finansal kiralama"sında, "dağıtım" lojistik
+# uzmanının "dağıtım planlaması"nda, "access control" siber güvenlikçinin IAM işinde geçer.
+hizmet_meslek:
+  "Private Security": ["özel güvenlik", "güvenlik görevlisi", "güvenlik görevliliği",
+                       "özel güvenlik kimlik kartı", "security guard", "security officer",
+                       "devriye", "patrol duty", "nöbet", "5188"]
+  "Access Control Point": ["giriş kontrol", "turnike", "ziyaretçi kayıt", "x-ray cihaz",
+                           "x-ray kontrol", "kartlı geçiş", "üst araması"]
+  "CCTV Monitoring": ["cctv", "kamera izleme", "güvenlik kamera", "kamera sistemleri izleme"]
+  "Armed Security": ["silahlı güvenlik", "silah ruhsatı", "silahlı görev"]
+  "Warehouse Operations": ["depo elemanı", "depo görevlisi", "depo işçisi", "sipariş toplama",
+                           "order picking", "yükleme boşaltma", "mal kabul", "paletleme",
+                           "istifleme", "warehouse operative", "warehouse associate"]
+  "Professional Driving License": ["src belgesi", "psikoteknik", "c sınıfı ehliyet",
+                                   "ce sınıfı ehliyet", "d sınıfı ehliyet", "e sınıfı ehliyet",
+                                   "c sınıfı sürücü", "ce sınıfı sürücü", "hgv licence", "cdl",
+                                   "commercial driver"]
+  "Driving Licence": ["b sınıfı ehliyet", "b sınıfı sürücü belgesi", "sürücü belgesi",
+                      "driving licence", "driving license", "driver's license"]
+  "Last-mile Delivery": ["kurye", "moto kurye", "motorlu kurye", "paket dağıtım", "kargo dağıtım",
+                         "courier", "parcel delivery", "delivery driver"]
+  "Professional Driving": ["şoför", "tır şoför", "kamyon şoför", "servis şoför", "makam şoför",
+                           "uzun yol", "truck driver", "lorry driver", "van driver", "hgv driver"]
+  "Executive Assistance": ["yönetici asistan", "üst düzey yönetici asistan", "executive assistant",
+                           "personal assistant", "ajanda yönetim", "takvim yönetim",
+                           "diary management", "calendar management", "seyahat organizasyon",
+                           "travel arrangements", "toplantı organizasyon"]
+  "Office Administration": ["idari işler", "ofis yönetimi", "office administration",
+                            "office management", "evrak takibi", "resmi yazışma", "yazışma takibi",
+                            "dosyalama", "arşivleme", "filing", "sekreterya", "sekreterlik"]
+  "Data Entry": ["veri girişi", "veri giriş", "data entry"]
+  "Cleaning Services": ["temizlik görevli", "temizlik personel", "temizlik eleman", "genel temizlik",
+                        "endüstriyel temizlik", "ofis temizliği", "bina temizliği",
+                        "temizlik hizmetleri", "cleaning staff", "cleaning operative",
+                        "janitorial", "custodial"]
+  "Tea Service": ["çay servis", "çay ocağı", "ikram servisi", "çay kahve servis", "tea service",
+                  "tea and coffee service"]
+  "Real Estate Sales": ["gayrimenkul danışman", "gayrimenkul satış", "emlak danışman", "emlak satış",
+                        "real estate sales", "real estate agent", "property sales", "estate agent",
+                        "gayrimenkul portföy"]
+  "Property Leasing": ["kiralama danışman", "konut kiralama", "ofis kiralama", "mağaza kiralama",
+                       "kiracı ilişkileri", "property leasing", "tenant relations", "lettings"]
+  "Real Estate Appraisal": ["gayrimenkul değerleme", "değerleme uzmanı", "ekspertiz raporu",
+                            "property valuation", "spk değerleme"]
